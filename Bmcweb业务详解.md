@@ -279,7 +279,7 @@ POST .../Actions/ComputerSystem.Reset
 | --- | --- | --- |
 | 路由权限 | 一般是 `privilegeSetLogin`（`redfish-core/include/registries/privilege_registry.hpp:372`、`:1470`） | 一般是 `privilegeSetConfigure*` / `ConfigureComponents`（`:375`、`:1472`） |
 | 入口 handler | `handleComputerSystemGet`（`redfish-core/lib/systems.hpp:3212`） | `handleComputerSystemResetActionPost`（`redfish-core/lib/systems.hpp:2960`）/ `handleChassisPowerPatch`（`redfish-core/lib/power.hpp:292`） |
-| 请求体 | 无 | `json_util::readJsonPatch()` / `readJsonObject()` 解析（`redfish-core/lib/power.hpp:309-316`、`redfish-core/lib/systems.hpp:94-97`） |
+| 请求体 | 无 | `json_util::readJsonPatch()` / `readJsonAction()` 解析（`redfish-core/lib/power.hpp:309-316`、`redfish-core/lib/systems.hpp:2990`） |
 | D-Bus 动作 | `getProperty` / `getAllProperties` / `getSubTreePaths`（`redfish-core/lib/systems.hpp:460`、`redfish-core/lib/power.hpp:254`、`:287`） | `setDbusProperty`（`redfish-core/lib/systems.hpp:2942`、`redfish-core/lib/power.hpp:63`） |
 | 结果落点 | 填 `asyncResp->res.jsonValue[...]`（`redfish-core/lib/systems.hpp:484`） | 回调里 `messages::success()` 或出错时 `messages::internalError()`（`redfish-core/lib/systems.hpp:2875`、`redfish-core/lib/power.hpp:50`） |
 | 响应发出 | `AsyncResp` 析构 → `res.end()`（`include/async_resp.hpp:28-31`） | 同左 |

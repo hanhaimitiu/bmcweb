@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 852" font-family="'Segoe UI','Microsoft YaHei',sans-serif">
+  <style>
+    .panel{fill:#ffffff;stroke:#d8d2c7;stroke-width:1.5;}
+    .phead{fill:#ece7df;stroke:#d8d2c7;stroke-width:1.5;}
+    .ptitle{fill:#2d2a27;font-size:15px;font-weight:700;}
+    .box{fill:#ffffff;stroke:#3f6b78;stroke-width:1.5;rx:6;}
+    .bbox{fill:#e3ecee;stroke:#3f6b78;stroke-width:1.5;rx:6;}
+    .bmain{fill:#2d2a27;font-size:13px;font-weight:600;}
+    .bsub{fill:#5c5650;font-size:11px;}
+    .arrow{stroke:#3f6b78;stroke-width:1.8;fill:none;}
+    .anum{fill:#3f6b78;font-size:12px;font-weight:700;}
+    .acc{fill:#3f6b78;font-size:12.5px;font-weight:700;}
+    .note{fill:#a86a4c;font-size:11.5px;}
+    .nest{fill:#f4f1ea;stroke:#c9c2b6;stroke-width:1.2;rx:6;}
+    .nl{fill:#5c5650;font-size:11px;}
+    .nlh{fill:#2d2a27;font-size:11.5px;font-weight:700;}
+    .ttl{fill:#2d2a27;font-size:17px;font-weight:700;}
+    .role{fill:#5c5650;font-size:12px;}
+  </style>
+
+  <text x="380" y="30" text-anchor="middle" class="ttl">bmcweb</text>
+  <text x="380" y="50" text-anchor="middle" class="role">OpenBMC 唯一 HTTP 入口 · Redfish/REST/WebSocket → D-Bus 翻译层</text>
+
+  <!-- Panel A 业务流程 -->
+  <rect class="panel" x="20" y="64" width="720" height="448" rx="6"/>
+  <rect class="phead" x="20" y="64" width="720" height="32" rx="6"/>
+  <text x="34" y="86" class="ptitle">一、业务流程：一次 GET /redfish/v1/Systems/1 看电源状态</text>
+
+  <rect class="bbox" x="50" y="104" width="660" height="46" rx="6"/>
+  <text x="66" y="125" class="bmain">浏览器 GET /redfish/v1/Systems/1 看电源状态，拿到 PowerState=On</text>
+  <text x="66" y="143" class="bsub">PowerState 来自 D-Bus 属性 State.Host.CurrentHostState · redfish-core/lib/systems.hpp:460-462,482-485</text>
+
+  <line class="arrow" x1="380" y1="150" x2="380" y2="162"/>
+  <polygon points="372,160 388,160 380,172" fill="#3f6b78"/>
+
+  <rect class="box" x="50" y="172" width="660" height="46" rx="6"/>
+  <text x="66" y="193" class="bmain">① Boost.Beast accept：systemd 传 fd → async_accept() → afterAccept() 建 Connection</text>
+  <text x="66" y="211" class="bsub">http/app.hpp:114-184 · http/http_server.hpp:120-154,147-162</text>
+
+  <line class="arrow" x1="380" y1="218" x2="380" y2="230"/>
+  <polygon points="372,228 388,228 380,240" fill="#3f6b78"/>
+
+  <rect class="box" x="50" y="240" width="660" height="46" rx="6"/>
+  <text x="66" y="261" class="bmain">② 读头 + 认证鉴权：afterReadHeaders() → authenticate()（mTLS/Xtoken/Cookie/Session/Basic）</text>
+  <text x="66" y="279" class="bsub">http/http_connection.hpp:610-675,646-650 · include/authentication.hpp:255-310</text>
+
+  <line class="arrow" x1="380" y1="286" x2="380" y2="298"/>
+  <polygon points="372,296 388,296 380,308" fill="#3f6b78"/>
+
+  <rect class="box" x="50" y="308" width="660" height="46" rx="6"/>
+  <text x="66" y="329" class="bmain">③ 路由匹配 + 鉴权：findRoute() trie 命中 → validatePrivilege() → checkPrivileges()</text>
+  <text x="66" y="347" class="bsub">http/routing.hpp:213-257,298-359 · redfish-core/lib/systems.hpp:3619-3622 · include/dbus_privileges.hpp:187-206</text>
+
+  <line class="arrow" x1="380" y1="354" x2="380" y2="366"/>
+  <polygon points="372,364 388,364 380,376" fill="#3f6b78"/>
+
+  <rect class="box" x="50" y="376" width="660" height="46" rx="6"/>
+  <text x="66" y="397" class="bmain">④ handler 调 D-Bus(async_method_call)：handleComputerSystemGet() → getHostState() → getProperty</text>
+  <text x="66" y="415" class="bsub">redfish-core/lib/systems.hpp:3212-3245,454-531 · include/dbus_utility.hpp:123-132 · systemBus</text>
+
+  <line class="arrow" x1="380" y1="422" x2="380" y2="434"/>
+  <polygon points="372,432 388,432 380,444" fill="#3f6b78"/>
+
+  <rect class="bbox" x="50" y="444" width="660" height="46" rx="6"/>
+  <text x="66" y="465" class="bmain">⑤ 回调填 JSON：HostState.Running → PowerState=On，AsyncResp 析构 → res.end() → doWrite()</text>
+  <text x="66" y="483" class="bsub">redfish-core/lib/systems.hpp:482-485 · include/async_resp.hpp:28-31 · http/http_connection.hpp:506-519</text>
+
+  <!-- Panel B 体系结构 -->
+  <rect class="panel" x="20" y="528" width="720" height="164" rx="6"/>
+  <rect class="phead" x="20" y="528" width="720" height="32" rx="6"/>
+  <text x="34" y="550" class="ptitle">二、代码体系结构：三层骨架 + 编译期裁剪</text>
+
+  <text x="40" y="578" class="nlh">① HTTP 服务器 · Boost.Beast / ASIO</text>
+  <text x="40" y="596" class="nl">Server/Connection 异步状态机 · http/app.hpp:114-184 · http/http_server.hpp:38-80</text>
+  <text x="40" y="620" class="nlh">② 路由表注册 · trie</text>
+  <text x="40" y="638" class="nl">BMCWEB_ROUTE().privileges().methods() · src/webserver_run.cpp:76-105</text>
+  <text x="40" y="662" class="nlh">③ 认证鉴权 · Session/Token/Basic</text>
+  <text x="40" y="680" class="nl">authenticate() 五方式 + SessionStore token map · include/authentication.hpp:255-310</text>
+
+  <text x="400" y="578" class="nlh">④ D-Bus 异步封装</text>
+  <text x="400" y="596" class="nl">getProperty / async_method_call · dbus_utility.hpp:100-132</text>
+  <text x="400" y="620" class="nlh">⑤ redfish-core/lib/ 资源</text>
+  <text x="400" y="638" class="nl">systems/sensors/power.hpp · redfish.cpp:74-248</text>
+  <text x="400" y="662" class="nlh">⑥ BMCWEB_* 编译期开关</text>
+  <text x="400" y="680" class="nl">if constexpr 物理删代码 · config/meson.build:65-98</text>
+
+  <!-- Panel C 对外交互 -->
+  <rect class="panel" x="20" y="708" width="720" height="144" rx="6"/>
+  <rect class="phead" x="20" y="708" width="720" height="32" rx="6"/>
+  <text x="34" y="730" class="ptitle">三、对外交互：HTTP 世界 ↔ D-Bus 世界</text>
+
+  <text x="40" y="756" class="acc">入站（谁调 bmcweb）：</text>
+  <text x="40" y="774" class="nl">· 浏览器 / webui-vue / Redfish 客户端 → GET /redfish/v1/...；POST .../Actions/ComputerSystem.Reset</text>
+  <text x="40" y="792" class="nl">· 传统 REST（BMCWEB_REST）/xyz/... 直映射 D-Bus 对象；POST /login/ → SessionStore 发 token</text>
+
+  <text x="40" y="810" class="acc">出站（bmcweb 调谁 / 事件推送）：</text>
+  <text x="40" y="828" class="nl">· 读 D-Bus：State.Host.CurrentHostState（state-manager）、Sensor/Power 属性（dbus-sensors，经 ObjectMapper 发现）</text>
+  <text x="40" y="846" class="nl">· 写 RequestedHostTransition（state-manager 执行上下电）｜ SSE /EventService/SSE/ · WebSocket /subscribe/</text>
+</svg>
