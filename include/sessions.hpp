@@ -29,6 +29,9 @@ namespace persistent_data
 // entropy: 20 characters, 62 possibilities.  log2(62^20) = 119 bits of
 // entropy.  OWASP recommends at least 64
 // https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#session-id-entropy
+// 熵：20 个字符，62 种可能。log2(62^20) = 119 比特熵。
+// OWASP 建议至少 64 比特。
+// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#session-id-entropy
 constexpr std::size_t sessionTokenSize = 20;
 
 enum class SessionType
@@ -62,6 +65,13 @@ struct UserSession
     // time.  For example, a password can expire or be changed outside of
     // bmcweb.  The value stored here is updated at the start of each
     // operation and used as the truth within bmcweb.
+    // isConfigureSelfOnly 有两个信息来源：
+    //  1. 当 pamAuthenticateUser() 返回 PAM_NEW_AUTHTOK_REQD 时。
+    //  2. D-Bus User.Manager.GetUserInfo 的 UserPasswordExpired 属性。
+    // 两者本应保持一致，但底层条件随时可能改变。
+    // 例如密码可能在 bmcweb 之外过期或被修改。
+    // 此处存储的值在每次操作开始时更新，
+    // 并作为 bmcweb 内部使用的判断依据。
 
     /**
      * @brief Fills object with data from UserSession's JSON representation
@@ -73,6 +83,11 @@ struct UserSession
      * @return a shared pointer if data has been loaded properly, nullptr
      * otherwise
      */
+    /* @brief 用 UserSession 的 JSON 表示中的数据填充对象
+     * 这里取代 nlohmann 的 from_json，以确保采用不抛异常的方式
+     * @param[in] j   从中加载数据的 JSON 对象
+     * @return 数据加载成功时返回 shared pointer，
+     * 否则返回 nullptr */
     static std::shared_ptr<UserSession> fromJson(
         const nlohmann::json::object_t& j)
     {
@@ -126,6 +141,10 @@ struct UserSession
         // we don't have enough information.  These 4 fields have been present
         // in every version of this file in bmcwebs history, so any file, even
         // on upgrade, should have these present
+        // 如果这些字段中任何一个缺失，我们就无法恢复会话，
+        // 因为信息不足。这 4 个字段在 bmcweb 历史的
+        // 每个版本文件中都存在，因此任何文件（即使是在
+        // 升级时）都应包含它们。
         if (userSession->uniqueId.empty() || userSession->username.empty() ||
             userSession->sessionToken.empty() || userSession->csrfToken.empty())
         {
@@ -140,6 +159,12 @@ struct UserSession
         // persisting values with wall clock time instead of steady timer, but
         // the tradeoffs of all the corner cases involved are non-trivial, so
         // this is done temporarily
+        // 目前，通过重启持久化的会话会重置其空闲计时器。
+        // 要克服这一点，可能需要更好地理解
+        // 挂钟时间与稳定计时器时间，或许可以持久化
+        // 挂钟时间而非稳定计时器时间，但其中涉及的
+        // 所有边界情况的权衡并非易事，因此
+        // 暂时采用这种做法。
         userSession->lastUpdated = std::chrono::steady_clock::now();
         userSession->sessionType = SessionType::Session;
 
@@ -154,13 +179,19 @@ enum class MTLSCommonNameParseMode
     // CertificateMappingAttribute,  plus bmcweb defined OEM ones.
     // Note, IDs in this enum must be maintained between versions, as they are
     // persisted to disk
+    // 本节大致对应 Redfish AccountService 的
+    // CertificateMappingAttribute，外加 bmcweb 定义的 OEM 项。
+    // 注意，此枚举中的 ID 必须在各版本间保持一致，
+    // 因为它们会被持久化到磁盘。
     Whole = 1,
     CommonName = 2,
     UserPrincipalName = 3,
 
     // Intentional gap for future DMTF-defined enums
+    // 为未来 DMTF 定义的枚举有意留出的空档
 
     // OEM parsing modes for various OEMs
+    // 各家 OEM 的解析模式
 };
 
 inline MTLSCommonNameParseMode getMTLSCommonNameParseMode(std::string_view name)
@@ -173,6 +204,8 @@ inline MTLSCommonNameParseMode getMTLSCommonNameParseMode(std::string_view name)
     {
         // Not yet supported
         // return MTLSCommonNameParseMode::Whole;
+        // 尚不支持
+        // return MTLSCommonNameParseMode::Whole;
     }
     if (name == "UserPrincipalName")
     {
@@ -184,6 +217,7 @@ inline MTLSCommonNameParseMode getMTLSCommonNameParseMode(std::string_view name)
 struct AuthConfigMethods
 {
     // Authentication paths
+    // 认证路径
     bool basic = BMCWEB_BASIC_AUTH;
     bool sessionToken = BMCWEB_SESSION_AUTH;
     bool xtoken = BMCWEB_XTOKEN_AUTH;
@@ -195,6 +229,11 @@ struct AuthConfigMethods
     // false = allow connection, and allow user to use other auth method
     // Always default to false, because root certificates will not
     // be provisioned at startup
+    // 是否接受未经认证的 TLS：
+    // true = 如果未提供双向 TLS 则拒绝连接
+    // false = 允许连接，并允许用户使用其他认证方式
+    // 始终默认为 false，因为启动时不会预置根
+    // 证书。
     bool tlsStrict = false;
 
     MTLSCommonNameParseMode mTLSCommonNameParsingMode =
@@ -267,6 +306,7 @@ class SessionStore
         bool isConfigureSelfOnly = false)
     {
         // Only need csrf tokens for cookie based auth, token doesn't matter
+        // 只有基于 cookie 的认证才需要 csrf 令牌，令牌本身无关紧要
         std::string sessionToken =
             bmcweb::getRandomIdOfLength(sessionTokenSize);
         std::string csrfToken = bmcweb::getRandomIdOfLength(sessionTokenSize);
@@ -294,6 +334,7 @@ class SessionStore
             {}});
         auto it = authTokens.emplace(sessionToken, session);
         // Only need to write to disk if session isn't about to be destroyed.
+        // 只有当会话不会立即销毁时才需要写入磁盘。
         needWrite = sessionType != SessionType::Basic &&
                     sessionType != SessionType::MutualTLS;
         return it.first->second;
@@ -320,6 +361,7 @@ class SessionStore
     {
         applySessionTimeouts();
         // TODO(Ed) this is inefficient
+        // TODO(Ed) 这样效率不高
         auto sessionIt = authTokens.begin();
         while (sessionIt != authTokens.end())
         {
@@ -410,6 +452,8 @@ class SessionStore
         if (isTLSchanged)
         {
             // recreate socket connections with new settings
+            // NOLINTNEXTLINE(misc-include-cleaner)
+            // 用新设置重建 socket 连接
             // NOLINTNEXTLINE(misc-include-cleaner)
             std::raise(SIGHUP);
         }

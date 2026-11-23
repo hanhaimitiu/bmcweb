@@ -50,12 +50,14 @@ TEST(AsciiToLower, Positive)
 {
     using bmcweb::asciiToLower;
     // Noop
+    // 空操作（Noop）
     EXPECT_EQ(asciiToLower('a'), 'a');
     EXPECT_EQ(asciiToLower('z'), 'z');
     EXPECT_EQ(asciiToLower('0'), '0');
     EXPECT_EQ(asciiToLower('_'), '_');
 
     // Converted
+    // 已转换
     EXPECT_EQ(asciiToLower('A'), 'a');
     EXPECT_EQ(asciiToLower('Z'), 'z');
 }

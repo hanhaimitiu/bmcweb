@@ -60,6 +60,7 @@ inline void afterGetFanSensorObjects(
     }
 
     /* Sort list by sensorPath */
+    /* 按 sensorPath 对列表排序 */
     std::ranges::sort(
         sensorsPathAndService, [](const auto& c1, const auto& c2) {
             return AlphanumLess<std::string>()(c1.second, c2.second);

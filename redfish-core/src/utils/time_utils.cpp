@@ -33,11 +33,14 @@ namespace redfish::time_utils
  * @brief Convert string that represents value in Duration Format to its numeric
  *        equivalent.
  */
+/* @brief 将表示 Duration 格式值的字符串
+ *        转换为对应的数值。 */
 std::optional<std::chrono::milliseconds> fromDurationString(std::string_view v)
 {
     std::chrono::milliseconds out = std::chrono::milliseconds::zero();
     enum class ProcessingStage
     {
+        // P1DT1H1M1.100S
         // P1DT1H1M1.100S
         P,
         Days,
@@ -120,6 +123,8 @@ std::optional<std::chrono::milliseconds> fromDurationString(std::string_view v)
         {
             // We could be seeing seconds for the first time, (as is the case in
             // 1S) or for the second time (in the case of 1.1S).
+            // 我们可能是第一次看到秒数（如 1S 的情况），
+            // 也可能是第二次看到（如 1.1S 的情况）。
             if (stage <= ProcessingStage::Seconds)
             {
                 out += std::chrono::seconds(ticks);
@@ -135,6 +140,9 @@ std::optional<std::chrono::milliseconds> fromDurationString(std::string_view v)
                 // Seconds could be any form of (1S, 1.1S, 1.11S, 1.111S);
                 // Handle them all milliseconds are after the decimal point,
                 // so they need right padded.
+                // 秒数可能是 (1S, 1.1S, 1.11S, 1.111S) 中的任意形式；
+                // 都要处理，毫秒在小数点之后，
+                // 因此需要在右侧补零。
                 if (charactersRead == 1)
                 {
                     ticks *= 100;
@@ -163,6 +171,9 @@ std::optional<std::chrono::milliseconds> fromDurationString(std::string_view v)
  *        Example output: "P12DT1M5.5S"
  *        Ref: Redfish Specification, Section 9.4.4. Duration values
  */
+/* @brief 将时间值转换为基于 ISO 8601 的 duration 格式。
+ *        输出示例："P12DT1M5.5S"
+ *        参考：Redfish 规范 9.4.4 节 Duration values */
 std::string toDurationString(std::chrono::milliseconds ms)
 {
     if (ms < std::chrono::milliseconds::zero())
@@ -269,14 +280,20 @@ std::string toISO8061ExtendedStr(
     std::chrono::zoned_time<SubType> zonedTime(tz, sysTimeOriginal);
 
     // Protect against integer overflow/underflow when adding offset
+    // 添加偏移量时防止整数上溢/下溢
     std::chrono::local_time<SubType> duration(zonedTime.get_local_time());
 
     // Enforce 3 constraints
     // the result can't under or overflow the calculation
     // the resulting string needs to be representable as 4 digits
+    // 强制满足 3 个约束条件
+    // 结果在计算中不能上溢或下溢
+    // 结果字符串必须能用 4 位数字表示
 
     // Midnight of the year 1970 in that timezone is the lowest representable
     // date
+    // 该时区 1970 年的午夜是可表示的
+    // 最早日期
     using std::chrono::January;
     std::chrono::year_month_day tzEpoch(1970y, January, 1d);
     std::chrono::local_days tzEpochDays(tzEpoch);
@@ -285,6 +302,10 @@ std::string toISO8061ExtendedStr(
     // unsigned timezone will underflow) or because the duration is not
     // representable in that timezone. Handle both by setting to 1970 in that
     // timezone
+    // 我们可能会下溢，原因可能是 duration 为负（此时我们
+    // 的无符号时区会下溢），或者该 duration 在该时区中
+    // 无法表示。两种情况都通过在该时区中将其设为 1970
+    // 来处理。
     if (dur.count() <= 0 || zonedTime.get_local_time() < tzMin.get_local_time())
     {
         BMCWEB_LOG_WARNING("Underflow from value {}",
@@ -296,6 +317,9 @@ std::string toISO8061ExtendedStr(
         // Midnight of the year 10000 is the first non representable
         // date as a string, so go back one tick to get the last representable
         // date
+        // 10000 年的午夜是第一个无法用字符串表示的日期，
+        // 因此回退一个刻度以获得最后一个可表示的
+        // 日期。
         std::chrono::year_month_day overflowDate(10000y, std::chrono::January,
                                                  1d);
         std::chrono::local_days maxDays(overflowDate);
@@ -318,6 +342,10 @@ std::string toISO8061ExtendedStr(
 // Note that the maximum supported date is 9999-12-31T23:59:59+00:00, if
 // the given |secondsSinceEpoch| is too large, we return the maximum supported
 // date.
+// 返回格式化后的日期时间字符串。
+// 注意，支持的最大日期是 9999-12-31T23:59:59+00:00，如果
+// 给定的 |secondsSinceEpoch| 过大，我们将返回支持的最大
+// 日期。
 std::string getDateTimeUint(uint64_t secondsSinceEpoch,
                             std::string_view timezoneName)
 {
@@ -330,6 +358,10 @@ std::string getDateTimeUint(uint64_t secondsSinceEpoch,
 // Note that the maximum supported date is 9999-12-31T23:59:59+00:00, if
 // the given |secondsSinceEpoch| is too large, we return the maximum supported
 // date.
+// 返回具有毫秒精度的格式化日期时间字符串。
+// 注意，支持的最大日期是 9999-12-31T23:59:59+00:00，如果
+// 给定的 |secondsSinceEpoch| 过大，我们将返回支持的最大
+// 日期。
 std::string getDateTimeUintMs(uint64_t milliSecondsSinceEpoch,
                               std::string_view timezoneName)
 {
@@ -339,6 +371,7 @@ std::string getDateTimeUintMs(uint64_t milliSecondsSinceEpoch,
 }
 
 // Returns the formatted date time string with microsecond precision
+// 返回具有微秒精度的格式化日期时间字符串
 std::string getDateTimeUintUs(uint64_t microSecondsSinceEpoch,
                               std::string_view timezoneName)
 {
@@ -353,6 +386,7 @@ std::string getDateTimeStdtime(std::chrono::system_clock::time_point timePoint,
     using std::chrono::floor;
     using std::chrono::seconds;
     // Floor to seconds
+    // 向下取整到秒
     auto secondsDuration = floor<seconds>(timePoint.time_since_epoch());
     return details::toISO8061ExtendedStr(secondsDuration, timezoneName);
 }
@@ -366,6 +400,11 @@ std::string getDateTimeStdtime(std::chrono::system_clock::time_point timePoint,
  * @return std::pair<std::string, std::string>, which consist
  * of current DateTime & the TimeOffset strings respectively.
  */
+/* 以 pair 形式返回当前的日期、时间和本地时间偏移
+ * 信息
+ * @param[in] 无
+ * @return std::pair<std::string, std::string>，分别由当前的
+ * DateTime 和 TimeOffset 字符串组成。 */
 std::pair<std::string, std::string> getDateTimeOffsetNow()
 {
     const std::chrono::time_zone* tz = details::getTimeZone();
@@ -380,6 +419,7 @@ std::pair<std::string, std::string> getDateTimeOffsetNow()
     system_clock::time_point now = system_clock::now();
 
     // Round down to the nearest second
+    // 向下舍入到最接近的秒
     time_point<system_clock, seconds> nowSeconds = floor<seconds>(now);
 
     std::chrono::zoned_time zt{tz, nowSeconds};
@@ -401,6 +441,12 @@ using usSinceEpoch = std::chrono::duration<int64_t, std::micro>;
  *
  * @return std::string which consist the datetime
  */
+/* @brief 以 ISO 8601 格式返回日期时间
+ * @param[in] std::string_view 物品的制造日期，采用 ISO 8601 格式，
+ *            可为 YYYYMMDD 或 YYYYMMDDThhmmssZ
+ * 参考：https://github.com/openbmc/phosphor-dbus-interfaces/blob/master/yaml/
+ *      xyz/openbmc_project/Inventory/Decorator/Asset.interface.yaml#L16
+ * @return std::string，包含该日期时间 */
 std::optional<std::string> getDateTimeIso8601(std::string_view datetime)
 {
     std::optional<usSinceEpoch> us = dateStringToEpoch(datetime);
@@ -418,9 +464,11 @@ std::optional<std::string> getDateTimeIso8601(std::string_view datetime)
 /**
  * @brief ProductionDate report
  */
+/* @brief 生产日期（ProductionDate）报告 */
 void productionDateReport(crow::Response& res, const std::string& buildDate)
 {
     // The default buildDate property is empty, so just return
+    // 默认的 buildDate 属性为空，因此直接返回
     if (buildDate.empty())
     {
         return;
@@ -440,6 +488,7 @@ std::optional<usSinceEpoch> dateStringToEpoch(std::string_view datetime)
              {"%FT%T%Ez", "%FT%TZ", "%FT%T", "%Y%m%d", "%Y%m%dT%H%M%SZ"}))
     {
         // Parse using signed so we can detect negative dates
+        // 使用有符号类型解析，以便检测负数日期
         std::chrono::sys_time<usSinceEpoch> date;
         std::istringstream iss(std::string{datetime});
 #if __cpp_lib_chrono >= 201907L
@@ -456,6 +505,7 @@ std::optional<usSinceEpoch> dateStringToEpoch(std::string_view datetime)
             if (iss.rdbuf()->in_avail() != 0)
             {
                 // More information left at end of string.
+                // 字符串末尾还有更多信息。
                 continue;
             }
             return date.time_since_epoch();

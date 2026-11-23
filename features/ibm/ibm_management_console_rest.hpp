@@ -51,6 +51,7 @@ inline void handleFilePut(const crow::Request& req,
 {
     std::error_code ec;
     // Check the content-type of the request
+    // 检查请求的 content-type
     boost::beast::string_view contentType = req.getHeaderValue("content-type");
     if (!bmcweb::asciiIEquals(contentType, "application/octet-stream"))
     {
@@ -77,6 +78,7 @@ inline void handleFilePut(const crow::Request& req,
         "/var/lib/bmcweb/ibm-management-console/configfiles");
 
     // Get the current size of the savearea directory
+    // 获取 savearea 目录的当前大小
     std::filesystem::recursive_directory_iterator iter(loc, ec);
     if (ec)
     {
@@ -120,6 +122,7 @@ inline void handleFilePut(const crow::Request& req,
     BMCWEB_LOG_DEBUG("saveAreaDirSize: {}", saveAreaDirSize);
 
     // Get the file size getting uploaded
+    // 获取正在上传的文件大小
     const std::string& data = req.body();
     BMCWEB_LOG_DEBUG("data length: {}", data.length());
 
@@ -139,10 +142,12 @@ inline void handleFilePut(const crow::Request& req,
     }
 
     // Form the file path
+    // 构造文件路径
     loc /= fileID;
     BMCWEB_LOG_DEBUG("Writing to the file: {}", loc.string());
 
     // Check if the same file exists in the directory
+    // 检查目录中是否存在同名文件
     bool fileExists = std::filesystem::exists(loc, ec);
     if (ec)
     {
@@ -158,6 +163,7 @@ inline void handleFilePut(const crow::Request& req,
     if (fileExists)
     {
         // File exists. Get the current file size
+        // 文件已存在，获取当前文件大小
         std::uintmax_t currentFileSize = std::filesystem::file_size(loc, ec);
         if (ec)
         {
@@ -174,6 +180,12 @@ inline void handleFilePut(const crow::Request& req,
         // because there is no increase in the total directory size.
         // We need to add the diff only if the incoming data is larger than the
         // existing filesize
+        // 计算文件大小的差值。
+        // 如果 data.length 大于现有文件大小，则计算差值；
+        // 否则将增量视为零——
+        // 因为目录总大小并未增加。
+        // 只有当传入数据大于现有文件大小时，
+        // 才需要加上这个差值。
         if (data.length() > currentFileSize)
         {
             newSizeToWrite = data.length() - currentFileSize;
@@ -183,10 +195,12 @@ inline void handleFilePut(const crow::Request& req,
     else
     {
         // This is a new file upload
+        // 这是一次新文件上传
         newSizeToWrite = data.length();
     }
 
     // Calculate the total dir size before writing the new file
+    // 在写入新文件前计算目录总大小
     BMCWEB_LOG_DEBUG("total new size: {}", saveAreaDirSize + newSizeToWrite);
 
     if ((saveAreaDirSize + newSizeToWrite) > maxSaveareaDirSize)
@@ -201,6 +215,7 @@ inline void handleFilePut(const crow::Request& req,
     file.open(loc, std::ofstream::out);
 
     // set the permission of the file to 600
+    // 将文件权限设置为 600
     std::filesystem::perms permission = std::filesystem::perms::owner_write |
                                         std::filesystem::perms::owner_read;
     std::filesystem::permissions(loc, permission);
@@ -217,6 +232,7 @@ inline void handleFilePut(const crow::Request& req,
     file << data;
 
     // Push an event
+    // 推送事件
     if (fileExists)
     {
         BMCWEB_LOG_DEBUG("config file is updated");
@@ -397,6 +413,8 @@ inline bool isValidConfigFileName(const std::string& fileName,
 
     // ConfigFile name is allowed to take upper and lowercase letters,
     // numbers and hyphen
+    // ConfigFile 名称允许使用大小写字母、
+    // 数字和连字符
     std::size_t found = fileName.find_first_not_of(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-");
     if (found != std::string::npos)
@@ -407,6 +425,7 @@ inline bool isValidConfigFileName(const std::string& fileName,
     }
 
     // Check the filename length
+    // 检查文件名长度
     if (fileName.length() > 20)
     {
         BMCWEB_LOG_ERROR("Name must be maximum 20 characters. "
@@ -422,10 +441,12 @@ inline bool isValidConfigFileName(const std::string& fileName,
 inline void requestRoutes(App& app)
 {
     // allowed only for admin
+    // 仅允许管理员操作
     BMCWEB_ROUTE(app, "/ibm/v1/")
         .privileges({{"ConfigureComponents", "ConfigureManager"}})
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             [](const crow::Request&,
                const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 asyncResp->res.jsonValue["@odata.type"] =
@@ -461,11 +482,13 @@ inline void requestRoutes(App& app)
         .methods(boost::beast::http::verb::put, boost::beast::http::verb::get,
                  boost::beast::http::verb::delete_)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             [](const crow::Request& req,
                const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                const std::string& fileName) {
                 BMCWEB_LOG_DEBUG("ConfigFile : {}", fileName);
                 // Validate the incoming fileName
+                // 校验传入的 fileName
                 if (!isValidConfigFileName(fileName, asyncResp->res))
                 {
                     asyncResp->res.result(

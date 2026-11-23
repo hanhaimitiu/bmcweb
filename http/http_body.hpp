@@ -40,6 +40,8 @@ struct HttpBody
 {
     // Body concept requires specific naming of classes
     // NOLINTBEGIN(readability-identifier-naming)
+    // Body concept 要求类使用特定的命名
+    // NOLINTBEGIN(readability-identifier-naming)
     class writer;
     class reader;
     class value_type;
@@ -249,6 +251,10 @@ class HttpBody::writer
     // files and fewer loops over per-connection reduction in memory usage.
     // Nginx uses 16-32KB here, so we're in the range of what other webservers
     // do.
+    // 64KB 这个数值是任意选取的，旨在针对较大文件优化，
+    // 减少单连接内存占用方面的循环次数。
+    // Nginx 在这里使用 16-32KB，因此我们与其他 Web 服务器
+    // 处于同一量级。
     constexpr static size_t readBufSize = 1024UL * 64UL;
     std::array<char, readBufSize> fileReadBuf{};
 
@@ -259,6 +265,8 @@ class HttpBody::writer
     {
         // If zstd compressed and client doesn't support zstd, need to
         // decompress
+        // 如果内容经过 zstd 压缩而客户端不支持 zstd，则需要
+        // 解压
         if (body.compressionType == CompressionType::Zstd &&
             body.clientCompressionType != CompressionType::Zstd)
         {
@@ -329,6 +337,8 @@ class HttpBody::writer
             BMCWEB_LOG_INFO("Read {} bytes from file", read);
             // If the number of bytes read equals the amount requested, we
             // haven't reached EOF yet
+            // 如果读取的字节数等于请求的数量，则说明
+            // 尚未到达 EOF
             ret.second = read == readReq;
             if (body.encodingType == EncodingType::Base64)
             {

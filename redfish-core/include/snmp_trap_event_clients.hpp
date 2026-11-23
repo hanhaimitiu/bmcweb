@@ -82,6 +82,8 @@ inline void getSnmpTrapClientdata(
     /* Context is required Redfish field,
      * but SNMP backend doesn't support a context string.
      */
+    /* Context 是 Redfish 的必填字段，
+     * 但 SNMP 后端不支持 context 字符串。 */
     asyncResp->res.jsonValue["Context"] = "";
 
     dbus::utility::getAllProperties(
@@ -169,6 +171,7 @@ inline void afterSnmpClientCreate(
             if (ec.value() != EBADR)
             {
                 // SNMP not installed
+                // 未安装 SNMP。
                 messages::propertyValueOutOfRange(asyncResp->res, "SNMPv2c",
                                                   "Protocol");
                 return;
@@ -255,6 +258,9 @@ inline void deleteSnmpTrapClient(
     // Erase "snmp" in the request to find the corresponding
     // dbus snmp client id. For example, the snmpid in the
     // request is "snmp1", which will be "1" after being erased.
+    // 去掉请求中的 "snmp" 以找到对应的
+    // D-Bus SNMP 客户端 id。例如，请求中的 snmpid
+    // 为 "snmp1"，去掉后即为 "1"。
     snmpTrapId.remove_prefix(4);
 
     sdbusplus::object_path snmpPath =

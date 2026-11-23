@@ -79,6 +79,8 @@ inline void setBytesProperty(
     }
     // If the param is in Kib, make it Kib.  Redfish uses this as a naming
     // DBus represents as bytes
+    // 如果参数以 KiB 为单位，则保留为 KiB。Redfish 将其用作命名约定，
+    // 而 DBus 以字节表示。
     if (std::string_view(jPtr.back()).ends_with("KiB"))
     {
         bytes /= 1024.0;
@@ -193,6 +195,7 @@ inline void afterGetManagerStartTime(
     if (ec)
     {
         // Not all servers will be running in systemd, so ignore the error.
+        // 并非所有服务器都运行在 systemd 下，因此忽略该错误。
         return;
     }
     using std::chrono::steady_clock;
@@ -213,6 +216,7 @@ inline void afterGetManagerStartTime(
     }
 
     // Floor to the closest millisecond
+    // 向下取整到最接近的毫秒。
     using Milli = std::chrono::duration<steady_clock::rep, std::milli>;
     Milli milli = std::chrono::floor<Milli>(runTime);
 
@@ -236,6 +240,8 @@ inline void managerGetServiceRootUptime(
  * It retrieves BMC health information from various DBus resources and returns
  * the information through the response.
  */
+/* handleManagerDiagnosticData 支持 ManagerDiagnosticData。
+ * 它从各种 DBus 资源检索 BMC 健康信息，并通过响应返回这些信息。 */
 inline void handleManagerDiagnosticDataGet(
     crow::App& app, const crow::Request& req,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,

@@ -77,6 +77,7 @@ class ConnectionImpl : public Connection
     {
         BMCWEB_LOG_DEBUG("Closing connection with reason {}", msg);
         // send notification to handler for cleanup
+        // 向 handler 发送通知以进行清理
         if (closeHandler)
         {
             closeHandler(*this);
@@ -107,6 +108,8 @@ class ConnectionImpl : public Connection
 
         // SSE stream header sent, So let us setup monitor.
         // Any read data on this stream will be error in case of SSE.
+        // SSE 流头部已发送，下面设置监控。
+        // 对于 SSE，从此流读取到的任何数据都是错误。
         adaptor.async_read_some(boost::asio::buffer(buffer),
                                 std::bind_front(&ConnectionImpl::afterReadError,
                                                 this, shared_from_this()));
@@ -244,6 +247,7 @@ class ConnectionImpl : public Connection
         {
             BMCWEB_LOG_DEBUG("Timer operation aborted");
             // Canceled wait means the path succeeded.
+            // 等待被取消意味着该路径执行成功。
             return;
         }
         if (ec)

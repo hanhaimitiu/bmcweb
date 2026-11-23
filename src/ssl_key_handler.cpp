@@ -54,6 +54,7 @@ constexpr std::array<unsigned char, 6> sessionIdContext = {
     'b', 'm', 'c', 'w', 'e', 'b'};
 
 // Trust chain related errors.`
+// 与信任链相关的错误。`
 static bool isTrustChainError(int errnum)
 {
     return (errnum == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ||
@@ -66,9 +67,11 @@ static bool isTrustChainError(int errnum)
 static bool validateCertificate(OpenSSLX509& cert)
 {
     // Create an empty X509_STORE structure for certificate validation.
+    // 创建一个空的 X509_STORE 结构用于证书验证。
     OpenSSLX509Store x509Store;
 
     // Load Certificate file into the X509 structure.
+    // 将证书文件加载到 X509 结构中。
     OpenSSLX509StoreCTX storeCtx;
 
     int errCode = storeCtx.init(x509Store, cert);
@@ -236,6 +239,7 @@ void regenerateCertificateIfHostnameChanged(const std::string& filepath,
 }
 
 // Writes a certificate to a path, ignoring errors
+// 将证书写入指定路径，忽略错误
 void writeCertificateToFile(const std::string& filepath,
                             const std::string& certificate)
 {
@@ -246,6 +250,7 @@ void writeCertificateToFile(const std::string& filepath,
     {
         file.write(certificate.data(), certificate.size(), ec);
         // ignore result
+        // 忽略结果
     }
 }
 
@@ -256,6 +261,9 @@ static std::string constructX509(const std::string& cn, OpenSSLEVPKey& pPrivKey)
     // get a random number from the RNG for the certificate serial
     // number If this is not random, regenerating certs throws browser
     // errors
+    // 从 RNG 获取一个随机数作为证书序列号。
+    // 如果不是随机的，重新生成证书时会抛出浏览器
+    // 错误。
     bmcweb::OpenSSLGenerator gen;
     std::uniform_int_distribution<uint64_t> dis(
         std::numeric_limits<uint64_t>::min(),
@@ -263,9 +271,11 @@ static std::string constructX509(const std::string& cn, OpenSSLEVPKey& pPrivKey)
     x509Obj.setSerialNumber(dis(gen));
 
     // Cert is valid for 10 years
+    // 证书有效期为 10 年
     x509Obj.setValidityPeriodFromNow(std::chrono::years(10));
 
     // set the public key to the key we just generated
+    // 将公钥设置为我们刚刚生成的密钥
     if (!x509Obj.setPubkey(pPrivKey))
     {
         return "";
@@ -287,6 +297,7 @@ static std::string constructX509(const std::string& cn, OpenSSLEVPKey& pPrivKey)
     }
 
     // set the CSR options
+    // 设置 CSR 选项
     if (!x509Obj.setIssuerNameToSubject())
     {
         return "";
@@ -303,6 +314,7 @@ static std::string constructX509(const std::string& cn, OpenSSLEVPKey& pPrivKey)
     x509Obj.addExt(NID_netscape_comment, x509Comment);
 
     // Sign the certificate with our private key
+    // 使用我们的私钥对证书签名
     if (!x509Obj.sign(pPrivKey))
     {
         return "";
@@ -337,6 +349,7 @@ std::string generateSslCertificate(const std::string& commonName)
     }
     BMCWEB_LOG_INFO("Generating x509 Certificates");
     // Use this code to directly generate a certificate
+    // 使用此代码直接生成证书
     return constructX509(commonName, *pPrivKey);
 }
 
@@ -364,15 +377,20 @@ static std::string ensureCertificate()
 {
     namespace fs = std::filesystem;
     // Cleanup older certificate file existing in the system
+    // 清理系统中存在的旧证书文件
     fs::path oldcertPath = fs::path("/home/root/server.pem");
     std::error_code ec;
     fs::remove(oldcertPath, ec);
     // Ignore failure to remove;  File might not exist.
+    // 忽略删除失败；文件可能不存在。
 
     fs::path certPath = "/etc/ssl/certs/https/";
     // if path does not exist create the path so that
     // self signed certificate can be created in the
     // path
+    // 如果路径不存在，则创建该路径，
+    // 以便可以在该路径下创建
+    // 自签名证书。
     fs::path certFile = certPath / "server.pem";
 
     if (!fs::exists(certPath, ec))
@@ -388,6 +406,7 @@ static int nextProtoCallback(SSL* /*unused*/, const unsigned char** data,
                              unsigned int* len, void* /*unused*/)
 {
     // First byte is the length.
+    // 第一个字节是长度。
     constexpr std::string_view h2 = "\x02h2";
     *data = std::bit_cast<const unsigned char*>(h2.data());
     *len = static_cast<unsigned int>(h2.size());
@@ -415,6 +434,7 @@ static bool setCiphers(boost::asio::ssl::context& mSslContext)
     OpenSSLSSLCtx sslCtx(mSslContext.native_handle());
 
     // Mozilla recommended elliptic curve groups v5.7 (shared between profiles).
+    // Mozilla 推荐的椭圆曲线组 v5.7（各 profile 共享）。
     if (!sslCtx.setCurves("X25519:prime256v1:secp384r1"))
     {
         BMCWEB_LOG_ERROR("Error setting TLS curve list");
@@ -425,6 +445,8 @@ static bool setCiphers(boost::asio::ssl::context& mSslContext)
     {
         // Mozilla intermediate TLS 1.2 cipher suites v5.7.
         // Sourced from: https://ssl-config.mozilla.org/guidelines/5.7.json
+        // Mozilla intermediate TLS 1.2 密码套件 v5.7。
+        // 来源：https://ssl-config.mozilla.org/guidelines/5.7.json
         constexpr std::string_view mozillaIntermediateCiphers =
             "ECDHE-ECDSA-AES128-GCM-SHA256:"
             "ECDHE-RSA-AES128-GCM-SHA256:"
@@ -442,6 +464,8 @@ static bool setCiphers(boost::asio::ssl::context& mSslContext)
     }
     // Mozilla TLS 1.3 ciphersuites v5.7 (identical in the intermediate and
     // modern profiles).
+    // Mozilla TLS 1.3 密码套件 v5.7（在 intermediate 和
+    // modern profile 中相同）。
     constexpr std::string_view tls13cipherSuites =
         "TLS_AES_128_GCM_SHA256:"
         "TLS_AES_256_GCM_SHA384:"
@@ -469,6 +493,7 @@ static bool getSslContext(boost::asio::ssl::context& mSslContext,
     if constexpr (BMCWEB_TLS_PROFILE == "modern")
     {
         // Mozilla modern is TLS 1.3 only.
+        // Mozilla modern 仅支持 TLS 1.3。
         sslOptions |= boost::asio::ssl::context::no_tlsv1_2;
     }
     mSslContext.set_options(sslOptions);
@@ -533,6 +558,14 @@ std::shared_ptr<boost::asio::ssl::context> getSslServerContext()
         // request.  So, in this case detect if the webui is installed, and
         // only request peer authentication if it's not present.
         // This will likely need revisited in the future.
+        // 这是一个 HACK
+        // 如果安装了 webui 且 TLSSTrict 为 false，我们不希望
+        // 强制弹出 mtls 弹窗，而如果我们通过设置 verify_peer 来请求
+        // 客户端证书就会触发该弹窗。但是，如果未安装 webui，
+        // 我们希望客户端能够选择使用 MTLS 登录，而如果不暴露 MTLS
+        // 客户端证书请求，就不会发生这种情况。因此，在这种情况下
+        // 检测是否安装了 webui，仅在未安装时才请求对等端认证。
+        // 这将来可能需要重新审视。
         BMCWEB_LOG_DEBUG("Setting verify peer only");
         mode |= boost::asio::ssl::verify_peer;
     }
@@ -558,15 +591,22 @@ std::shared_ptr<boost::asio::ssl::context> getSslServerContext()
 
     // Enable server-side in memory session caching, so they can be looked up
     // by ID.
+    // 启用服务器端内存会话缓存，以便可以
+    // 通过 ID 查找会话。
     SSL_CTX_set_session_cache_mode(sslCtx.native_handle(), SSL_SESS_CACHE_BOTH);
 
     // Set session cache size to prevent session ID DoS attack
+    // 设置会话缓存大小以防止会话 ID DoS 攻击
     SSL_CTX_sess_set_cache_size(sslCtx.native_handle(), 100);
 
     // Set the Session ID Context
     // OpenSSL REQUIRES this to be set for the server to support session
     // caching. It prevents sessions from one application context (e.g., a
     // different port/app) from being used in another.
+    // 设置 Session ID Context
+    // OpenSSL 要求服务器必须设置此项以支持会话
+    // 缓存。它防止一个应用上下文（例如不同的
+    // 端口/应用）的会话被另一个上下文使用。
     if (SSL_CTX_set_session_id_context(sslCtx.native_handle(),
                                        sessionIdContext.data(),
                                        sessionIdContext.size()) != 1)
@@ -587,6 +627,8 @@ std::optional<boost::asio::ssl::context> getSSLClientContext(
 
     // NOTE, this path is temporary;  In the future it will need to change to
     // be set per subscription.  Do not rely on this.
+    // 注意，此路径是临时的；将来需要改为按
+    // subscription 设置。请勿依赖此行为。
     fs::path certPath = "/etc/ssl/certs/https/client.pem";
     std::string cert = verifyOpensslKeyCert(certPath);
 
@@ -597,6 +639,8 @@ std::optional<boost::asio::ssl::context> getSSLClientContext(
 
     // Add a directory containing certificate authority files to be used
     // for performing verification.
+    // 添加一个包含证书颁发机构（CA）文件的目录，
+    // 用于执行验证。
     boost::system::error_code ec;
     sslCtx.set_default_verify_paths(ec);
     if (ec)
@@ -612,6 +656,7 @@ std::optional<boost::asio::ssl::context> getSSLClientContext(
     }
 
     // Verify the remote server's certificate
+    // 验证远程服务器的证书
     sslCtx.set_verify_mode(mode, ec);
     if (ec)
     {

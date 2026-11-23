@@ -359,6 +359,7 @@ inline void afterGetManagedObjectsDumpEntryCollection(
             !dumpStatus.empty())
         {
             // Dump status is not Complete, no need to enumerate
+            // 转储（Dump）状态未完成，无需枚举
             continue;
         }
 
@@ -473,6 +474,8 @@ inline void afterGetManagedObjectsDumpEntryById(
         {
             // Dump status is not Complete
             // return not found until status is changed to Completed
+            // 转储（Dump）状态未完成
+            // 在状态变为 Completed 之前返回未找到
             messages::resourceNotFound(
                 asyncResp->res, std::format("{} dump", dumpTypeStr), entryID);
             return;
@@ -722,6 +725,10 @@ inline void startCreateDumpTask(
     // interface to track dump completion. If yes, fetch the "Status"
     // property of the interface, modify the task state accordingly.
     // Else, return task completed.
+    // 检查创建的转储对象是否实现了 Progress
+    // 接口以跟踪转储完成情况。若实现，则获取该接口的 "Status"
+    // 属性，并据此修改任务状态。
+    // 否则，返回任务已完成。
     tinyxml2::XMLDocument doc;
 
     doc.Parse(introspectXml.data(), introspectXml.size());
@@ -759,6 +766,8 @@ inline void startCreateDumpTask(
 
     // The task timer is set to max time limit within which the
     // requested dump will be collected.
+    // 任务定时器设置为收集所请求转储的
+    // 最大时间限制。
     task->startTimer(std::chrono::minutes(6));
     task->payload.emplace(payload);
     task->populateResp(asyncResp->res);
@@ -827,6 +836,13 @@ inline void afterCreateDump(
         // implementation and has nothing to do with the client's
         // input in the request. Hence, returning internal error
         // back to the client.
+        // 其他 D-Bus 错误，例如：
+        // xyz.openbmc_project.Common.Error.InvalidArgument 和
+        // org.freedesktop.DBus.Error.InvalidArgs 都与
+        // 此处 bmcweb 实现中发起的 dbus 调用
+        // 有关，与客户端在请求中的输入
+        // 无关。因此，返回内部错误
+        // 给客户端。
         messages::internalError(asyncResp->res);
         return;
     }
@@ -972,6 +988,8 @@ inline void afterGetSubtreePathsDumpServiceInfo(
         BMCWEB_LOG_ERROR("getDumpServiceInfo respHandler got error {}", ec);
         // Assume that getting an error simply means there are no dump
         // LogServices. Return without adding any error response.
+        // 假设收到错误仅表示没有转储（dump）
+        // LogServices。直接返回，不添加任何错误响应。
         return;
     }
     std::optional<sdbusplus::object_path> dumpObjPath =

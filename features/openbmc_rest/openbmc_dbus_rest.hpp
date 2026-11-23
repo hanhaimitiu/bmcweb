@@ -145,6 +145,7 @@ inline void introspectObjects(
                         }
                         newpath += std::string("/") + childPath;
                         // introspect the subobjects as well
+                        // 也对子对象进行 introspect（自省）
                         introspectObjects(processName, newpath, transaction);
                     }
 
@@ -167,6 +168,7 @@ inline void getPropertiesForEnumerate(
     dbus::utility::getAllProperties(
         service, objectPath, interface,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [asyncResp, objectPath, service,
          interface](const boost::system::error_code& ec,
                     const dbus::utility::DBusPropertiesMap& propertiesList) {
@@ -196,6 +198,8 @@ inline void getPropertiesForEnumerate(
 
 // Find any results that weren't picked up by ObjectManagers, to be
 // called after all ObjectManagers are searched for and called.
+// 查找未被 ObjectManagers 收集的结果，
+// 在所有 ObjectManagers 都被搜索并调用后调用此函数。
 inline void findRemainingObjectsForEnumerate(
     const std::string& objectPath,
     const std::shared_ptr<dbus::utility::MapperGetSubTreeResponse>& subtree,
@@ -209,6 +213,7 @@ inline void findRemainingObjectsForEnumerate(
         if (path == objectPath)
         {
             // An enumerate does not return the target path's properties
+            // enumerate 不会返回目标路径的属性
             continue;
         }
         if (!dataJson.contains(path))
@@ -270,6 +275,7 @@ inline void getManagedObjectsForEnumerate(
     dbus::utility::getManagedObjects(
         connectionName, path,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [transaction, objectName,
          connectionName](const boost::system::error_code& ec,
                          const dbus::utility::ManagedObjectType& objects) {
@@ -302,6 +308,7 @@ inline void getManagedObjectsForEnumerate(
                                 objectJson[property.first];
                             std::visit(
                                 // ast-grep-ignore: long-lambda
+                                // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
                                 [&propertyJson](auto&& val) {
                                     if constexpr (
                                         std::is_same_v<
@@ -340,6 +347,7 @@ inline void findObjectManagerPathForEnumerate(
                      objectName, connectionName);
     dbus::utility::async_method_call(
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [transaction, objectName, connectionName](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetAncestorsResponse& objects) {
@@ -357,6 +365,7 @@ inline void findObjectManagerPathForEnumerate(
                     if (connectionGroup.first == connectionName)
                     {
                         // Found the object manager path for this resource.
+                        // 已找到该资源对应的 object manager 路径。
                         getManagedObjectsForEnumerate(
                             objectName, pathGroup.first, connectionName,
                             transaction);
@@ -374,12 +383,16 @@ inline void findObjectManagerPathForEnumerate(
 // Uses GetObject to add the object info about the target /enumerate path to
 // the results of GetSubTree, as GetSubTree will not return info for the
 // target path, and then continues on enumerating the rest of the tree.
+// 使用 GetObject 将目标 /enumerate 路径的对象信息加入
+// GetSubTree 的结果中，因为 GetSubTree 不会返回目标路径的信息，
+// 然后继续枚举树的其余部分。
 inline void getObjectAndEnumerate(
     const std::shared_ptr<InProgressEnumerateData>& transaction)
 {
     dbus::utility::getDbusObject(
         transaction->objectPath, {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [transaction](const boost::system::error_code& ec,
                       const dbus::utility::MapperGetObject& objects) {
             if (ec)
@@ -399,6 +412,8 @@ inline void getObjectAndEnumerate(
 
             // Map indicating connection name, and the path where the object
             // manager exists
+            // 映射表，记录连接名以及 object
+            // manager 所在的路径
             boost::container::flat_map<
                 std::string, std::string, std::less<>,
                 std::vector<std::pair<std::string, std::string>>>
@@ -428,6 +443,9 @@ inline void getObjectAndEnumerate(
                 // If we already know where the object manager is, we don't
                 // need to search for it, we can call directly in to
                 // getManagedObjects
+                // 如果已知 object manager 的位置，就无需
+                // 再搜索它，可以直接调用
+                // getManagedObjects
                 if (!connection.second.empty())
                 {
                     getManagedObjectsForEnumerate(
@@ -438,6 +456,8 @@ inline void getObjectAndEnumerate(
                 {
                     // otherwise we need to find the object manager path
                     // before we can continue
+                    // 否则需要先找到 object manager 的路径
+                    // 才能继续
                     findObjectManagerPathForEnumerate(
                         transaction->objectPath, connection.first, transaction);
                 }
@@ -446,6 +466,7 @@ inline void getObjectAndEnumerate(
 }
 
 // Structure for storing data on an in progress action
+// 用于存储进行中的 action 相关数据的结构体
 struct InProgressActionData
 {
     explicit InProgressActionData(
@@ -462,8 +483,17 @@ struct InProgressActionData
         //   (converse: if at least one method passed - OK)
         // * for the method output:
         //   * if output processing didn't fail, return the data
+        // 方法调用可能涉及不同的 owner
+        // 和 interface，其中有些调用失败、有些成功。
+        // 规则如下：
+        // * 如果没有任何方法被调用——报错
+        // * 如果有方法失败且无成功——报错
+        //   （反之：只要至少一个方法成功——OK）
+        // * 对于方法的输出：
+        //   * 如果输出处理未失败，返回数据
 
         // Only deal with method returns if nothing failed earlier
+        // 仅当之前没有任何失败时才处理方法的返回值
         if (asyncResp->res.result() == boost::beast::http::status::ok)
         {
             if (!methodPassed)
@@ -572,6 +602,7 @@ inline int convertJsonToDbus(sd_bus_message* m, const std::string& argType,
     const std::vector<std::string> argTypes = dbusArgSplit(argType);
 
     // Assume a single object for now.
+    // 目前假设只有一个对象。
     const nlohmann::json* j = &inputJson;
     const nlohmann::json::array_t* inputArr =
         inputJson.get_ptr<const nlohmann::json::array_t*>();
@@ -584,6 +615,8 @@ inline int convertJsonToDbus(sd_bus_message* m, const std::string& argType,
     {
         // If we are decoding multiple objects, grab the pointer to the
         // iterator, and increment it for the next loop
+        // 如果要解码多个对象，则获取指向
+        // 迭代器的指针，并在下一次循环时递增它
         if (argTypes.size() > 1)
         {
             if (jIt == inputArr->end())
@@ -602,6 +635,8 @@ inline int convertJsonToDbus(sd_bus_message* m, const std::string& argType,
 
         // Do some basic type conversions that make sense.  uint can be
         // converted to int.  int and uint can be converted to double
+        // 做一些合理的基本类型转换：uint 可以
+        // 转换为 int，int 和 uint 可以转换为 double
         if (intValue == nullptr)
         {
             const uint64_t* uintValue = j->get_ptr<const uint64_t*>();
@@ -663,6 +698,7 @@ inline int convertJsonToDbus(sd_bus_message* m, const std::string& argType,
         else if (argCode == "b")
         {
             // lots of ways bool could be represented here.  Try them all
+            // bool 在这里可能有多种表示方式，逐一尝试
             int boolInt = 0;
             if (intValue != nullptr)
             {
@@ -948,6 +984,10 @@ int readMessageItem(const std::string& typeCode, sdbusplus::message_t& m,
     // Given that sd-bus takes a void pointer to a char*, and that's
     // Not something we can fix.
     // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
+    // 当 T == char* 时会触发此警告，目前尚不清楚如何解决。
+    // 鉴于 sd-bus 接受指向 char* 的 void 指针，
+    // 这一点我们无法修改。
+    // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
     int r = sd_bus_message_read_basic(m.get(), typeCode.front(), &value);
     if (r < 0)
     {
@@ -995,10 +1035,14 @@ inline int readDictEntryFromMessage(const std::string& typeCode,
     {
         // json doesn't support non-string keys.  If we hit this condition,
         // convert the result to a string so we can proceed
+        // json 不支持非字符串键。如果遇到这种情况，
+        // 将结果转换为字符串以便继续处理
         key = key.dump(2, ' ', true, nlohmann::json::error_handler_t::replace);
         keyPtr = key.get_ptr<const std::string*>();
         // in theory this can't fail now, but lets be paranoid about it
         // anyway
+        // 理论上现在这不会失败，但无论如何
+        // 还是谨慎一点
         if (keyPtr == nullptr)
         {
             return -1;
@@ -1046,6 +1090,7 @@ inline int readArrayFromMessage(const std::string& typeCode,
     if (dict)
     {
         // Remove the { }
+        // 去掉 { }
         containedType = containedType.substr(1, containedType.size() - 2);
         data = nlohmann::json::object();
     }
@@ -1069,6 +1114,7 @@ inline int readArrayFromMessage(const std::string& typeCode,
         }
 
         // Dictionaries are only ever seen in an array
+        // 字典（Dictionary）只会出现在数组中
         if (dict)
         {
             r = readDictEntryFromMessage(containedType, m, data);
@@ -1339,6 +1385,10 @@ inline void handleMethodResponse(
     // Otherwise, make the results an array with every result
     // an entry.  Could also just fail in that case, but it
     // seems better to get the data back somehow.
+    // 如果两者都是字典或数组，则合并为一个。
+    // 否则将结果组成一个数组，每个结果作为
+    // 一个条目。这种情况也可以直接报错，但
+    // 似乎还是设法把数据返回更好。
     nlohmann::json::object_t* dataobj =
         data.get_ptr<nlohmann::json::object_t*>();
 
@@ -1349,6 +1399,7 @@ inline void handleMethodResponse(
         for (auto& obj : *dataobj)
         {
             // Note: Will overwrite the data for a duplicate key
+            // 注意：遇到重复的 key 会覆盖其数据
             methodResponseObj->emplace(obj.first, std::move(obj.second));
         }
         return;
@@ -1369,6 +1420,7 @@ inline void handleMethodResponse(
     if (!transaction->convertedToArray)
     {
         // They are different types. May as well turn them into an array
+        // 它们是不同类型，不妨将它们转换为数组
         nlohmann::json j = std::move(transaction->methodResponse);
         transaction->methodResponse = nlohmann::json::array();
         transaction->methodResponse.emplace_back(std::move(j));
@@ -1450,6 +1502,7 @@ inline void findActionOnInterface(
                             std::string returnType;
 
                             // Find the output type
+                            // 查找输出类型
                             while (argumentNode != nullptr)
                             {
                                 const char* argDirection =
@@ -1504,6 +1557,7 @@ inline void findActionOnInterface(
 
                             crow::connections::systemBus->async_send(
                                 // ast-grep-ignore: long-lambda
+                                // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
                                 m, [transaction, returnType](
                                        const boost::system::error_code& ec2,
                                        sdbusplus::message_t& m2) {
@@ -1605,6 +1659,7 @@ inline void handleAction(const crow::Request& req,
     dbus::utility::getDbusObject(
         objectPath, {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [transaction](
             const boost::system::error_code& ec,
             const std::vector<std::pair<std::string, std::vector<std::string>>>&
@@ -1637,6 +1692,7 @@ inline void handleDelete(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::getDbusObject(
         objectPath, {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [asyncResp, objectPath](
             const boost::system::error_code& ec,
             const std::vector<std::pair<std::string, std::vector<std::string>>>&
@@ -1670,6 +1726,7 @@ inline void handleList(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::getSubTreePaths(
         objectPath, depth, {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [asyncResp](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreePathsResponse& objectPaths) {
@@ -1700,6 +1757,7 @@ inline void handleEnumerate(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::getSubTree(
         objectPath, 0, {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [objectPath, asyncResp](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreeResponse& objectNames) {
@@ -1722,6 +1780,8 @@ inline void handleEnumerate(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
 
             // Add the data for the path passed in to the results
             // as if GetSubTree returned it, and continue on enumerating
+            // 将传入路径的数据加入结果，
+            // 就像 GetSubTree 返回的一样，然后继续枚举
             getObjectAndEnumerate(transaction);
         });
 }
@@ -1739,6 +1799,7 @@ inline void handleGet(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::getDbusObject(
         *path, {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [asyncResp, path,
          propertyName](const boost::system::error_code& ec,
                        const dbus::utility::MapperGetObject& objectNames) {
@@ -1761,6 +1822,8 @@ inline void handleGet(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                 {
                     // mapper allows empty interfaces in case an
                     // object does not implement any interface.
+                    // 当某个 object 未实现任何 interface 时，
+                    // mapper 允许 interfaces 为空。
                     continue;
                 }
 
@@ -1773,6 +1836,7 @@ inline void handleGet(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                     m.append(interface);
                     crow::connections::systemBus->async_send(
                         // ast-grep-ignore: long-lambda
+                        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
                         m, [asyncResp, response,
                             propertyName](const boost::system::error_code& ec2,
                                           sdbusplus::message_t& msg) {
@@ -1805,6 +1869,9 @@ inline void handleGet(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                                         // if property name is empty, or
                                         // matches our search query, add it
                                         // to the response json
+                                        // 如果 property name 为空，或
+                                        // 与查询条件匹配，就将其加入
+                                        // 响应 json
 
                                         if (propertyName->empty())
                                         {
@@ -1931,6 +1998,7 @@ inline void handlePut(const crow::Request& req,
     dbus::utility::getDbusObject(
         transaction->objectPath, {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [transaction](const boost::system::error_code& ec2,
                       const dbus::utility::MapperGetObject& objectNames) {
             if (!ec2 && objectNames.empty())
@@ -2049,6 +2117,7 @@ inline void handlePut(const crow::Request& req,
                                             ->async_send(
                                                 m,
                                                 // ast-grep-ignore: long-lambda
+                                                // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
                                                 [transaction](
                                                     const boost::system::
                                                         error_code& ec,
@@ -2110,6 +2179,8 @@ inline void handleDBusUrl(const crow::Request& req,
 {
     // If accessing a single attribute, fill in and update objectPath,
     // otherwise leave destProperty blank
+    // 如果访问的是单个 attribute，则填充并更新 objectPath，
+    // 否则将 destProperty 留空
     std::string destProperty;
     const char* attrSeperator = "/attr/";
     size_t attrPosition = objectPath.find(attrSeperator);
@@ -2151,6 +2222,7 @@ inline void handleDBusUrl(const crow::Request& req,
         else
         {
             // Trim any trailing "/" at the end
+            // 去掉末尾多余的 "/"
             if (objectPath.ends_with("/"))
             {
                 objectPath.pop_back();
@@ -2199,6 +2271,8 @@ inline void handleBusSystemPost(
     {
         // Check if segment contains ".".  If it does, it must be an
         // interface
+        // 检查路径段是否包含 "."，如果包含，则它一定是
+        // 一个 interface
         if (it->contains("."))
         {
             break;
@@ -2206,6 +2280,10 @@ inline void handleBusSystemPost(
             // parsed as part of our <path> specifier above, which
             // causes the normal trailing backslash redirector to
             // fail.
+            // 此检查是必要的，因为结尾的斜杠会被
+            // 上面的 <path> 规则解析进去，
+            // 从而导致常规的结尾反斜杠重定向
+            // 失效。
         }
         if (!it->empty())
         {
@@ -2219,6 +2297,7 @@ inline void handleBusSystemPost(
         it++;
 
         // after interface, we might have a method name
+        // interface 之后可能跟着一个方法名
         if (it != strs.end())
         {
             methodName = *it;
@@ -2229,6 +2308,8 @@ inline void handleBusSystemPost(
     {
         // if there is more levels past the method name, something
         // went wrong, return not found
+        // 如果方法名之后还有更多层级，说明
+        // 出了问题，返回 not found
         asyncResp->res.result(boost::beast::http::status::not_found);
         return;
     }
@@ -2236,6 +2317,7 @@ inline void handleBusSystemPost(
     {
         dbus::utility::async_method_call(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             [asyncResp, processName,
              objectPath](const boost::system::error_code& ec,
                          const std::string& introspectXml) {
@@ -2291,6 +2373,7 @@ inline void handleBusSystemPost(
     {
         dbus::utility::async_method_call(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             [asyncResp, processName, objectPath,
              interfaceName](const boost::system::error_code& ec,
                             const std::string& introspectXml) {
@@ -2333,6 +2416,8 @@ inline void handleBusSystemPost(
 
                 // if we know we're the only call, build the
                 // json directly
+                // 如果确定只有这一次调用，就直接
+                // 构建 json
                 tinyxml2::XMLElement* interface =
                     pRoot->FirstChildElement("interface");
                 while (interface != nullptr)
@@ -2350,6 +2435,8 @@ inline void handleBusSystemPost(
                 {
                     // if we got to the end of the list and
                     // never found a match, throw 404
+                    // 如果已遍历到列表末尾仍未
+                    // 找到匹配项，则返回 404
                     asyncResp->res.result(
                         boost::beast::http::status::not_found);
                     return;
@@ -2454,6 +2541,7 @@ inline void handleBusSystemPost(
                         nlohmann::json& propertyItem = propertiesObj[name];
                         crow::connections::systemBus->async_send(
                             // ast-grep-ignore: long-lambda
+                            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
                             m, [&propertyItem,
                                 asyncResp](const boost::system::error_code& ec2,
                                            sdbusplus::message_t& msg) {
@@ -2535,9 +2623,11 @@ inline void requestRoutes(App& app)
         .privileges({{"Login"}})
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             [](const crow::Request&,
                const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
                 auto myCallback = [asyncResp](
                                       const boost::system::error_code& ec,
                                       std::vector<std::string>& names) {
@@ -2619,6 +2709,7 @@ inline void requestRoutes(App& app)
         .privileges({{"ConfigureManager"}})
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             [](const crow::Request&,
                const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                const std::string& dumpId) {
@@ -2657,11 +2748,16 @@ inline void requestRoutes(App& app)
 
                     // Assuming only one dump file will be present in the dump
                     // id directory
+                    // 假设 dump id 目录中只有一个
+                    // dump 文件
                     std::string dumpFileName = file.path().filename().string();
 
                     // Filename should be in alphanumeric, dot and underscore
                     // Its based on phosphor-debug-collector application
                     // dumpfile format
+                    // 文件名应由字母数字、点和下划线组成
+                    // 它基于 phosphor-debug-collector 应用的
+                    // dumpfile 格式
                     static std::regex dumpFileRegex("[a-zA-Z0-9\\._]+");
                     if (!std::regex_match(dumpFileName, dumpFileRegex))
                     {

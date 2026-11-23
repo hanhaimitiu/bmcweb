@@ -166,6 +166,7 @@ inline void handleSystemsAndManagersEventLogServiceGet(
 /*
  * Journal EventLog utilities
  * */
+/* Journal EventLog 工具函数 */
 
 inline bool getRedfishLogFiles(
     std::vector<std::filesystem::path>& redfishLogFiles)
@@ -174,10 +175,12 @@ inline bool getRedfishLogFiles(
     static const std::string redfishLogFilename = "redfish";
 
     // Loop through the directory looking for redfish log files
+    // 遍历目录以查找 redfish 日志文件
     for (const std::filesystem::directory_entry& dirEnt :
          std::filesystem::directory_iterator(redfishLogDir))
     {
         // If we find a redfish log file, save the path
+        // 如果找到 redfish 日志文件，则保存其路径
         std::string filename = dirEnt.path().filename();
         if (filename.starts_with(redfishLogFilename))
         {
@@ -187,6 +190,9 @@ inline bool getRedfishLogFiles(
     // As the log files rotate, they are appended with a ".#" that is higher for
     // the older logs. Since we don't expect more than 10 log files, we
     // can just sort the list to get them in order from newest to oldest
+    // 日志文件轮转时，会附加一个 ".#"，日志越旧该数字越大。
+    // 由于我们预计日志文件不会超过 10 个，因此只需对列表排序，
+    // 即可按从新到旧的顺序排列它们
     std::ranges::sort(redfishLogFiles);
 
     return !redfishLogFiles.empty();
@@ -206,6 +212,8 @@ static LogParseError fillEventLogEntryJson(
 {
     // The redfish log format is "<Timestamp> <MessageId>,<MessageArgs>"
     // First get the Timestamp
+    // redfish 日志格式为 "<Timestamp> <MessageId>,<MessageArgs>"
+    // 首先获取 Timestamp（时间戳）
     size_t space = logEntry.find_first_of(' ');
     if (space == std::string::npos)
     {
@@ -213,6 +221,7 @@ static LogParseError fillEventLogEntryJson(
     }
     std::string timestamp = logEntry.substr(0, space);
     // Then get the log contents
+    // 然后获取日志内容
     size_t entryStart = logEntry.find_first_not_of(' ', space);
     if (entryStart == std::string::npos)
     {
@@ -221,9 +230,11 @@ static LogParseError fillEventLogEntryJson(
     std::string_view entry(logEntry);
     entry.remove_prefix(entryStart);
     // Use split to separate the entry into its fields
+    // 使用 split 将条目拆分为各个字段
     std::vector<std::string> logEntryFields;
     bmcweb::split(logEntryFields, entry, ',');
     // We need at least a MessageId to be valid
+    // 至少需要有一个 MessageId 才算有效
     auto logEntryIter = logEntryFields.begin();
     if (logEntryIter == logEntryFields.end())
     {
@@ -246,6 +257,7 @@ static LogParseError fillEventLogEntryJson(
     }
 
     // Get the Message from the MessageKey and RegistryEntries
+    // 根据 MessageKey 和 RegistryEntries 获取 Message
     const registries::Message* message = registries::getMessageFromRegistry(
         msgComponents->messageKey, registry->get().entries);
 
@@ -273,6 +285,9 @@ static LogParseError fillEventLogEntryJson(
     // Get the Created time from the timestamp. The log timestamp is in RFC3339
     // format which matches the Redfish format except for the
     // fractional seconds between the '.' and the '+', so just remove them.
+    // 从时间戳中获取 Created 时间。日志时间戳采用 RFC3339
+    // 格式，与 Redfish 格式一致，只是 '.' 与 '+' 之间
+    // 多出小数秒部分，因此将其移除即可。
     std::size_t dot = timestamp.find_first_of('.');
     std::size_t plus = timestamp.find_first_of('+');
     if (dot != std::string::npos && plus != std::string::npos)
@@ -281,6 +296,7 @@ static LogParseError fillEventLogEntryJson(
     }
 
     // Fill in the log entry with the gathered data
+    // 用收集到的数据填充日志条目
     logEntryJson["@odata.type"] = "#LogEntry.v1_9_0.LogEntry";
     logEntryJson["@odata.id"] =
         boost::urls::format("/redfish/v1/{}/{}/LogServices/EventLog/Entries/{}",
@@ -321,6 +337,8 @@ inline void handleSystemsAndManagersLogServiceEventLogLogEntryCollection(
 
     // Collections don't include the static data added by SubRoute
     // because it has a duplicate entry for members
+    // 集合不包含 SubRoute 添加的静态数据，
+    // 因为其中的 members 有重复条目
     asyncResp->res.jsonValue["@odata.type"] =
         "#LogEntryCollection.LogEntryCollection";
     asyncResp->res.jsonValue["@odata.id"] =
@@ -335,6 +353,8 @@ inline void handleSystemsAndManagersLogServiceEventLogLogEntryCollection(
     logEntryArray = nlohmann::json::array();
     // Go through the log files and create a unique ID for each
     // entry
+    // 遍历日志文件，为每个条目创建唯一的
+    // ID
     std::vector<std::filesystem::path> redfishLogFiles;
     getRedfishLogFiles(redfishLogFiles);
     uint64_t entryCount = 0;
@@ -342,6 +362,8 @@ inline void handleSystemsAndManagersLogServiceEventLogLogEntryCollection(
 
     // Oldest logs are in the last file, so start there and loop
     // backwards
+    // 最早的日志在最后一个文件中，因此从那里开始
+    // 向后循环遍历
     event_log::UniqueEntryIDState state;
     for (auto it = redfishLogFiles.rbegin(); it < redfishLogFiles.rend(); it++)
     {
@@ -352,6 +374,7 @@ inline void handleSystemsAndManagersLogServiceEventLogLogEntryCollection(
         }
 
         // Reset the unique ID on the first entry
+        // 在第一个条目处重置 unique ID
         while (std::getline(logStream, logEntry))
         {
             std::string idStr;
@@ -377,6 +400,8 @@ inline void handleSystemsAndManagersLogServiceEventLogLogEntryCollection(
             entryCount++;
             // Handle paging using skip (number of entries to skip from the
             // start) and top (number of entries to display)
+            // 使用 skip（从开头跳过的条目数）和 top（要显示的条目数）
+            // 来处理分页
             if (entryCount <= skip || entryCount > skip + top)
             {
                 continue;
@@ -416,12 +441,16 @@ inline void handleSystemsAndManagersLogServiceEventLogEntriesGet(
 
     // Go through the log files and check the unique ID for each
     // entry to find the target entry
+    // 遍历日志文件并检查每个条目的 unique ID，
+    // 以找到目标条目
     std::vector<std::filesystem::path> redfishLogFiles;
     getRedfishLogFiles(redfishLogFiles);
     std::string logEntry;
 
     // Oldest logs are in the last file, so start there and loop
     // backwards
+    // 最早的日志在最后一个文件中，因此从那里开始
+    // 向后循环遍历
     event_log::UniqueEntryIDState state;
     for (auto it = redfishLogFiles.rbegin(); it < redfishLogFiles.rend(); it++)
     {
@@ -432,6 +461,7 @@ inline void handleSystemsAndManagersLogServiceEventLogEntriesGet(
         }
 
         // Reset the unique ID on the first entry
+        // 在第一个条目处重置 unique ID
         while (std::getline(logStream, logEntry))
         {
             std::string idStr;
@@ -457,6 +487,7 @@ inline void handleSystemsAndManagersLogServiceEventLogEntriesGet(
         }
     }
     // Requested ID was not found
+    // 未找到请求的 ID
     messages::resourceNotFound(asyncResp->res, "LogEntry", targetID);
 }
 
@@ -464,6 +495,7 @@ inline void handleSystemsAndManagersLogServicesEventLogActionsClearPost(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     // Clear the EventLog by deleting the log files
+    // 通过删除日志文件来清空 EventLog
     std::vector<std::filesystem::path> redfishLogFiles;
     if (getRedfishLogFiles(redfishLogFiles))
     {
@@ -475,6 +507,7 @@ inline void handleSystemsAndManagersLogServicesEventLogActionsClearPost(
     }
 
     // Reload rsyslog so it knows to start new log files
+    // 重新加载 rsyslog，使其知道要开始新的日志文件
     dbus::utility::async_method_call(
         asyncResp,
         [asyncResp](const boost::system::error_code& ec) {
@@ -495,6 +528,7 @@ inline void handleSystemsAndManagersLogServicesEventLogActionsClearPost(
 /*
  * DBus EventLog utilities
  * */
+/* DBus EventLog 工具函数 */
 
 inline std::optional<bool> getProviderNotifyAction(const std::string& notify)
 {
@@ -652,6 +686,8 @@ inline void dBusEventLogEntryCollection(
 
     // Collections don't include the static data added by SubRoute
     // because it has a duplicate entry for members
+    // 集合不包含由 SubRoute 添加的静态数据，
+    // 因为其中的 members 有重复条目
     asyncResp->res.jsonValue["@odata.type"] =
         "#LogEntryCollection.LogEntryCollection";
     asyncResp->res.jsonValue["@odata.id"] =
@@ -664,6 +700,8 @@ inline void dBusEventLogEntryCollection(
 
     // DBus implementation of EventLog/Entries
     // Make call to Logging Service to find all log entry objects
+    // EventLog/Entries 的 DBus 实现
+    // 调用 Logging Service 查找所有日志条目对象
     sdbusplus::object_path path("/xyz/openbmc_project/logging");
     dbus::utility::getManagedObjects(
         "xyz.openbmc_project.Logging", path,
@@ -729,6 +767,8 @@ inline void dBusEventLogEntryGet(
 
     // DBus implementation of EventLog/Entries
     // Make call to Logging Service to find all log entry objects
+    // EventLog/Entries 的 DBus 实现
+    // 调用 Logging Service 查找所有日志条目对象
     dbus::utility::getAllProperties(
         "xyz.openbmc_project.Logging",
         "/xyz/openbmc_project/logging/entry/" + entryID, "",
@@ -756,6 +796,7 @@ inline void dBusEventLogEntryPatch(
 }
 
 // Process response from Logging service.
+// 处理来自 Logging 服务的响应。
 inline void afterDBusEventLogEntryDelete(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& entryID, const boost::system::error_code& ec)
@@ -769,6 +810,7 @@ inline void afterDBusEventLogEntryDelete(
             return;
         }
         // TODO Handle for specific error code
+        // TODO 针对特定错误码进行处理
         BMCWEB_LOG_ERROR(
             "EventLogEntry (DBus) doDelete respHandler got error {}", ec);
         asyncResp->res.result(
@@ -787,6 +829,7 @@ inline void dBusEventLogEntryDelete(
     dbus::utility::escapePathForDbus(entryID);
 
     // Make call to Logging service to request Delete Log
+    // 调用 Logging 服务请求删除日志
     dbus::utility::async_method_call(
         asyncResp,
         std::function<void(const boost::system::error_code&)>(
@@ -797,6 +840,7 @@ inline void dBusEventLogEntryDelete(
 }
 
 // Process response from Logging service.
+// 处理来自 Logging 服务的响应。
 inline void afterDBusLogServiceActionsClear(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const boost::system::error_code& ec)
@@ -805,6 +849,7 @@ inline void afterDBusLogServiceActionsClear(
     if (ec)
     {
         // TODO Handle for specific error code
+        // TODO 针对特定错误码进行处理
         BMCWEB_LOG_ERROR("doClearLog resp_handler got error {}", ec);
         asyncResp->res.result(
             boost::beast::http::status::internal_server_error);
@@ -820,6 +865,7 @@ inline void dBusLogServiceActionsClear(
     BMCWEB_LOG_DEBUG("Do delete all entries.");
 
     // Make call to Logging service to request Clear Log
+    // 调用 Logging 服务请求清空日志
     dbus::utility::async_method_call(
         asyncResp,
         std::function<void(const boost::system::error_code&)>(

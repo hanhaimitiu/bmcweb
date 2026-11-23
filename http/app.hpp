@@ -106,6 +106,7 @@ class App
         }
 
         // all other types https
+        // 其他所有类型均按 https 处理
         BMCWEB_LOG_ERROR("Unknown http type={} assuming HTTPS only",
                          socketTypeString);
         return HttpType::HTTPS;
@@ -133,6 +134,8 @@ class App
             }
             // name looks like bmcweb_443_https_auth
             // Assume HTTPS as default
+            // 名称形如 bmcweb_443_https_auth
+            // 默认按 HTTPS 处理
             std::string socketName(name);
 
             std::vector<std::string> socknameComponents;

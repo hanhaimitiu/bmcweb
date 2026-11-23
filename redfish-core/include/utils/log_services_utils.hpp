@@ -38,6 +38,7 @@ inline bool checkSizeLimit(int fd, crow::Response& res)
     }
 
     // Arbitrary max size of 20MB to accommodate BMC dumps
+    // 设定 20MB 的任意上限，以容纳 BMC dump
     constexpr long long int maxFileSize = 20LL * 1024LL * 1024LL;
     if (size > maxFileSize)
     {
@@ -75,6 +76,7 @@ inline void downloadEntryCallback(
     }
 
     // Make sure we know how to process the retrieved entry attachment
+    // 确保我们知道如何处理取回的条目附件
     if ((downloadEntryType != "BMC") && (downloadEntryType != "System"))
     {
         BMCWEB_LOG_ERROR("downloadEntryCallback() invalid entry type: {}",

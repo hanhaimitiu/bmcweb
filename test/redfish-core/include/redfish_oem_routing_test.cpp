@@ -28,6 +28,7 @@ TEST(OemRouter, FragmentRoutes)
     RedfishService service(app);
 
     // Callback handler that does nothing
+    // 不执行任何操作的回调处理函数
     bool oemCalled = false;
     auto oemCallback = [&oemCalled](const SubRequest&,
                                     const std::shared_ptr<bmcweb::AsyncResp>&,
@@ -46,6 +47,7 @@ TEST(OemRouter, FragmentRoutes)
             EXPECT_EQ(bar, "bar");
         };
     // Need the normal route registered for OEM to work
+    // 需要注册常规路由，OEM 才能正常工作
     BMCWEB_ROUTE(app, "/foo/<str>/")
         .methods(boost::beast::http::verb::get)(standardCallback);
     REDFISH_SUB_ROUTE<"/foo/<str>/#/Oem">(service, HttpVerb::Get)(oemCallback);
@@ -75,8 +77,10 @@ TEST(OemRouter, PatchHandlerWithJsonObject)
     RedfishService service(app);
 
     // Callback handlers
+    // 回调处理函数
     bool callback1Called = false;
     auto patchCallback1 =
+        // ast-grep-ignore: long-lambda
         // ast-grep-ignore: long-lambda
         [&callback1Called](
             const SubRequest& req,
@@ -97,6 +101,7 @@ TEST(OemRouter, PatchHandlerWithJsonObject)
 
     bool callback2Called = false;
     auto patchCallback2 =
+        // ast-grep-ignore: long-lambda
         // ast-grep-ignore: long-lambda
         [&callback2Called](
             const SubRequest& req,
@@ -127,6 +132,7 @@ TEST(OemRouter, PatchHandlerWithJsonObject)
         };
 
     // Need the normal route registered for OEM to work
+    // 需要注册常规路由，OEM 才能正常工作
     BMCWEB_ROUTE(app, "/foo/<str>/")
         .methods(boost::beast::http::verb::patch)(standardCallback);
 
@@ -141,14 +147,17 @@ TEST(OemRouter, PatchHandlerWithJsonObject)
     {
         constexpr std::string_view reqUrl = "/foo/bar";
         // OEM payload
+        // OEM 负载
         nlohmann::json reqBody = {{"Oem",
                                    {{"OemFoo", {{"OemFooKey", "fooValue"}}},
                                     {"OemBar", {{"OemBarKey", "barValue"}}}}}};
 
         // Create request with the body string
+        // 使用该 body 字符串创建请求
         std::shared_ptr<crow::Request> req = std::make_shared<crow::Request>(
             crow::Request::Body{
                 boost::beast::http::verb::patch, reqUrl, 11,
+                // ast-grep-ignore: bmcweb.common-errors.throwing-json-dump
                 // ast-grep-ignore: bmcweb.common-errors.throwing-json-dump
                 reqBody.dump() // Pass body string directly in the constructor
             },

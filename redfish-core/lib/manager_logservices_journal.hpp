@@ -94,9 +94,18 @@ inline void readJournalEntries(
     // trying to process thousands of entries at the same time.
     // The implementation will process the number of entries, then return
     // control to the io_context to let other operations continue.
+    // Journal API 不幸地对文件系统执行阻塞调用，
+    // 可能相当耗时。除非我们自己实现一个基于 io_uring 的
+    // sd-journal（这很困难），否则我们能做的最好办法就是
+    // 每次只解析一定数量的条目。
+    // 当前的分块大小是任意选定的，以确保我们不会
+    // 试图同时处理数千个条目。
+    // 该实现将处理指定数量的条目，然后把控制权交还给
+    // io_context，让其他操作得以继续。
     size_t segmentCountRemaining = 10;
 
     // Reset the unique ID on the first entry
+    // 在第一个条目处重置唯一 ID。
     for (uint64_t entryCount = logEntryArray->size();
          entryCount < topEntryCount; entryCount++)
     {
@@ -160,6 +169,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
 
     // Collections don't include the static data added by SubRoute
     // because it has a duplicate entry for members
+    // 集合不包含 SubRoute 添加的静态数据，因为其 members 存在重复条目。
     asyncResp->res.jsonValue["@odata.type"] =
         "#LogEntryCollection.LogEntryCollection";
     asyncResp->res.jsonValue["@odata.id"] = boost::urls::format(
@@ -172,6 +182,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
 
     // Go through the journal and use the timestamp to create a
     // unique ID for each entry
+    // 遍历 journal，使用时间戳为每个条目创建唯一 ID。
     std::optional<JournalReadState> journalOpt =
         JournalReadState::openDefaults();
     if (!journalOpt)
@@ -181,6 +192,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
     }
     JournalReadState& journal = *journalOpt;
     // Seek to the end
+    // 定位到末尾。
     if (journal.seekTail() < 0)
     {
         messages::internalError(asyncResp->res);
@@ -188,6 +200,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
     }
 
     // Get the last entry
+    // 获取最后一条条目。
     if (journal.previous() < 0)
     {
         messages::internalError(asyncResp->res);
@@ -195,6 +208,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
     }
 
     // Get the last sequence number
+    // 获取最后的序列号。
     uint64_t endSeqNum = 0;
     if (journal.getSeqnum(endSeqNum) < 0)
     {
@@ -203,6 +217,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
     }
 
     // Seek to the beginning
+    // 定位到开头。
     if (journal.seekHead() < 0)
     {
         messages::internalError(asyncResp->res);
@@ -210,6 +225,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
     }
 
     // Get the first entry
+    // 获取第一条条目。
     if (journal.next() < 0)
     {
         messages::internalError(asyncResp->res);
@@ -217,6 +233,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
     }
 
     // Get the first sequence number
+    // 获取第一个序列号。
     uint64_t startSeqNum = 0;
     if (journal.getSeqnum(startSeqNum) < 0)
     {
@@ -228,6 +245,7 @@ inline void handleManagersJournalLogEntryCollectionGet(
                      endSeqNum);
 
     // Add 1 to account for the last entry
+    // 加 1 以计入最后一条条目。
     uint64_t totalEntries = endSeqNum - startSeqNum + 1;
     asyncResp->res.jsonValue["Members@odata.count"] = totalEntries;
     if (skip + top < totalEntries)
@@ -283,6 +301,7 @@ inline void handleManagersJournalEntriesLogEntryGet(
     }
 
     // Go to the cursor in the log
+    // 定位到日志中的游标位置。
     int ret = journal.seekCursor(cursor);
     if (ret < 0)
     {

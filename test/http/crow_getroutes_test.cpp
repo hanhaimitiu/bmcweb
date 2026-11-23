@@ -1,4 +1,5 @@
 // ast-grep-ignore: bmcweb.common-errors.route-missing-trailing-slash
+// ast-grep-ignore: bmcweb.common-errors.route-missing-trailing-slash
 
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Copyright OpenBMC Authors
@@ -31,6 +32,7 @@ TEST(GetRoutes, TestEmptyRoutes)
 }
 
 // Tests that static urls are correctly passed
+// 测试静态 URL 是否被正确传递
 TEST(GetRoutes, TestOneRoute)
 {
     App app;
@@ -43,9 +45,14 @@ TEST(GetRoutes, TestOneRoute)
     // it is fixed
     // EXPECT_THAT(app.getRoutes(),
     // testing::ElementsAre(Pointee(Eq("/"))));
+    // TODO: 目前 "/" 不会在 |getRoutes| 中报告。修复后请取消
+    // 注释此段代码。
+    // EXPECT_THAT(app.getRoutes(),
+    // testing::ElementsAre(Pointee(Eq("/"))));
 }
 
 // Tests that static urls are correctly passed
+// 测试静态 URL 是否被正确传递
 TEST(GetRoutes, TestlotsOfRoutes)
 {
     App app;
@@ -66,7 +73,10 @@ TEST(GetRoutes, TestlotsOfRoutes)
 
     // TODO: "/" doesn't get reported in |getRoutes| today. Uncomment this once
     // it is fixed
+    // TODO: 目前 "/" 不会在 |getRoutes| 中报告。修复后请
+    // 取消注释此段代码。
     EXPECT_THAT(app.getRoutes(), UnorderedElementsAre(
+                                     // Pointee(Eq("/")),
                                      // Pointee(Eq("/")),
                                      Pointee(Eq("/foo")), Pointee(Eq("/bar")),
                                      Pointee(Eq("/baz")), Pointee(Eq("/boo")),

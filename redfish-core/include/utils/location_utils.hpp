@@ -26,6 +26,10 @@ namespace location_util
  * @return location if interface is supported Connector, otherwise, return
  * std::nullopt.
  */
+/* @brief 通过从指定 D-Bus 对象请求数据来填充资源的位置信息。
+ * @param[in]       interface   位置类型接口。
+ * @return 如果接口是受支持的 Connector，则返回 location，否则返回
+ * std::nullopt。 */
 inline std::optional<std::string> getLocationType(const std::string& interface)
 {
     if (interface == "xyz.openbmc_project.Inventory.Connector.Embedded")
@@ -70,6 +74,12 @@ inline void afterGetLocationCode(
  * @param[in]       location    Json path of where to find the location
  *                                property.
  */
+/* @brief 通过从指定 D-Bus 对象请求数据来填充资源的 location code。
+ * @param[in,out]   asyncResp   异步 HTTP 响应。
+ * @param[in]       service     要查询的 D-Bus 服务。
+ * @param[in]       objPath     要查询的 D-Bus 对象。
+ * @param[in]       location    用于查找 location 属性的
+ *                                JSON 路径。 */
 inline void getLocationCode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                             const std::string& service,
                             const std::string& objPath,

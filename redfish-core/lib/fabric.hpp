@@ -98,6 +98,7 @@ inline void afterGetSwitchPowerStateService(
         if (ec.value() == EBADR || ec.value() == boost::system::errc::io_error)
         {
             // Not mandatory features thus is okay to skip
+            // 这些不是强制功能，因此可以跳过。
             BMCWEB_LOG_DEBUG("PowerState interface absent on {}", switchPath);
             return;
         }
@@ -323,6 +324,8 @@ inline void requestRoutesFabrics(App& app)
 {
     // The Fabric resource is designed so that each BMC will have only one
     // Fabric resource.
+    // Fabric 资源的设计是：每个 BMC 只有一个
+    // Fabric 资源。
     BMCWEB_ROUTE(app, "/redfish/v1/Fabrics/")
         .privileges(redfish::privileges::getFabricCollection)
         .methods(boost::beast::http::verb::get)(

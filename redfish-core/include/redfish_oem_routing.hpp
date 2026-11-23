@@ -28,6 +28,9 @@ namespace redfish
 // Helper struct to allow parsing string literals at compile time until
 // std::string is supported in constexpr context.
 // NOLINTBEGIN
+// 辅助结构体，用于在 constexpr 上下文支持 std::string 之前，
+// 允许在编译期解析字符串字面量。
+// NOLINTBEGIN
 template <size_t N>
 struct StringLiteral
 {
@@ -44,6 +47,7 @@ struct StringLiteral
     char value[N];
 };
 // Explicit deduction guide to prevent Clang warnings
+// 显式推导指引，避免 Clang 发出警告。
 template <size_t N>
 StringLiteral(const char (&)[N]) -> StringLiteral<N>;
 // NOLINTEND
@@ -120,6 +124,8 @@ class OemRouter
         SubRouteTrie trie;
         // rule index 0 has special meaning; preallocate it to avoid
         // duplication.
+        // 规则索引 0 具有特殊含义；预先分配它以避免
+        // 重复。
         PerMethod() : rules(1) {}
 
         void internalAdd(std::string_view rule,
@@ -128,6 +134,7 @@ class OemRouter
             rules.emplace_back(std::move(ruleObject));
             trie.add(rule, static_cast<unsigned>(rules.size() - 1U));
             // request to /resource/#/frag matches /resource#/frag
+            // 对 /resource/#/frag 的请求可匹配 /resource#/frag。
             size_t hashPos = rule.find("/#/");
             if (hashPos != std::string_view::npos)
             {
@@ -235,6 +242,7 @@ class OemRouter
             multiResp->res.setCompleteRequestHandler(std::move(handler));
 
             // Copy so that they exists when completion handler is called.
+            // 进行拷贝，以便在调用完成处理器时它们仍然存在。
             auto uriFragments =
                 std::make_shared<std::vector<OemBaseRule*>>(fragments);
             auto uriParams = std::make_shared<std::vector<std::string>>(params);

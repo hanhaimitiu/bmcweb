@@ -25,10 +25,12 @@ inline void getDrivePresent(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::getProperty<bool>(
         connectionName, path, "xyz.openbmc_project.Inventory.Item", "Present",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          path](const boost::system::error_code& ec, const bool isPresent) {
             // this interface isn't necessary, only check it if
             // we get a good return
+            // 该接口不是必需的，只有在获得良好返回值时才检查它。
             if (ec)
             {
                 return;
@@ -49,9 +51,11 @@ inline void getDriveState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::getProperty<bool>(
         connectionName, path, "xyz.openbmc_project.State.Drive", "Rebuilding",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec, const bool updating) {
             // this interface isn't necessary, only check it
             // if we get a good return
+            // 该接口不是必需的，只有在获得良好返回值时才检查它。
             if (ec)
             {
                 return;
@@ -61,6 +65,8 @@ inline void getDriveState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
             // able to be set at the same time, so we don't need
             // to check for the race condition of these two
             // calls
+            // 后端不应同时设置 updating 和 disabled，
+            // 因此我们无需检查这两个调用的竞态条件。
             if (updating)
             {
                 asyncResp->res.jsonValue["Status"]["State"] =
@@ -130,6 +136,7 @@ inline void getDriveItemProperties(
     dbus::utility::getAllProperties(
         connectionName, path, "xyz.openbmc_project.Inventory.Item.Drive",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::vector<
                         std::pair<std::string, dbus::utility::DbusVariantType>>&
@@ -137,6 +144,7 @@ inline void getDriveItemProperties(
             if (ec)
             {
                 // this interface isn't required
+                // 该接口不是必需的。
                 return;
             }
             const std::string* encryptionStatus = nullptr;
@@ -152,6 +160,7 @@ inline void getDriveItemProperties(
                     if (value == nullptr)
                     {
                         // illegal property
+                        // 非法属性。
                         BMCWEB_LOG_ERROR("Illegal property: Type");
                         messages::internalError(asyncResp->res);
                         return;
@@ -186,6 +195,7 @@ inline void getDriveItemProperties(
                     if (*capacity == 0)
                     {
                         // drive capacity not known
+                        // 驱动器容量未知。
                         continue;
                     }
 
@@ -229,6 +239,7 @@ inline void getDriveItemProperties(
                         return;
                     }
                     // 255 means reading the value is not supported
+                    // 255 表示不支持读取该值。
                     if (*lifeLeft != 255)
                     {
                         asyncResp->res
@@ -269,6 +280,7 @@ inline void getDriveItemProperties(
                 "xyz.openbmc_project.Inventory.Item.Drive.DriveEncryptionState.Encrypted")
             {
                 //"The drive is not currently encrypted."
+                // "该驱动器当前未加密。"
                 asyncResp->res.jsonValue["EncryptionStatus"] =
                     drive::EncryptionStatus::Unencrypted;
                 return;
@@ -277,6 +289,7 @@ inline void getDriveItemProperties(
             {
                 //"The drive is currently encrypted and the data is not
                 // accessible to the user."
+                // "该驱动器当前已加密，且用户无法访问数据。"
                 asyncResp->res.jsonValue["EncryptionStatus"] =
                     drive::EncryptionStatus::Locked;
                 return;
@@ -284,6 +297,8 @@ inline void getDriveItemProperties(
             // if not locked
             // "The drive is currently encrypted but the data is accessible
             // to the user in unencrypted form."
+            // 如果未锁定：
+            // "该驱动器当前已加密，但用户可以未加密形式访问数据。"
             asyncResp->res.jsonValue["EncryptionStatus"] =
                 drive::EncryptionStatus::Unlocked;
         });
@@ -368,6 +383,7 @@ inline void afterGetSubtreeSystemsStorageDrive(
         });
 
     // default it to Enabled
+    // 默认设为 Enabled。
     asyncResp->res.jsonValue["Status"]["State"] = resource::State::Enabled;
 
     addAllDriveInfo(asyncResp, connectionNames[0].first, path,
@@ -391,6 +407,7 @@ inline void afterChassisDriveCollectionSubtreeGet(
     }
 
     // Iterate over all retrieved ObjectPaths.
+    // 遍历所有检索到的 ObjectPath。
     for (const auto& [path, connectionNames] : subtree)
     {
         sdbusplus::object_path objPath(path);
@@ -412,9 +429,11 @@ inline void afterChassisDriveCollectionSubtreeGet(
         asyncResp->res.jsonValue["Name"] = "Drive Collection";
 
         // Association lambda
+        // 关联 lambda。
         dbus::utility::getAssociationEndPoints(
             path + "/drive",
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [asyncResp, chassisId](const boost::system::error_code& ec3,
                                    const dbus::utility::MapperEndPoints& resp) {
                 if (ec3)
@@ -423,6 +442,7 @@ inline void afterChassisDriveCollectionSubtreeGet(
                 }
                 nlohmann::json& members = asyncResp->res.jsonValue["Members"];
                 // important if array is empty
+                // 数组为空时很重要。
                 members = nlohmann::json::array();
 
                 std::vector<std::string> leafNames;
@@ -442,6 +462,7 @@ inline void afterChassisDriveCollectionSubtreeGet(
                                             chassisId, leafName);
                     members.emplace_back(std::move(member));
                     // navigation links will be registered in next patch set
+                    // 导航链接将在下一个 patch 集合中注册。
                 }
                 asyncResp->res.jsonValue["Members@odata.count"] = resp.size();
             }); // end association lambda
@@ -453,6 +474,7 @@ inline void afterChassisDriveCollectionSubtreeGet(
  * Chassis drives, this URL will show all the DriveCollection
  * information
  */
+/* Chassis drives，该 URL 将显示所有 DriveCollection 信息。 */
 inline void chassisDriveCollectionGet(
     crow::App& app, const crow::Request& req,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -464,6 +486,7 @@ inline void chassisDriveCollectionGet(
     }
 
     // mapper call lambda
+    // mapper 调用 lambda。
     dbus::utility::getSubTree(
         "/xyz/openbmc_project/inventory", 0, chassisInterfaces,
         std::bind_front(afterChassisDriveCollectionSubtreeGet, asyncResp,
@@ -484,6 +507,7 @@ inline void buildDrive(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // Iterate over all retrieved ObjectPaths.
+    // 遍历所有检索到的 ObjectPath。
     for (const auto& [path, connectionNames] : subtree)
     {
         sdbusplus::object_path objPath(path);
@@ -505,6 +529,7 @@ inline void buildDrive(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         asyncResp->res.jsonValue["Name"] = driveName;
         asyncResp->res.jsonValue["Id"] = driveName;
         // default it to Enabled
+        // 默认设为 Enabled。
         asyncResp->res.jsonValue["Status"]["State"] = resource::State::Enabled;
 
         nlohmann::json::object_t linkChassisNav;
@@ -531,6 +556,7 @@ inline void matchAndFillDrive(
             continue;
         }
         //  mapper call drive
+        // mapper 调用 drive。
         constexpr std::array<std::string_view, 1> driveInterface = {
             "xyz.openbmc_project.Inventory.Item.Drive"};
         dbus::utility::getSubTree(
@@ -554,9 +580,11 @@ inline void handleChassisDriveGet(
     }
 
     // mapper call chassis
+    // mapper 调用 chassis。
     dbus::utility::getSubTree(
         "/xyz/openbmc_project/inventory", 0, chassisInterfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, chassisId,
          driveName](const boost::system::error_code& ec,
                     const dbus::utility::MapperGetSubTreeResponse& subtree) {
@@ -567,6 +595,7 @@ inline void handleChassisDriveGet(
             }
 
             // Iterate over all retrieved ObjectPaths.
+            // 遍历所有检索到的 ObjectPath。
             for (const auto& [path, connectionNames] : subtree)
             {
                 sdbusplus::object_path objPath(path);
@@ -596,6 +625,7 @@ inline void handleChassisDriveGet(
                 return;
             }
             // Couldn't find an object with that name.  return an error
+            // 找不到具有该名称的对象，返回错误。
             messages::resourceNotFound(asyncResp->res, "Chassis", chassisId);
         });
 }
@@ -603,6 +633,7 @@ inline void handleChassisDriveGet(
 /**
  * This URL will show the drive interface for the specific drive in the chassis
  */
+/* 该 URL 将显示 chassis 中特定驱动器的 drive 接口。 */
 inline void requestRoutesChassisDrive(App& app)
 {
     BMCWEB_ROUTE(app, "/redfish/v1/Chassis/<str>/Drives/")

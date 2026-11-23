@@ -9,6 +9,9 @@
 // Clang-tidy would rather these be static, but using static causes the template
 // specialization to not function.  Ignore the warning.
 // NOLINTBEGIN(readability-convert-member-functions-to-static, cert-dcl58-cpp)
+// Clang-tidy 更希望这些成员是静态的，但使用 static 会导致模板
+// 特化无法生效。忽略该警告。
+// NOLINTBEGIN(readability-convert-member-functions-to-static, cert-dcl58-cpp)
 
 template <>
 struct std::formatter<nlohmann::json::json_pointer>

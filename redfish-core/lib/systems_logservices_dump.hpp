@@ -106,6 +106,7 @@ inline void handleSystemsLogServicesDumpEntryDownloadGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -134,6 +135,7 @@ inline void handleSystemsLogServicesDumpCollectDiagnosticDataPost(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -159,6 +161,7 @@ inline void handleSystemsLogServicesDumpClearLogPost(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;

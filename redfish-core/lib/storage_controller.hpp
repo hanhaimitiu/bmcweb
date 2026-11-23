@@ -21,6 +21,7 @@ inline void afterGetStorageControllerPresent(
 {
     // this interface isn't necessary, only check it
     // if we get a good return
+    // 该接口不是必需的，只有在获得良好返回值时才检查它。
     if (ec)
     {
         BMCWEB_LOG_DEBUG("Failed to get Present property");
@@ -62,6 +63,7 @@ inline void getStorageControllerHandler(
     if (ec || subtree.empty())
     {
         // doesn't have to be there
+        // 不一定存在。
         BMCWEB_LOG_DEBUG("Failed to handle StorageController");
         return;
     }

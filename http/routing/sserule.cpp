@@ -26,6 +26,7 @@ SseSocketRule::SseSocketRule(const std::string& ruleIn) : BaseRule(ruleIn)
 {
     isUpgrade = true;
     // Clear GET handler
+    // 清除 GET handler
     methodsBitfield = 0;
 }
 

@@ -85,6 +85,7 @@ TEST(NameUtils, MissingInventoryItemUsesDefault)
 }
 
 // When Inventory.Item is absent but other interfaces exist, default is used
+// 当缺少 Inventory.Item 但存在其他接口时，使用默认值
 TEST(NameUtils, NoInventoryItemInterfaceUsesDefault)
 {
     auto asyncResp = std::make_shared<bmcweb::AsyncResp>();
@@ -101,6 +102,7 @@ TEST(NameUtils, NoInventoryItemInterfaceUsesDefault)
 }
 
 // Verify all three afterGetPrettyName rules hold with a nested JSON pointer
+// 验证使用嵌套 JSON pointer 时 afterGetPrettyName 的三条规则均成立
 TEST(NameUtils, ErrorWithJsonPointerPreservesDefault)
 {
     auto asyncResp = std::make_shared<bmcweb::AsyncResp>();

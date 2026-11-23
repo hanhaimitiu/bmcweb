@@ -19,6 +19,7 @@
 #include <string>
 
 // Override default log option:
+// 覆盖默认日志选项：
 static void cliLogLevel(const std::string& logLevel)
 {
     crow::getBmcwebCurrentLoggingLevel() = crow::getLogLevelFromName(logLevel);
@@ -28,6 +29,7 @@ static constexpr std::array<std::string, 7> levels{
     "DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "ENABLED"};
 
 // Check if debug level is valid
+// 检查 debug 级别是否有效
 static std::string validateLogLevel(std::string& input)
 {
     std::ranges::transform(input, input.begin(), ::toupper);
@@ -69,6 +71,7 @@ static void afterSetLogLevel(boost::asio::io_context& io,
 static int setLogLevel(std::string& loglevel)
 {
     // Define sdbus interfaces:
+    // 定义 sdbus 接口：
     std::string service = "xyz.openbmc_project.bmcweb";
     std::string path = "/xyz/openbmc_project/bmcweb";
     std::string iface = "xyz.openbmc_project.bmcweb";
@@ -76,10 +79,12 @@ static int setLogLevel(std::string& loglevel)
 
     std::ranges::transform(loglevel, loglevel.begin(), ::toupper);
     // Set up dbus connection:
+    // 建立 dbus 连接：
     boost::asio::io_context io;
     auto conn = std::make_shared<sdbusplus::asio::connection>(io);
 
     // Attempt to async_call to set logging level
+    // 尝试通过 async_call 设置日志级别
     conn->async_method_call(
         std::function<void(boost::system::error_code&)>(
             std::bind_front(afterSetLogLevel, std::ref(io), loglevel)),

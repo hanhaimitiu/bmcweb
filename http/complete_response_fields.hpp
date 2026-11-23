@@ -37,6 +37,7 @@ inline bool attemptZstdCompression(Response& res)
     if (strBody.empty())
     {
         // No need to compress an empty body
+        // 空 body 无需压缩
         return true;
     }
     bmcweb::ZstdCompressor zstdCompressor;
@@ -73,6 +74,8 @@ inline void handleEncoding(std::string_view acceptEncoding, Response& res)
     using enum http_helpers::Encoding;
     // If the payload is currently compressed, see if we can avoid
     // decompressing it by sending it to the client directly
+    // 如果负载当前已压缩，则考虑能否避免解压，
+    // 直接将其发送给客户端
     switch (res.response.body().compressionType)
     {
         case Zstd:
@@ -84,6 +87,7 @@ inline void handleEncoding(std::string_view acceptEncoding, Response& res)
             if (encoding == ZSTD)
             {
                 // If the client supports returning zstd directly, allow that.
+                // 如果客户端支持直接返回 zstd，则允许这样做。
                 BMCWEB_LOG_DEBUG(
                     "Content is already ztd compressed.  Setting client compression type to Zstd");
                 res.response.body().clientCompressionType = Zstd;
@@ -157,6 +161,9 @@ inline void completeResponseFields(
             // Technically preferred could also be NoMatch here, but we'd
             // like to default to something rather than return 400 for
             // backward compatibility.
+            // 从技术上讲这里也可以用 NoMatch，但为了
+            // 向后兼容，我们倾向于给出一个默认值，
+            // 而不是返回 400。
             res.addHeader(boost::beast::http::field::content_type,
                           "application/json");
             res.write(res.jsonValue.dump(

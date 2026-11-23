@@ -44,6 +44,13 @@ inline void afterGetPrettyName(
  * @param defaultName Fallback name if PrettyName is not available
  * @param jsonPtr JSON pointer where to the parent JSON object
  */
+/* @brief 从 D-Bus Inventory.Item 接口获取 PrettyName，并设置到
+ *        指定的 JSON pointer 位置。
+ * @param asyncResp 要更新的 AsyncResp 对象
+ * @param service D-Bus 服务名
+ * @param path D-Bus 对象路径
+ * @param defaultName 当 PrettyName 不可用时的回退名称
+ * @param jsonPtr 指向父 JSON 对象的 JSON pointer */
 inline void getPrettyName(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& service, const std::string& path,
@@ -67,6 +74,13 @@ inline void getPrettyName(
  * @param defaultName Fallback name if no service implements Inventory.Item
  * @param jsonPtr JSON pointer where to the parent JSON object
  */
+/* @brief 从第一个实现 Inventory.Item 的服务获取 PrettyName，
+ * 否则使用 defaultName 作为默认值
+ * @param asyncResp 要更新的 AsyncResp 对象
+ * @param services 服务到接口的映射
+ * @param path D-Bus 对象路径
+ * @param defaultName 当没有服务实现 Inventory.Item 时的回退名称
+ * @param jsonPtr 指向父 JSON 对象的 JSON pointer */
 inline void getPrettyName(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const dbus::utility::MapperServiceMap& services, const std::string& path,
@@ -86,6 +100,7 @@ inline void getPrettyName(
         }
     }
     // If the Inventory.Item interface is missing, set to default
+    // 若缺少 Inventory.Item 接口，则设为默认值
     asyncResp->res.jsonValue[jsonPtr]["Name"] = defaultName;
 }
 

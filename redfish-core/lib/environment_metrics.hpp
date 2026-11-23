@@ -78,6 +78,8 @@ inline void afterGetPowerWatts(
     /* Don't return an error for a failure to fill in properties from the
      * single sensor. Just skip adding it.
      */
+    /* 如果是从单个传感器填充属性失败，不要返回错误，
+     * 直接跳过添加它即可。 */
     if (sensor_utils::objectExcerptToJson(
             path, chassisId,
             sensor_utils::ChassisSubNode::environmentMetricsNode,
@@ -105,11 +107,13 @@ inline void handleTotalPowerList(
     }
 
     // TotalPower cannot be supplied by multiple sensors
+    // TotalPower 不能由多个传感器提供。
     if (sensorList->size() != 1)
     {
         if (sensorList->empty())
         {
             // None found, not an error
+            // 未找到，这不是错误。
             return;
         }
         BMCWEB_LOG_ERROR("Too many total power sensors found {}. Expected 1.",
@@ -145,16 +149,19 @@ inline void getTotalPowerSensor(
             messages::internalError(asyncResp->res);
         }
         // None found, not an error
+        // 未找到，这不是错误。
         return;
     }
 
     if (sensorsServiceAndPath.empty())
     {
         // No power sensors implement Sensor.Purpose, not an error
+        // 没有电源传感器实现 Sensor.Purpose，这不是错误。
         return;
     }
 
     // Create vector to hold list of sensors with totalPower purpose
+    // 创建 vector 用于保存具有 totalPower 用途的传感器列表。
     std::shared_ptr<sensor_utils::SensorServicePathList> sensorList =
         std::make_shared<sensor_utils::SensorServicePathList>();
 
@@ -184,6 +191,15 @@ inline void getTotalPowerSensor(
  * @param validChassisPath Path to chassis, caller confirms path is valid
  * @param chassisId Chassis id matching <validChassisPath>
  */
+/* @brief 查找提供 totalPower 的传感器并填充响应。
+ * 需要多次 D-Bus 调用才能找到提供 totalPower 详情的传感器：
+ * 1. 检索与指定机箱关联且实现了 Sensor.Purpose 接口的电源传感器列表。
+ * 2. 对其中每个电源传感器检索其实际用途，
+ * 以找到实现 totalPower 用途的传感器。预计最多只有一个传感器实现该用途。
+ * 3. 如果找到了 totalPower 传感器，则检索其属性以填充响应中的 PowerWatts。
+ * @param asyncResp 响应数据
+ * @param validChassisPath 机箱路径，调用方已确认该路径有效
+ * @param chassisId 与 <validChassisPath> 对应的机箱 id */
 inline void getPowerWatts(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                           const std::string& validChassisPath,
                           const std::string& chassisId)
@@ -218,6 +234,8 @@ inline void handleGetFanSensorsExcerpt(
     /* Don't return an error for a failure to fill in properties from this
      * sensor. Just skip adding it.
      */
+    /* 如果是从该传感器填充属性失败，不要返回错误，
+     * 直接跳过添加它即可。 */
     if (sensor_utils::objectExcerptToJson(
             fanSensorPath, chassisId,
             sensor_utils::ChassisSubNode::environmentMetricsNode,
@@ -268,6 +286,7 @@ inline void afterGetFanSpeedsPercent(
     }
 
     // Initialize the array then fill in the fans
+    // 初始化数组，然后填充风扇（fan）数据。
     asyncResp->res.jsonValue["FanSpeedsPercent"] = nlohmann::json::array();
     asyncResp->res.jsonValue["FanSpeedsPercent@odata.count"] = 0;
 
@@ -662,6 +681,7 @@ inline void handleProcessorEnvironmentMetricsHead(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems. TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -694,6 +714,7 @@ inline void handleProcessorEnvironmentMetricsGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems. TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -770,6 +791,7 @@ inline void handleProcessorEnvironmentMetricsPatch(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems. TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;

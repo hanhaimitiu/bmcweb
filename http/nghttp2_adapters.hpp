@@ -18,7 +18,13 @@ extern "C"
  * lifetime safety for the various classes.  Because of this, they use the same
  * naming as nghttp2, so ignore naming violations.
  */
+/* 本文件包含适用于 nghttp2 结构体的 RAII 适配器。它们
+ * 力求尽可能接近直接调用，同时为各个类保持 RAII
+ * 生命周期安全性。因此它们使用与 nghttp2 相同的
+ * 命名，请忽略命名规范违规的问题。 */
 
+// NOLINTBEGIN(readability-identifier-naming,
+// readability-make-member-function-const)
 // NOLINTBEGIN(readability-identifier-naming,
 // readability-make-member-function-const)
 
@@ -126,6 +132,7 @@ struct nghttp2_session
     }
 
     // explicitly uncopyable
+    // 显式禁止拷贝
     nghttp2_session(const nghttp2_session&) = delete;
     nghttp2_session& operator=(const nghttp2_session&) = delete;
 
@@ -221,5 +228,7 @@ struct nghttp2_hd_inflater_ex
         }
     }
 };
+// NOLINTEND(readability-identifier-naming,
+// readability-make-member-function-const)
 // NOLINTEND(readability-identifier-naming,
 // readability-make-member-function-const)

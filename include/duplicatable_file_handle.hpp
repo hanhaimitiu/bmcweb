@@ -21,6 +21,7 @@ struct DuplicatableFileHandle
     std::string filePath;
 
     // Construct from a file descriptor
+    // 从文件描述符构造
     explicit DuplicatableFileHandle(int fd)
     {
         fileHandle.native_handle(fd);
@@ -28,6 +29,8 @@ struct DuplicatableFileHandle
 
     // Creates a temporary file with the contents provided, removes it on
     // destruction.
+    // 用提供的内容创建一个临时文件，并在
+    // 析构时将其删除。
     explicit DuplicatableFileHandle(std::string_view contents)
     {
         std::filesystem::path tempDir("/tmp/bmcweb");
@@ -64,6 +67,8 @@ struct DuplicatableFileHandle
     DuplicatableFileHandle(DuplicatableFileHandle&&) noexcept = default;
     // Overload copy constructor, because posix doesn't have dup(), but linux
     // does
+    // 重载拷贝构造函数，因为 posix 没有 dup()，但 linux
+    // 有
     DuplicatableFileHandle(const DuplicatableFileHandle& other)
     {
         fileHandle.native_handle(dup(other.fileHandle.native_handle()));

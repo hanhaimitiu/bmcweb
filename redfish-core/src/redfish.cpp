@@ -240,6 +240,7 @@ RedfishService::RedfishService(App& app)
     requestRoutesTrigger(app);
 
     // Note, this must be the last route registered
+    // 注意，这必须是最后注册的路由
     requestRoutesRedfish(app);
 
     requestRoutesOpenBmcManager(*this);

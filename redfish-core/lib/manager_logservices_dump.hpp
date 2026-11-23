@@ -200,6 +200,7 @@ inline void requestRoutesManagersLogServicesDumpAndFaultLog(App& app)
                             std::ref(app), dump_utils::DumpType::BMC));
 
     /* FaultLog routes */
+    /* FaultLog 路由。 */
 
     BMCWEB_ROUTE(app, "/redfish/v1/Managers/<str>/LogServices/FaultLog/")
         .privileges(redfish::privileges::getLogService)

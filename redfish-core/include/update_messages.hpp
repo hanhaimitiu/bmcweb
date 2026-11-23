@@ -9,8 +9,19 @@
  * should be first pushed to the relevant registry in the DMTF
  * github organization.
  ***************************************************************/
+/*                 请先阅读此警告
+ * 这是一个自动生成的头文件，其中包含
+ * Redfish DMTF 定义消息的相关定义。
+ * 除运行 parse_registries.py 脚本外，
+ * 请勿修改此注册表。本文件中所含的
+ * 定义归 DMTF 所有。对这些文件的任何修改，
+ * 都应先推送到 DMTF github 组织中的
+ * 相应注册表。 */
 // These generated headers are a superset of what is needed.
 // clang sees them as an error, so ignore
+// NOLINTBEGIN(misc-include-cleaner)
+// 这些生成的头文件包含了超出所需的超集内容。
+// clang 会将它们视为错误，因此忽略。
 // NOLINTBEGIN(misc-include-cleaner)
 #include "http_response.hpp"
 

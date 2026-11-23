@@ -6,6 +6,8 @@
  *  Originally sourced from
  *  https://github.com/HowardHinnant/date/blob/master/include/date/date.h
  */
+/*  最初来源：
+ *  https://github.com/HowardHinnant/date/blob/master/include/date/date.h */
 
 // The MIT License (MIT)
 //
@@ -37,6 +39,31 @@
 // Our apologies.  When the previous paragraph was written, lowercase had not yet
 // been invented (that would involve another several millennia of evolution).
 // We did not mean to shout.
+// MIT 许可证（MIT）
+// 版权所有 (c) 2015、2016、2017 Howard Hinnant
+// 版权所有 (c) 2016 Adrian Colomitchi
+// 版权所有 (c) 2017 Florian Dang
+// 版权所有 (c) 2017 Paul Thompson
+// 版权所有 (c) 2018、2019 Tomasz Kamiński
+// 版权所有 (c) 2019 Jiangang Zhuang
+// 在此特此免费授予任何获得本软件及
+// 其相关文档文件（以下简称"软件"）副本的人，
+// 可不受限制地处理本软件，包括但不限于
+// 使用、复制、修改、合并、发布、分发、再许可和/或
+// 出售本软件的副本，并允许被提供本软件的人
+// 这样做，但须满足以下条件：
+// 上述版权声明和本许可声明应包含在
+// 本软件的所有副本或主要部分中。
+// 本软件按"原样"提供，不提供任何形式的明示或
+// 默示保证，包括但不限于对适销性、
+// 特定用途适用性和不侵权的保证。在任何情况下，
+// 作者或版权持有人均不对任何索赔、损害或
+// 其他责任承担责任，无论是在合同、侵权或其他
+// 方面，因软件或软件的使用或其他交易
+// 而引起的或与之相关的。
+// 深表歉意。上一段落写成时，小写字母尚未
+// 被发明出来（那还需要再经历几千年的进化）。
+// 我们并非想要大声喊叫。
 
 #ifndef HAS_STRING_VIEW
 #  if __cplusplus >= 201703 || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
@@ -83,6 +110,7 @@
 # endif
 # if __GNUC__ < 5
    // GCC 4.9 Bug 61489 Wrong warning with -Wmissing-field-initializers
+   // GCC 4.9 Bug 61489：-Wmissing-field-initializers 产生错误警告
 #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 # endif
 #endif
@@ -96,6 +124,7 @@
 #ifdef _MSC_VER
 #   pragma warning(push)
 // warning C4127: conditional expression is constant
+// 警告 C4127：条件表达式为常量
 #   pragma warning(disable : 4127)
 #endif
 
@@ -105,6 +134,9 @@ namespace date
 //---------------+
 // Configuration |
 //---------------+
+// ---------------+
+// 配置 |
+// ---------------+
 
 #ifndef ONLY_C_LOCALE
 #  define ONLY_C_LOCALE 1
@@ -112,17 +144,20 @@ namespace date
 
 #if defined(_MSC_VER) && (!defined(__clang__) || (_MSC_VER < 1910))
 // MSVC
+// MSVC 编译器（微软 Visual C++）
 #  ifndef _SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING
 #    define _SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING
 #  endif
 #  if _MSC_VER < 1910
 //   before VS2017
+//   VS2017 之前
 #    define CONSTDATA const
 #    define CONSTCD11
 #    define CONSTCD14
 #    define NOEXCEPT _NOEXCEPT
 #  else
 //   VS2017 and later
+//   VS2017 及以后
 #    define CONSTDATA constexpr const
 #    define CONSTCD11 constexpr
 #    define CONSTCD14 constexpr
@@ -131,6 +166,7 @@ namespace date
 
 #elif defined(__SUNPRO_CC) && __SUNPRO_CC <= 0x5150
 // Oracle Developer Studio 12.6 and earlier
+// Oracle Developer Studio 12.6 及更早版本
 #  define CONSTDATA constexpr const
 #  define CONSTCD11 constexpr
 #  define CONSTCD14
@@ -167,6 +203,7 @@ namespace date
 #endif  // HAS_VOID_T
 
 // Protect from Oracle sun macro
+// 避免与 Oracle 的 sun 宏冲突
 #ifdef sun
 #  undef sun
 #endif
@@ -174,6 +211,9 @@ namespace date
 // Work around for a NVCC compiler bug which causes it to fail
 // to compile std::ratio_{multiply,divide} when used directly
 // in the std::chrono::duration template instantiations below
+// 针对 NVCC 编译器 bug 的变通处理：当直接使用
+// std::ratio_{multiply,divide} 实例化下方 std::chrono::duration
+// 模板时，该 bug 会导致编译失败。
 namespace detail {
 template <typename R1, typename R2>
 using ratio_multiply = decltype(std::ratio_multiply<R1, R2>{});
@@ -185,8 +225,12 @@ using ratio_divide = decltype(std::ratio_divide<R1, R2>{});
 //-----------+
 // Interface |
 //-----------+
+// -----------+
+// 接口 |
+// -----------+
 
 // durations
+// duration 类型（时间段）
 
 using days = std::chrono::duration
     <int, detail::ratio_multiply<std::ratio<24>, std::chrono::hours::period>>;
@@ -201,6 +245,7 @@ using months = std::chrono::duration
     <int, detail::ratio_divide<years::period, std::ratio<12>>>;
 
 // time_point
+// time_point（时间点）类型
 
 template <class Duration>
     using sys_time = std::chrono::time_point<std::chrono::system_clock, Duration>;
@@ -217,6 +262,7 @@ using local_seconds = local_time<std::chrono::seconds>;
 using local_days    = local_time<days>;
 
 // types
+// 类型定义（types）
 
 struct last_spec
 {
@@ -244,6 +290,7 @@ class year_month_weekday;
 class year_month_weekday_last;
 
 // date composition operators
+// 日期组合运算符
 
 CONSTCD11 year_month operator/(const year& y, const month& m) NOEXCEPT;
 CONSTCD11 year_month operator/(const year& y, int          m) NOEXCEPT;
@@ -328,8 +375,10 @@ year_month_weekday_last
 operator/(const month_weekday_last& mwdl, int         y) NOEXCEPT;
 
 // Detailed interface
+// 详细接口
 
 // day
+// day（日）类
 
 class day
 {
@@ -368,6 +417,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const day& d);
 
 // month
+// month（月）类
 
 class month
 {
@@ -406,6 +456,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const month& m);
 
 // year
+// year（年）类
 
 class year
 {
@@ -452,6 +503,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const year& y);
 
 // weekday
+// weekday（星期）类
 
 class weekday
 {
@@ -503,6 +555,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const weekday& wd);
 
 // weekday_indexed
+// weekday_indexed（带索引的星期）类
 
 class weekday_indexed
 {
@@ -526,6 +579,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const weekday_indexed& wdi);
 
 // weekday_last
+// weekday_last（某月最后一个星期几）类
 
 class weekday_last
 {
@@ -553,6 +607,7 @@ struct unspecified_month_disambiguator {};
 }  // namespace detail
 
 // year_month
+// year_month（年月）类
 
 class year_month
 {
@@ -600,6 +655,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const year_month& ym);
 
 // month_day
+// month_day（月日）类
 
 class month_day
 {
@@ -628,6 +684,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const month_day& md);
 
 // month_day_last
+// month_day_last（某月最后一天）类
 
 class month_day_last
 {
@@ -652,6 +709,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const month_day_last& mdl);
 
 // month_weekday
+// month_weekday（某月第几个星期几）类
 
 class month_weekday
 {
@@ -675,6 +733,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const month_weekday& mwd);
 
 // month_weekday_last
+// month_weekday_last（某月最后一个星期几）类
 
 class month_weekday_last
 {
@@ -701,6 +760,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const month_weekday_last& mwdl);
 
 // class year_month_day
+// class year_month_day（年月日类）
 
 class year_month_day
 {
@@ -759,6 +819,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const year_month_day& ymd);
 
 // year_month_day_last
+// year_month_day_last（某月最后一天，含年）类
 
 class year_month_day_last
 {
@@ -831,6 +892,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const year_month_day_last& ymdl);
 
 // year_month_weekday
+// year_month_weekday（某月第几个星期几，含年）类
 
 class year_month_weekday
 {
@@ -904,6 +966,7 @@ std::basic_ostream<CharT, Traits>&
 operator<<(std::basic_ostream<CharT, Traits>& os, const year_month_weekday& ymwdi);
 
 // year_month_weekday_last
+// year_month_weekday_last（某月最后一个星期几，含年）类
 
 class year_month_weekday_last
 {
@@ -1004,6 +1067,25 @@ CONSTCD11 date::year operator ""_y(unsigned long long y) NOEXCEPT;
 // CONSTDATA date::weekday Thursday{4u};
 // CONSTDATA date::weekday Friday{5u};
 // CONSTDATA date::weekday Saturday{6u};
+// CONSTDATA date::month January{1};
+// CONSTDATA date::month February{2};
+// CONSTDATA date::month March{3};
+// CONSTDATA date::month April{4};
+// CONSTDATA date::month May{5};
+// CONSTDATA date::month June{6};
+// CONSTDATA date::month July{7};
+// CONSTDATA date::month August{8};
+// CONSTDATA date::month September{9};
+// CONSTDATA date::month October{10};
+// CONSTDATA date::month November{11};
+// CONSTDATA date::month December{12};
+// CONSTDATA date::weekday Sunday{0u};
+// CONSTDATA date::weekday Monday{1u};
+// CONSTDATA date::weekday Tuesday{2u};
+// CONSTDATA date::weekday Wednesday{3u};
+// CONSTDATA date::weekday Thursday{4u};
+// CONSTDATA date::weekday Friday{5u};
+// CONSTDATA date::weekday Saturday{6u};
 
 #if HAS_VOID_T
 
@@ -1026,8 +1108,12 @@ template<class T> inline constexpr bool is_clock_v = is_clock<T>::value;
 //----------------+
 // Implementation |
 //----------------+
+// ----------------+
+// 实现 |
+// ----------------+
 
 // utilities
+// 工具函数（utilities）
 namespace detail {
 
 template<class CharT, class Traits = std::char_traits<CharT>>
@@ -1211,6 +1297,7 @@ public:
 }  // detail
 
 // trunc towards zero
+// 向零截断（trunc）
 template <class To, class Rep, class Period>
 CONSTCD11
 inline
@@ -1255,6 +1342,7 @@ trunc(const std::chrono::duration<Rep, Period>& d)
 #if HAS_CHRONO_ROUNDING == 0
 
 // round down
+// 向下取整（floor）
 template <class To, class Rep, class Period>
 CONSTCD14
 inline
@@ -1286,6 +1374,7 @@ floor(const std::chrono::duration<Rep, Period>& d)
 }
 
 // round to nearest, to even on tie
+// 就近舍入，平局时取偶数（round to nearest, to even on tie）
 template <class To, class Rep, class Period>
 CONSTCD14
 inline
@@ -1310,6 +1399,7 @@ round(const std::chrono::duration<Rep, Period>& d)
 }
 
 // round up
+// 向上取整（ceil）
 template <class To, class Rep, class Period>
 CONSTCD14
 inline
@@ -1335,6 +1425,7 @@ abs(std::chrono::duration<Rep, Period> d)
 }
 
 // round down
+// 向下取整（floor）
 template <class To, class Clock, class FromDuration>
 CONSTCD11
 inline
@@ -1346,6 +1437,7 @@ floor(const std::chrono::time_point<Clock, FromDuration>& tp)
 }
 
 // round to nearest, to even on tie
+// 就近舍入，平局时取偶数（round to nearest, to even on tie）
 template <class To, class Clock, class FromDuration>
 CONSTCD11
 inline
@@ -1357,6 +1449,7 @@ round(const std::chrono::time_point<Clock, FromDuration>& tp)
 }
 
 // round up
+// 向上取整（ceil）
 template <class To, class Clock, class FromDuration>
 CONSTCD11
 inline
@@ -1418,6 +1511,7 @@ round_i(const std::chrono::time_point<Clock, FromDuration>& tp)
 }  // detail
 
 // trunc towards zero
+// 向零截断（trunc）
 template <class To, class Clock, class FromDuration>
 CONSTCD11
 inline
@@ -1429,6 +1523,7 @@ trunc(const std::chrono::time_point<Clock, FromDuration>& tp)
 }
 
 // day
+// day（日）类
 
 CONSTCD11 inline day::day(unsigned d) NOEXCEPT : d_(static_cast<decltype(d_)>(d)) {}
 CONSTCD14 inline day& day::operator++() NOEXCEPT {++d_; return *this;}
@@ -1550,6 +1645,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const day& d)
 }
 
 // month
+// month（月）类
 
 CONSTCD11 inline month::month(unsigned m) NOEXCEPT : m_(static_cast<decltype(m_)>(m)) {}
 CONSTCD14 inline month& month::operator++() NOEXCEPT {*this += months{1}; return *this;}
@@ -1692,6 +1788,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const month& m)
 }
 
 // year
+// year（年）类
 
 CONSTCD11 inline year::year(int y) NOEXCEPT : y_(static_cast<decltype(y_)>(y)) {}
 CONSTCD14 inline year& year::operator++() NOEXCEPT {++y_; return *this;}
@@ -1831,6 +1928,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const year& y)
 }
 
 // weekday
+// weekday（星期）类
 
 CONSTCD14
 inline
@@ -2050,6 +2148,7 @@ CONSTDATA date::weekday Saturday{6};
 CONSTDATA date::weekday Sunday{7};
 
 // weekday_indexed
+// weekday_indexed（带索引的星期）类
 
 CONSTCD11
 inline
@@ -2133,6 +2232,7 @@ operator!=(const weekday_indexed& x, const weekday_indexed& y) NOEXCEPT
 }
 
 // weekday_last
+// weekday_last（某月最后一个星期几）类
 
 CONSTCD11 inline date::weekday weekday_last::weekday() const NOEXCEPT {return wd_;}
 CONSTCD11 inline bool weekday_last::ok() const NOEXCEPT {return wd_.ok();}
@@ -2186,6 +2286,7 @@ weekday::operator[](last_spec) const NOEXCEPT
 }
 
 // year_month
+// year_month（年月）类
 
 CONSTCD11
 inline
@@ -2374,6 +2475,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const year_month& ym)
 }
 
 // month_day
+// month_day（月日）类
 
 CONSTCD11
 inline
@@ -2475,6 +2577,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const month_day& md)
 }
 
 // month_day_last
+// month_day_last（某月最后一天）类
 
 CONSTCD11 inline month month_day_last::month() const NOEXCEPT {return m_;}
 CONSTCD11 inline bool month_day_last::ok() const NOEXCEPT {return m_.ok();}
@@ -2552,6 +2655,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const month_day_last& mdl)
 }
 
 // month_weekday
+// month_weekday（某月第几个星期几）类
 
 CONSTCD11
 inline
@@ -2620,6 +2724,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const month_weekday& mwd)
 }
 
 // month_weekday_last
+// month_weekday_last（某月最后一个星期几）类
 
 CONSTCD11
 inline
@@ -2688,6 +2793,7 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const month_weekday_last& mwdl
 }
 
 // year_month_day_last
+// year_month_day_last（某月最后一天，含年）类
 
 CONSTCD11
 inline
@@ -2910,6 +3016,7 @@ operator-(const year_month_day_last& ymdl, const years& dy) NOEXCEPT
 }
 
 // year_month_day
+// year_month_day（年月日）类
 
 CONSTCD11
 inline
@@ -3169,6 +3276,7 @@ operator-(const year_month_day& ymd, const years& dy) NOEXCEPT
 }
 
 // year_month_weekday
+// year_month_weekday（某月第几个星期几，含年）类
 
 CONSTCD11
 inline
@@ -3388,6 +3496,7 @@ operator-(const year_month_weekday& ymwd, const years& dy) NOEXCEPT
 }
 
 // year_month_weekday_last
+// year_month_weekday_last（某月最后一个星期几，含年）类
 
 CONSTCD11
 inline
@@ -3569,6 +3678,7 @@ operator-(const year_month_weekday_last& ymwdl, const years& dy) NOEXCEPT
 }
 
 // year_month from operator/()
+// 通过 operator/() 构造 year_month
 
 CONSTCD11
 inline
@@ -3587,6 +3697,7 @@ operator/(const year& y, int   m) NOEXCEPT
 }
 
 // month_day from operator/()
+// 通过 operator/() 构造 month_day
 
 CONSTCD11
 inline
@@ -3623,6 +3734,7 @@ operator/(int m, const day& d) NOEXCEPT
 CONSTCD11 inline month_day operator/(const day& d, int m) NOEXCEPT {return m / d;}
 
 // month_day_last from operator/()
+// 通过 operator/() 构造 month_day_last
 
 CONSTCD11
 inline
@@ -3657,6 +3769,7 @@ operator/(last_spec, int m) NOEXCEPT
 }
 
 // month_weekday from operator/()
+// 通过 operator/() 构造 month_weekday
 
 CONSTCD11
 inline
@@ -3691,6 +3804,7 @@ operator/(const weekday_indexed& wdi, int m) NOEXCEPT
 }
 
 // month_weekday_last from operator/()
+// 通过 operator/() 构造 month_weekday_last
 
 CONSTCD11
 inline
@@ -3725,6 +3839,7 @@ operator/(const weekday_last& wdl, int m) NOEXCEPT
 }
 
 // year_month_day from operator/()
+// 通过 operator/() 构造 year_month_day
 
 CONSTCD11
 inline
@@ -3775,6 +3890,7 @@ operator/(const month_day& md, int y) NOEXCEPT
 }
 
 // year_month_day_last from operator/()
+// 通过 operator/() 构造 year_month_day_last
 
 CONSTCD11
 inline
@@ -3817,6 +3933,7 @@ operator/(const month_day_last& mdl, int y) NOEXCEPT
 }
 
 // year_month_weekday from operator/()
+// 通过 operator/() 构造 year_month_weekday
 
 CONSTCD11
 inline
@@ -3859,6 +3976,7 @@ operator/(const month_weekday& mwd, int y) NOEXCEPT
 }
 
 // year_month_weekday_last from operator/()
+// 通过 operator/() 构造 year_month_weekday_last
 
 CONSTCD11
 inline
@@ -3916,6 +4034,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
             std::chrono::minutes* offset = nullptr);
 
 // hh_mm_ss
+// hh_mm_ss（时分秒）类
 
 namespace detail
 {
@@ -3931,6 +4050,15 @@ struct undocumented {explicit undocumented() = default;};
 // Example:  width<4>::value    ==  2
 // Example:  width<10>::value   ==  1
 // Example:  width<1000>::value ==  3
+// width<n>::value 是 1/n 的小数位数
+// width<0>::value 和 width<1>::value 定义为 0
+// 如果 1/n 的小数位数超过 18 位，
+//   结果将被截断为 19。
+// 示例：width<2>::value    ==  1
+// 示例：width<3>::value    == 19
+// 示例：width<4>::value    ==  2
+// 示例：width<10>::value   ==  1
+// 示例：width<1000>::value ==  3
 template <std::uint64_t n, std::uint64_t d, unsigned w = 0,
           bool should_continue = n%d != 0 && (w < 19)>
 struct width
@@ -4791,6 +4919,7 @@ struct make_string<wchar_t, Traits>
 }  // namespace detail
 
 // to_stream
+// to_stream（输出到流）
 
 CONSTDATA year nanyear{-32768};
 
@@ -4836,6 +4965,7 @@ extract_weekday(std::basic_ostream<CharT, Traits>& os, const fields<Duration>& f
     if (!fds.ymd.ok() && !fds.wd.ok())
     {
         // fds does not contain a valid weekday
+        // fds 中不包含有效的 weekday（星期）
         os.setstate(std::ios::failbit);
         return 8;
     }
@@ -4846,6 +4976,7 @@ extract_weekday(std::basic_ostream<CharT, Traits>& os, const fields<Duration>& f
         if (fds.wd.ok() && wd != fds.wd)
         {
             // fds.ymd and fds.wd are inconsistent
+            // fds.ymd 与 fds.wd 不一致
             os.setstate(std::ios::failbit);
             return 8;
         }
@@ -4862,6 +4993,7 @@ extract_month(std::basic_ostream<CharT, Traits>& os, const fields<Duration>& fds
     if (!fds.ymd.month().ok())
     {
         // fds does not contain a valid month
+        // fds 中不包含有效的 month（月份）
         os.setstate(std::ios::failbit);
         return 0;
     }
@@ -4966,6 +5098,7 @@ scan_keyword(std::basic_istream<CharT, Traits>& is, FwdIter kb, FwdIter ke)
     size_t n_might_match = nkw;  // At this point, any keyword might match
     size_t n_does_match = 0;     // but none of them definitely do
     // Initialize all statuses to might_match, except for "" keywords are does_match
+    // 将所有状态初始化为 might_match，"" 关键字除外，其状态为 does_match
     unsigned char* st = status;
     for (auto ky = kb; ky != ke; ++ky, ++st)
     {
@@ -4979,9 +5112,11 @@ scan_keyword(std::basic_istream<CharT, Traits>& is, FwdIter kb, FwdIter ke)
         }
     }
     // While there might be a match, test keywords against the next CharT
+    // 在仍可能匹配时，用下一个 CharT 逐一测试关键字
     for (size_t indx = 0; is && n_might_match > 0; ++indx)
     {
         // Peek at the next CharT but don't consume it
+        // 窥视下一个 CharT，但不 consume（消费）它
         auto ic = is.peek();
         if (ic == EOF)
         {
@@ -4996,6 +5131,12 @@ scan_keyword(std::basic_istream<CharT, Traits>& is, FwdIter kb, FwdIter ke)
         //    then that keyword matches.
         // If the keyword doesn't match this character, then change the keyword
         //    to doesn't match
+        // 对每个可能匹配的关键字，检查 indx 位置的字符是否为 c
+        // 若找到匹配，则 consume（消费）c
+        // 若找到匹配且该字符是关键字的最后一个字符，
+        //    则该关键字匹配成功。
+        // 若关键字与该字符不匹配，则将该关键字
+        //    标记为不匹配。
         st = status;
         for (auto ky = kb; ky != ke; ++ky, ++st)
         {
@@ -5019,12 +5160,16 @@ scan_keyword(std::basic_istream<CharT, Traits>& is, FwdIter kb, FwdIter ke)
             }
         }
         // consume if we matched a character
+        // 匹配到字符则 consume（消费）它
         if (consume)
         {
             (void)is.get();
             // If we consumed a character and there might be a matched keyword that
             //   was marked matched on a previous iteration, then such keywords
             //   are now marked as not matching.
+            // 如果我们 consume（消费）了一个字符，且存在此前迭代中
+            //   被标记为匹配的关键字，则这些关键字
+            //   现在要标记为不匹配。
             if (n_might_match + n_does_match > 1)
             {
                 st = status;
@@ -5041,6 +5186,8 @@ scan_keyword(std::basic_istream<CharT, Traits>& is, FwdIter kb, FwdIter ke)
     }
     // We've exited the loop because we hit eof and/or we have no more "might matches".
     // Return the first matching result
+    // 循环已退出，原因是遇到 eof 和/或不再有 "might matches"。
+    // 返回第一个匹配结果。
     for (st = status; kb != ke; ++kb, ++st)
         if (*st == does_match)
             break;
@@ -6030,6 +6177,7 @@ to_stream(std::basic_ostream<CharT, Traits>& os, const CharT* fmt,
                 if (offset_sec == nullptr)
                 {
                     // Can not format %z with unknown offset
+                    // 偏移量未知时无法格式化 %z
                     os.setstate(ios::failbit);
                     return os;
                 }
@@ -6064,6 +6212,7 @@ to_stream(std::basic_ostream<CharT, Traits>& os, const CharT* fmt,
                     if (abbrev == nullptr)
                     {
                         // Can not format %Z with unknown time_zone
+                        // 时区未知时无法格式化 %Z
                         os.setstate(ios::failbit);
                         return os;
                     }
@@ -6258,6 +6407,7 @@ to_stream(std::basic_ostream<CharT, Traits>& os, const CharT* fmt,
 }
 
 // format
+// format（格式化）
 
 template <class CharT, class Streamable>
 auto
@@ -6311,6 +6461,7 @@ format(const std::basic_string<CharT, Traits, Alloc>& fmt, const Streamable& tp)
 }
 
 // parse
+// parse（解析）
 
 namespace detail
 {
@@ -6485,6 +6636,7 @@ void
 read(std::basic_istream<CharT, Traits>& is, CharT a0, Args&& ...args)
 {
     // No-op if a0 == CharT{}
+    // 若 a0 == CharT{} 则不做任何操作
     if (a0 != CharT{})
     {
         auto ic = is.peek();
@@ -7047,6 +7199,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
                     {
                         int tI = not_a_hour_12_value;
                         // reads in an hour into I, but most be in [1, 12]
+                        // 读取小时到 I 中，但必须在 [1, 12] 范围内
                         read(is, rs{tI, 1, width == -1 ? 2u : static_cast<unsigned>(width)});
                         if (!(1 <= tI && tI <= 12))
                             is.setstate(ios::failbit);
@@ -7151,6 +7304,8 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
                     {
                         // %n matches a single white space character
                         // %t matches 0 or 1 white space characters
+                        // %n 匹配单个空白字符
+                        // %t 匹配 0 个或 1 个空白字符
                         auto ic = is.peek();
                         if (Traits::eq_int_type(ic, Traits::eof()))
                         {
@@ -7602,6 +7757,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
                             auto wc = Traits::to_char_type(i);
                             auto c = static_cast<char>(wc);
                             // is c a valid time zone name or abbreviation character?
+                            // c 是否为合法的时区名或时区缩写字符？
                             if (!(CharT{1} < wc && wc < CharT{127}) || !(isalnum(c) ||
                                     c == '_' || c == '/' || c == '-' || c == '+'))
                                 break;
@@ -7646,6 +7802,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
                     if (isspace(static_cast<unsigned char>(*fmt)))
                     {
                         // space matches 0 or more white space characters
+                        // 空格匹配 0 个或多个空白字符
                         if (is.good())
                            ws(is);
                     }
@@ -7656,6 +7813,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
             }
         }
         // is.fail() || *fmt == CharT{}
+        // is.fail() || *fmt == CharT{}（流失败或格式串结束）
         if (is.rdstate() == ios::goodbit && command)
         {
             if (modified == CharT{})
@@ -7668,6 +7826,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
             if (y != not_a_2digit_year)
             {
                 // Convert y and an optional C to Y
+                // 将 y 和可选的 C 转换为 Y
                 if (!(0 <= y && y <= 99))
                     goto broken;
                 if (C == not_a_century)
@@ -7696,6 +7855,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
             if (g != not_a_2digit_year)
             {
                 // Convert g and an optional C to G
+                // 将 g 和可选的 C 转换为 G
                 if (!(0 <= g && g <= 99))
                     goto broken;
                 if (C == not_a_century)
@@ -7850,10 +8010,13 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
                 {
                     // p is in [0, 1] == [AM, PM]
                     // Store trial H in I
+                    // p 取值 [0, 1] == [AM, PM]
+                    // 将试算得到的 H 存入 I
                     if (I == 12)
                         --p;
                     I += p*12;
                     // Either set H from I or make sure H and I are consistent
+                    // 要么用 I 设置 H，要么确保 H 与 I 一致
                     if (H == not_a_hour)
                         H = I;
                     else if (I != H)
@@ -7862,6 +8025,7 @@ from_stream(std::basic_istream<CharT, Traits>& is, const CharT* fmt,
                 else  // p == not_a_ampm
                 {
                     // if H, make sure H and I could be consistent
+                    // 若提供了 H，则确保 H 与 I 能够一致
                     if (H != not_a_hour)
                     {
                         if (I == 12)
@@ -8179,6 +8343,7 @@ parse(const std::basic_string<CharT, Traits, Alloc>& format, Parsable& tp,
 }
 
 // const CharT* formats
+// const CharT* formats（格式串）
 
 template <class Parsable, class CharT>
 inline
@@ -8225,6 +8390,7 @@ parse(const CharT* format, Parsable& tp,
 }
 
 // duration streaming
+// duration 的流输出
 
 template <class CharT, class Traits, class Rep, class Period>
 inline

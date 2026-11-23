@@ -134,6 +134,12 @@ inline std::string getPrivilegeFromRoleId(std::string_view role)
  * @return true in case of success, false if UserGroups contains
  * invalid group name(s).
  */
+/* @brief 将从 D-Bus 对象获取的用户组名映射到
+ * Account Type（账户类型）。
+ * @param[in] userGroups 用户组列表
+ * @param[out] res 填充后的 AccountTypes
+ * @return 成功返回 true；若 UserGroups 中包含
+ * 无效的组名则返回 false。 */
 inline bool translateUserGroup(const std::vector<std::string>& userGroups,
                                crow::Response& res)
 {
@@ -157,6 +163,8 @@ inline bool translateUserGroup(const std::vector<std::string>& userGroups,
         {
             // The hostconsole group controls who can access the host console
             // port via ssh and websocket.
+            // hostconsole 组控制哪些人可以通过 ssh 和 websocket
+            // 访问主机控制台端口。
             accountTypes.emplace_back("HostConsole");
         }
         else if (userGroup == "web")
@@ -166,10 +174,16 @@ inline bool translateUserGroup(const std::vector<std::string>& userGroups,
             // doing anything, and is considered to be equivalent to 'redfish'.
             // 'redfish' user group is mapped to 'Redfish'and 'WebUI'
             // AccountTypes, so do nothing here...
+            // 'web' 是 D-Bus 对象中用户账户 UserGroups 属性里的
+            // 合法组之一。该组目前不起任何作用，
+            // 被视为等同于 "redfish"。
+            // 'redfish' 用户组会映射到 'Redfish' 和 'WebUI'
+            // 这两个 AccountType，因此此处无需处理……
         }
         else
         {
             // Invalid user group name. Caller throws an exception.
+            // 无效的用户组名。调用方会抛出异常。
             return false;
         }
     }
@@ -187,11 +201,17 @@ inline bool translateUserGroup(const std::vector<std::string>& userGroups,
  *
  * @return true if Account Types mapped to User Groups, false otherwise.
  */
+/* @brief 根据 Account Type 构建 User Group（用户组）
+ * @param[in] asyncResp 异步响应
+ * @param[in] accountTypes Account Type 列表
+ * @param[out] userGroups 由 Account Type 映射得到的用户组列表
+ * @return 映射成功返回 true，否则返回 false。 */
 inline bool getUserGroupFromAccountType(
     crow::Response& res, const std::vector<std::string>& accountTypes,
     std::vector<std::string>& userGroups)
 {
     // Need both Redfish and WebUI Account Types to map to 'redfish' User Group
+    // 必须同时具备 Redfish 和 WebUI 两种 Account Type，才映射为 "redfish" 用户组
     bool redfishType = false;
     bool webUIType = false;
 
@@ -220,12 +240,14 @@ inline bool getUserGroupFromAccountType(
         else
         {
             // Invalid Account Type
+            // 无效的 Account Type（账户类型）
             messages::propertyValueNotInList(res, accountType, "AccountTypes");
             return false;
         }
     }
 
     // Both  Redfish and WebUI Account Types are needed to PATCH
+    // PATCH 时必须同时提供 Redfish 和 WebUI 两种 Account Type
     if (redfishType ^ webUIType)
     {
         BMCWEB_LOG_ERROR(
@@ -250,12 +272,18 @@ inline bool getUserGroupFromAccountType(
  * @param[in] dbusObjectPath D-Bus Object Path
  * @param[in] userSelf true if User is updating OWN Account Types
  */
+/* @brief 根据 Account Type 设置用户的 UserGroups 属性
+ * @param[in] accountTypes 用户 Account Type 列表
+ * @param[in] asyncResp 异步响应
+ * @param[in] dbusObjectPath D-Bus 对象路径
+ * @param[in] userSelf 若用户正在修改自己的 Account Type 则为 true */
 inline void patchAccountTypes(
     const std::vector<std::string>& accountTypes,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& dbusObjectPath, bool userSelf)
 {
     // Check if User is disabling own Redfish Account Type
+    // 检查用户是否正在禁用自己的 Redfish Account Type
     if (userSelf &&
         (accountTypes.cend() == std::ranges::find(accountTypes, "Redfish")))
     {
@@ -271,6 +299,8 @@ inline void patchAccountTypes(
     {
         // Problem in mapping Account Types to User Groups, Error already
         // logged.
+        // Account Type 到 User Group 的映射出现问题，
+        // 错误已记录日志。
         return;
     }
     setDbusProperty(asyncResp, "AccountTypes",
@@ -379,6 +409,8 @@ inline void parseLDAPConfigData(nlohmann::json& jsonResponse,
  * create, to delete or to set Rolemapping object based on the given input.
  *
  */
+/*  @brief 校验给定的 JSON 输入，然后根据输入调用相应的方法来
+ * 创建、删除或设置 Role Mapping（角色映射）对象。 */
 inline void handleRoleMapPatch(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::vector<std::pair<std::string, LDAPRoleMapData>>& roleMapObjData,
@@ -394,11 +426,13 @@ inline void handleRoleMapPatch(
         if (obj == nullptr)
         {
             // delete the existing object
+            // 删除已有对象
             if (index < roleMapObjData.size())
             {
                 dbus::utility::async_method_call(
                     asyncResp,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（ast-grep 工具忽略标记：长 lambda，需保持原样）
                     [asyncResp, roleMapObjData, serverType,
                      index](const boost::system::error_code& ec) {
                         if (ec)
@@ -427,10 +461,13 @@ inline void handleRoleMapPatch(
         {
             // Don't do anything for the empty objects,parse next json
             // eg {"RemoteRoleMapping",[{}]}
+            // 空对象不做任何处理，解析下一个 json
+            // 例如 {"RemoteRoleMapping",[{}]}
         }
         else
         {
             // update/create the object
+            // 更新/创建对象
             std::optional<std::string> remoteGroup;
             std::optional<std::string> localRole;
 
@@ -444,10 +481,12 @@ inline void handleRoleMapPatch(
             }
 
             // Update existing RoleMapping Object
+            // 更新已有的 RoleMapping 对象
             if (index < roleMapObjData.size())
             {
                 BMCWEB_LOG_DEBUG("Update Role Map Object");
                 // If "RemoteGroup" info is provided
+                // 如果提供了 "RemoteGroup" 信息
                 if (remoteGroup)
                 {
                     setDbusProperty(
@@ -459,6 +498,7 @@ inline void handleRoleMapPatch(
                 }
 
                 // If "LocalRole" info is provided
+                // 如果提供了 "LocalRole" 信息
                 if (localRole)
                 {
                     std::string priv = getPrivilegeFromRoleId(*localRole);
@@ -479,6 +519,7 @@ inline void handleRoleMapPatch(
                 }
             }
             // Create a new RoleMapping Object.
+            // 创建一个新的 RoleMapping 对象。
             else
             {
                 BMCWEB_LOG_DEBUG(
@@ -515,6 +556,7 @@ inline void handleRoleMapPatch(
                 dbus::utility::async_method_call(
                     asyncResp,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（ast-grep 工具忽略标记：长 lambda，需保持原样）
                     [asyncResp, serverType, localRole,
                      remoteGroup](const boost::system::error_code& ec) {
                         if (ec)
@@ -543,6 +585,8 @@ inline void handleRoleMapPatch(
  * Function that retrieves all properties for LDAP config object
  * into JSON
  */
+/* 将 LDAP 配置对象的所有属性取出到 JSON 中的
+ * 函数 */
 template <typename CallbackFunc>
 inline void getLDAPConfigData(const std::string& ldapType,
                               CallbackFunc&& callback)
@@ -553,6 +597,7 @@ inline void getLDAPConfigData(const std::string& ldapType,
     dbus::utility::getDbusObject(
         ldapConfigObjectName, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具忽略标记：长 lambda，需保持原样）
         [callback = std::forward<CallbackFunc>(callback),
          ldapType](const boost::system::error_code& ec,
                    const dbus::utility::MapperGetObject& resp) mutable {
@@ -570,6 +615,7 @@ inline void getLDAPConfigData(const std::string& ldapType,
             dbus::utility::getManagedObjects(
                 service, path,
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（ast-grep 工具忽略标记：长 lambda，需保持原样）
                 [callback, ldapType](const boost::system::error_code& ec2,
                                      const dbus::utility::ManagedObjectType&
                                          ldapObjects) mutable {
@@ -612,6 +658,8 @@ inline void getLDAPConfigData(const std::string& ldapType,
                     {
                         // let's find the object whose ldap type is equal to the
                         // given type
+                        // 查找 ldap 类型等于
+                        // 给定类型的对象
                         if (!object.first.str.contains(searchString))
                         {
                             continue;
@@ -622,6 +670,7 @@ inline void getLDAPConfigData(const std::string& ldapType,
                             if (interface.first == ldapEnableInterfaceStr)
                             {
                                 // rest of the properties are string.
+                                // 其余属性均为字符串。
                                 for (const auto& property : interface.second)
                                 {
                                     if (property.first == "Enabled")
@@ -725,6 +774,12 @@ inline void getLDAPConfigData(const std::string& ldapType,
  * @param ldapServerElementName Type of LDAP
  server(openLDAP/ActiveDirectory)
  */
+/* @brief 更新 LDAP 服务器地址，并用新值更新
+ * json 响应。
+ * @param serviceAddressList 要更新的地址。
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param ldapServerElementName LDAP 服务器类型
+ * （openLDAP/ActiveDirectory） */
 
 inline void handleServiceAddressPatch(
     const std::vector<std::string>& serviceAddressList,
@@ -744,6 +799,12 @@ inline void handleServiceAddressPatch(
  * @param ldapServerElementName Type of LDAP
  server(openLDAP/ActiveDirectory)
  */
+/* @brief 更新 LDAP Bind DN，并用新值更新
+ * json 响应。
+ * @param username 需要更新的用户名。
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param ldapServerElementName LDAP 服务器类型
+ * （openLDAP/ActiveDirectory） */
 
 inline void handleUserNamePatch(
     const std::string& username,
@@ -764,6 +825,11 @@ inline void handleUserNamePatch(
  * @param ldapServerElementName Type of LDAP
  *        server(openLDAP/ActiveDirectory)
  */
+/* @brief 更新 LDAP 密码
+ * @param password：需要更新的 LDAP 密码。
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param ldapServerElementName LDAP 服务器类型
+ *        （openLDAP/ActiveDirectory） */
 
 inline void handlePasswordPatch(
     const std::string& password,
@@ -785,6 +851,12 @@ inline void handlePasswordPatch(
  * @param ldapServerElementName Type of LDAP
  server(openLDAP/ActiveDirectory)
  */
+/* @brief 更新 LDAP BaseDN，并用新值更新
+ * json 响应。
+ * @param baseDNList 需要更新的 baseDN 列表。
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param ldapServerElementName LDAP 服务器类型
+ * （openLDAP/ActiveDirectory） */
 
 inline void handleBaseDNPatch(
     const std::vector<std::string>& baseDNList,
@@ -806,6 +878,12 @@ inline void handleBaseDNPatch(
  * @param ldapServerElementName Type of LDAP
  server(openLDAP/ActiveDirectory)
  */
+/* @brief 更新 LDAP 用户名属性，并用新值更新
+ * json 响应。
+ * @param userNameAttribute 要更新的属性。
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param ldapServerElementName LDAP 服务器类型
+ * （openLDAP/ActiveDirectory） */
 
 inline void handleUserNameAttrPatch(
     const std::string& userNameAttribute,
@@ -827,6 +905,12 @@ inline void handleUserNameAttrPatch(
  * @param ldapServerElementName Type of LDAP
  server(openLDAP/ActiveDirectory)
  */
+/* @brief 更新 LDAP 组属性，并用新值更新
+ * json 响应。
+ * @param groupsAttribute 要更新的属性。
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param ldapServerElementName LDAP 服务器类型
+ * （openLDAP/ActiveDirectory） */
 
 inline void handleGroupNameAttrPatch(
     const std::string& groupsAttribute,
@@ -848,6 +932,12 @@ inline void handleGroupNameAttrPatch(
  * @param ldapServerElementName Type of LDAP
  server(openLDAP/ActiveDirectory)
  */
+/* @brief 更新 LDAP 服务启用状态，并用新值更新
+ * json 响应。
+ * @param input JSON 数据。
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param ldapServerElementName LDAP 服务器类型
+ * （openLDAP/ActiveDirectory） */
 
 inline void handleServiceEnablePatch(
     bool serviceEnabled, const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -873,6 +963,7 @@ inline void handleAuthMethodsPatch(
     const AuthMethods& auth)
 {
     // No auth-method fields were requested in PATCH.
+    // PATCH 请求中未指定任何认证方法（auth-method）字段。
     if (!auth.basicAuth && !auth.cookie && !auth.sessionToken && !auth.xToken &&
         !auth.tls)
     {
@@ -948,6 +1039,7 @@ inline void handleAuthMethodsPatch(
         !authMethodsConfig.tls)
     {
         // Do not allow user to disable everything
+        // 不允许用户禁用所有认证方式。
         messages::actionNotSupported(asyncResp->res,
                                      "of disabling all available methods");
         return;
@@ -956,6 +1048,7 @@ inline void handleAuthMethodsPatch(
     persistent_data::SessionStore::getInstance().updateAuthMethodsConfig(
         authMethodsConfig);
     // Save configuration immediately
+    // 立即保存配置。
     persistent_data::getConfig().writeData();
 
     asyncResp->res.result(boost::beast::http::status::no_content);
@@ -968,6 +1061,10 @@ inline void handleAuthMethodsPatch(
  * @param asyncResp pointer to the JSON response
  * @param serverType Type of LDAP server(openLDAP/ActiveDirectory)
  */
+/* @brief 从给定的 JSON 中获取所需的值，校验该值，并创建 LDAP 配置对象。
+ * @param input JSON 数据
+ * @param asyncResp 指向 JSON 响应的指针
+ * @param serverType LDAP 服务器类型（openLDAP/ActiveDirectory） */
 
 struct LdapPatchParams
 {
@@ -1031,6 +1128,7 @@ inline void handleLDAPPatch(LdapPatchParams&& input,
     }
 
     // nothing to update, then return
+    // 没有需要更新的内容，直接返回。
     if (!input.userName && !input.password && !input.serviceAddressList &&
         !input.baseDNList && !input.userNameAttribute &&
         !input.groupsAttribute && !input.serviceEnabled &&
@@ -1042,6 +1140,9 @@ inline void handleLDAPPatch(LdapPatchParams&& input,
     // Get the existing resource first then keep modifying
     // whenever any property gets updated.
     // ast-grep-ignore: long-lambda
+    // 先获取现有资源，然后在
+    // 任何属性发生更新时持续修改它。
+    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
     getLDAPConfigData(serverType, [asyncResp, input = std::move(input),
                                    dbusObjectPath = std::move(dbusObjectPath)](
                                       bool success,
@@ -1057,6 +1158,8 @@ inline void handleLDAPPatch(LdapPatchParams&& input,
         {
             // Disable the service first and update the rest of
             // the properties.
+            // 先禁用该服务，
+            // 再更新其余属性。
             handleServiceEnablePatch(false, asyncResp, serverT, dbusObjectPath);
         }
 
@@ -1096,6 +1199,9 @@ inline void handleLDAPPatch(LdapPatchParams&& input,
             // if user has given the value as true then enable
             // the service. if user has given false then no-op
             // as service is already stopped.
+            // 如果用户传入的值为 true，则启用该服务。
+            // 如果传入 false，则不做任何操作，
+            // 因为服务已经停止。
             if (*input.serviceEnabled)
             {
                 handleServiceEnablePatch(*input.serviceEnabled, asyncResp,
@@ -1107,6 +1213,8 @@ inline void handleLDAPPatch(LdapPatchParams&& input,
             // if user has not given the service enabled value
             // then revert it to the same state as it was
             // before.
+            // 如果用户未指定服务启用状态，
+            // 则将其恢复为此前的状态。
             handleServiceEnablePatch(confData.serviceEnabled, asyncResp,
                                      serverT, dbusObjectPath);
         }
@@ -1123,6 +1231,7 @@ inline nlohmann::json passwordExpirationToJson(uint64_t value,
                                                std::string_view timezone = "")
 {
     // value indicating that password does not expire
+    // 表示该密码永不过期的值
     if (value == 0)
     {
         return nullptr;
@@ -1138,6 +1247,7 @@ inline std::optional<uint64_t> passwordExpirationToUint64(
     if (str == nullptr)
     {
         // value indicating that password does not expire
+        // 表示该密码永不过期的值
         return 0;
     }
 
@@ -1198,6 +1308,7 @@ inline void afterVerifyUserExists(
         else if (retval == PAM_AUTHTOK_ERR)
         {
             // If password is invalid
+            // 如果密码无效
             messages::propertyValueFormatError(asyncResp->res, nullptr,
                                                "Password");
             BMCWEB_LOG_ERROR("pamUpdatePassword Failed");
@@ -1211,6 +1322,7 @@ inline void afterVerifyUserExists(
         {
             // Remove existing sessions of the user when password
             // changed
+            // 密码更改后，移除该用户现有的会话。
             persistent_data::SessionStore::getInstance()
                 .removeSessionsByUsernameExceptSession(params.username,
                                                        params.session);
@@ -1246,6 +1358,8 @@ inline void afterVerifyUserExists(
         // admin can unlock the account which is locked by
         // successive authentication failures but admin should
         // not be allowed to lock an account.
+        // 管理员可以解锁因连续认证失败而被锁定的账户，
+        // 但不允许管理员主动锁定账户。
         if (*params.locked)
         {
             messages::propertyValueNotInList(asyncResp->res, *params.locked,
@@ -1504,6 +1618,8 @@ inline void handleAccountServiceGet(
     // /redfish/v1/AccountService/LDAP/Certificates is something only
     // ConfigureManager can access then only display when the user has
     // permissions ConfigureManager
+    // /redfish/v1/AccountService/LDAP/Certificates 只有 ConfigureManager 可访问，
+    // 因此仅在用户拥有 ConfigureManager 权限时才显示。
     Privileges effectiveUserPrivileges =
         redfish::getUserPrivileges(*req.session);
 
@@ -1517,6 +1633,7 @@ inline void handleAccountServiceGet(
         "xyz.openbmc_project.User.Manager", "/xyz/openbmc_project/user",
         "xyz.openbmc_project.User.AccountPolicy",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const dbus::utility::DBusPropertiesMap& propertiesList) {
             if (ec)
@@ -1602,6 +1719,9 @@ inline void handleRespondToUnauthenticatedClientsPatch(
         // Sanity check.  If the user isn't currently authenticated with mutual
         // TLS, they very likely are about to permanently lock themselves out.
         // Make sure they're using mutual TLS before allowing locking.
+        // 健全性检查。如果用户当前未通过双向 TLS 认证，
+        // 他们很可能即将把自己永久锁在系统之外。
+        // 在允许锁定账户前，请确认其正在使用双向 TLS。
         if (req.session->sessionType != persistent_data::SessionType::MutualTLS)
         {
             messages::propertyValueExternalConflict(
@@ -1616,12 +1736,15 @@ inline void handleRespondToUnauthenticatedClientsPatch(
         persistent_data::SessionStore::getInstance().getAuthMethodsConfig();
 
     // Change the settings
+    // 修改设置。
     authMethodsConfig.tlsStrict = !respondToUnauthenticatedClients;
 
     // Write settings to disk
+    // 将设置写入磁盘。
     persistent_data::getConfig().writeData();
 
     // Trigger a reload, to apply the new settings to new connections
+    // 触发重新加载，使新设置应用到新的连接。
     app.loadCertificate();
 }
 
@@ -1817,6 +1940,7 @@ inline void handleAccountCollectionGet(
     dbus::utility::getManagedObjects(
         "xyz.openbmc_project.User.Manager", path,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, thisUser, effectiveUserPrivileges](
             const boost::system::error_code& ec,
             const dbus::utility::ManagedObjectType& users) {
@@ -1851,6 +1975,10 @@ inline void handleAccountCollectionGet(
                 // Users without ConfigureUsers, only see their own
                 // account. Users with ConfigureUsers, see all
                 // accounts.
+                // Redfish 规范已作如下澄清：
+                // https://redfishforum.com/thread/281/manageraccountcollection-change-allows-account-enumeration
+                // 没有 ConfigureUsers 权限的用户只能看到自己的账户。
+                // 拥有 ConfigureUsers 权限的用户可以看到所有账户。
                 if (userCanSeeAllAccounts ||
                     (thisUser == user && userCanSeeSelf))
                 {
@@ -1882,6 +2010,9 @@ inline void processAfterCreateUser(
         // created, but the password set
         // failed.Something is wrong, so delete the user
         // that we've already created
+        // 此时用户已创建，但密码设置失败。
+        // 出现了问题，因此需要删除
+        // 刚刚创建的用户。
         sdbusplus::object_path tempObjPath(rootUserDbusPath);
         tempObjPath /= username;
         const std::string userPath(tempObjPath);
@@ -1889,6 +2020,7 @@ inline void processAfterCreateUser(
         dbus::utility::async_method_call(
             asyncResp,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [asyncResp, password](const boost::system::error_code& ec3) {
                 if (ec3)
                 {
@@ -1897,6 +2029,7 @@ inline void processAfterCreateUser(
                 }
 
                 // If password is invalid
+                // 如果密码无效
                 messages::propertyValueFormatError(asyncResp->res, nullptr,
                                                    "Password");
             },
@@ -1931,6 +2064,7 @@ inline void processAfterGetAllGroups(
     dbus::utility::DBusPropertiesMap userProps;
 
     // If user specified account types then convert them to unix user groups
+    // 如果用户指定了账户类型，则将其转换为 UNIX 用户组。
     if (userCreateProps.accountTypes)
     {
         if (!getUserGroupFromAccountType(asyncResp->res,
@@ -1939,6 +2073,7 @@ inline void processAfterGetAllGroups(
         {
             // Problem in mapping Account Types to User Groups, Error already
             // logged.
+            // 账户类型到用户组的映射出现问题，错误已记录。
             return;
         }
     }
@@ -1947,6 +2082,7 @@ inline void processAfterGetAllGroups(
     {
         // If user specified the account type then only accept groups which are
         // in the account types group list.
+        // 如果用户指定了账户类型，则只接受账户类型组列表中的组。
         if (!accountTypeUserGroups.empty())
         {
             bool found = false;
@@ -1967,6 +2103,8 @@ inline void processAfterGetAllGroups(
         // Console access is provided to the user who is a member of
         // hostconsole group and has a administrator role. So, set
         // hostconsole group only for the administrator.
+        // 只有属于 hostconsole 组且具有管理员角色的用户才可获得控制台访问权限。
+        // 因此，仅为管理员设置 hostconsole 组。
         if ((grp == "hostconsole") && (userCreateProps.roleId != "priv-admin"))
         {
             if (!accountTypeUserGroups.empty())
@@ -1983,6 +2121,8 @@ inline void processAfterGetAllGroups(
 
     // Make sure user specified groups are valid. This is internal error because
     // it some inconsistencies between user manager and bmcweb.
+    // 确保用户指定的组有效。这是内部错误，
+    // 因为 user manager 与 bmcweb 之间存在不一致。
     if (!accountTypeUserGroups.empty() &&
         accountTypeUserGroups.size() != userGroups.size())
     {
@@ -2008,6 +2148,7 @@ inline void processAfterGetAllGroups(
     {
         // value for CreateUser2 indicating that password expiration is not
         // specified
+        // CreateUser2 中表示该密码未指定过期时间的值
         userProps.emplace_back(
             "xyz.openbmc_project.User.Manager.UserProperty.PasswordExpiration",
             std::numeric_limits<uint64_t>::max());
@@ -2073,10 +2214,12 @@ inline void handleAccountCollectionPost(
     userCreateProps.enabled = enabledJson.value_or(true);
 
     // Reading AllGroups property
+    // 读取 AllGroups 属性
     dbus::utility::getProperty<std::vector<std::string>>(
         "xyz.openbmc_project.User.Manager", "/xyz/openbmc_project/user",
         "xyz.openbmc_project.User.Manager", "AllGroups",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, username, password{std::move(password)},
          userCreateProps](const boost::system::error_code& ec,
                           const std::vector<std::string>& allGroupsList) {
@@ -2128,6 +2271,7 @@ inline void handleAccountGet(
     if constexpr (BMCWEB_INSECURE_DISABLE_AUTH)
     {
         // If authentication is disabled, there are no user accounts
+        // 如果认证被禁用，则不存在用户账户。
         messages::resourceNotFound(asyncResp->res, "ManagerAccount",
                                    accountName);
         return;
@@ -2144,6 +2288,10 @@ inline void handleAccountGet(
         // modify a user that isn't them.  We need to verify that they
         // have permissions to modify other users, so re-run the auth
         // check with the same permissions, minus ConfigureSelf.
+        // 此时已确定用户试图修改其他用户的账户。
+        // 我们需要验证其是否有权限修改其他用户，
+        // 因此重新执行权限检查，
+        // 但去掉 ConfigureSelf 权限。
         Privileges effectiveUserPrivileges =
             redfish::getUserPrivileges(*req.session);
         Privileges requiredPermissionsToChangeNonSelf = {"ConfigureUsers",
@@ -2161,6 +2309,7 @@ inline void handleAccountGet(
     dbus::utility::getManagedObjects(
         "xyz.openbmc_project.User.Manager", path,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          accountName](const boost::system::error_code& ec,
                       const dbus::utility::ManagedObjectType& users) {
@@ -2233,6 +2382,7 @@ inline void handleAccountGet(
                     asyncResp->res.jsonValue["Locked"] = *userLocked;
                     nlohmann::json::array_t allowed;
                     // can only unlock accounts
+                    // 只能解锁账户。
                     allowed.emplace_back("false");
                     asyncResp->res.jsonValue["Locked@Redfish.AllowableValues"] =
                         std::move(allowed);
@@ -2282,6 +2432,7 @@ inline void handleAccountGet(
 
                     // default value indicating that password expiration is not
                     // specified
+                    // 表示未指定密码过期时间的默认值
                     if (passwordExpiration &&
                         (*passwordExpiration !=
                          std::numeric_limits<uint64_t>::max()))
@@ -2351,11 +2502,13 @@ inline void handleAccountDelete(
     if constexpr (BMCWEB_INSECURE_DISABLE_AUTH)
     {
         // If authentication is disabled, there are no user accounts
+        // 如果认证被禁用，则不存在用户账户。
         messages::resourceNotFound(asyncResp->res, "ManagerAccount", username);
         return;
     }
 
     // Do not allow the removal of the own user
+    // 不允许删除自己的用户账户。
     if (username == req.session->username)
     {
         messages::insufficientPrivilege(asyncResp->res);
@@ -2388,6 +2541,7 @@ inline void handleAccountPatch(
     if constexpr (BMCWEB_INSECURE_DISABLE_AUTH)
     {
         // If authentication is disabled, there are no user accounts
+        // 如果认证被禁用，则不存在用户账户。
         messages::resourceNotFound(asyncResp->res, "ManagerAccount", username);
         return;
     }
@@ -2416,6 +2570,7 @@ inline void handleAccountPatch(
     if (userHasConfigureUsers)
     {
         // Users with ConfigureUsers can modify for all users
+        // 拥有 ConfigureUsers 权限的用户可以修改所有用户。
         if (!json_util::readJsonPatch(                    //
                 req, asyncResp->res,                      //
                 "AccountTypes", accountTypes,             //
@@ -2433,6 +2588,7 @@ inline void handleAccountPatch(
     else
     {
         // ConfigureSelf accounts can only modify their own account
+        // ConfigureSelf 账户只能修改自己的账户。
         if (!userSelf)
         {
             messages::insufficientPrivilege(asyncResp->res);
@@ -2440,6 +2596,7 @@ inline void handleAccountPatch(
         }
 
         // ConfigureSelf accounts can only modify their password
+        // ConfigureSelf 账户只能修改自己的密码。
         if (!json_util::readJsonPatch(req, asyncResp->res, "Password",
                                       password))
         {
@@ -2452,6 +2609,10 @@ inline void handleAccountPatch(
     // updating user properties other then username. If username
     // provided doesn't match the URI, then we are treating this as
     // user rename request.
+    // 如果 PATCH 方法中未提供用户名，或其与 URI 中的用户名一致，
+    // 则视为更新用户名以外的用户属性。
+    // 如果提供的用户名与 URI 不一致，
+    // 则视为重命名用户的请求。
     if (!newUserName || (newUserName.value() == username))
     {
         updateUserProperties(asyncResp, username, password, enabled, roleId,
@@ -2557,6 +2718,8 @@ inline void requestAccountServiceRoutes(App& app)
         // TODO this privilege should be using the generated endpoints, but
         // because of the special handling of ConfigureSelf, it's not able to
         // yet
+        // TODO：此权限本应使用生成的端点，但由于 ConfigureSelf 的特殊处理，
+        // 目前还无法做到。
         .privileges({{"ConfigureUsers"}, {"ConfigureSelf"}})
         .methods(boost::beast::http::verb::patch)(
             std::bind_front(handleAccountPatch, std::ref(app)));

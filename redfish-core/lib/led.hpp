@@ -67,6 +67,7 @@ inline void afterGetLocationIndicatorBlink(
     }
 
     // Blinking ON, no need to check enclosure_identify assert.
+    // 正在闪烁（Blinking）开启，无需检查 enclosure_identify 断言。
     if (!ec && blinking)
     {
         asyncResp->res.jsonValue["LocationIndicatorActive"] = true;
@@ -75,6 +76,8 @@ inline void afterGetLocationIndicatorBlink(
 
     // Some systems may not have enclosure_identify_blink object so
     // proceed to get enclosure_identify state.
+    // 某些系统可能没有 enclosure_identify_blink 对象，
+    // 因此继续获取 enclosure_identify 状态。
     dbus::utility::getProperty<bool>(
         "xyz.openbmc_project.LED.GroupManager",
         "/xyz/openbmc_project/led/groups/enclosure_identify",
@@ -89,6 +92,9 @@ inline void afterGetLocationIndicatorBlink(
  *
  * @return None.
  */
+/* @brief 通过 dbus 检索 identify system led group 属性。
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @return 无。 */
 inline void getSystemLocationIndicatorActive(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -109,6 +115,9 @@ inline void afterSetLocationIndicatorBlink(
         // Some systems may not have enclosure_identify_blink object so
         // lets set enclosure_identify state also if
         // enclosure_identify_blink failed
+        // 某些系统可能没有 enclosure_identify_blink 对象，
+        // 因此如果 enclosure_identify_blink 失败，
+        // 也一并设置 enclosure_identify 状态。
         setDbusProperty(
             asyncResp, "LocationIndicatorActive",
             "xyz.openbmc_project.LED.GroupManager",
@@ -126,6 +135,10 @@ inline void afterSetLocationIndicatorBlink(
  *
  * @return None.
  */
+/* @brief 设置 identify system led group 属性。
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @param[in] ledState 从请求传入的 LED 状态。
+ * @return 无。 */
 inline void setSystemLocationIndicatorActive(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp, const bool ledState)
 {
@@ -150,6 +163,7 @@ inline void handleLedGroupSubtree(
     if (ec)
     {
         // Callback will handle the error
+        // 回调将处理该错误。
         callback(ec, "", "");
         return;
     }
@@ -157,6 +171,7 @@ inline void handleLedGroupSubtree(
     if (subtree.empty())
     {
         // Callback will handle the error
+        // 回调将处理该错误。
         BMCWEB_LOG_DEBUG(
             "No LED group associated with the specified object path: {}",
             objPath);
@@ -167,6 +182,7 @@ inline void handleLedGroupSubtree(
     if (subtree.size() > 1)
     {
         // Callback will handle the error
+        // 回调将处理该错误。
         BMCWEB_LOG_DEBUG(
             "More than one LED group associated with the object {}: {}",
             objPath, subtree.size());
@@ -238,6 +254,7 @@ inline void getLedState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     if (ledGroupPath.empty() || service.empty())
     {
         // No LED group associated, not an error
+        // 没有关联的 LED 组，这不是错误。
         return;
     }
 
@@ -256,6 +273,11 @@ inline void getLedState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @param[in] callback  to pass value
  * @return None.
  */
+/* @brief 通过 dbus 检索 identify led group 属性。
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @param[in] objPath PIM 上的对象路径。
+ * @param[in] callback 用于传递值的回调。
+ * @return 无。 */
 
 inline void getLocationIndicatorActive(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -318,6 +340,11 @@ inline void setLedState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  *
  * @return None.
  */
+/* @brief 设置 identify led group 属性。
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @param[in] objPath PIM 上的对象路径。
+ * @param[in] ledState 从请求传入的 LED 状态。
+ * @return 无。 */
 inline void setLocationIndicatorActive(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& objPath, bool ledState)

@@ -98,12 +98,16 @@ void getSubTreePaths(
 {
     dbus::utility::async_method_call(
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda
         [callback = std::move(callback)](
             const boost::system::error_code& ec,
             const MapperGetSubTreePathsResponse& subtreePaths) {
             // Treat io_error (which means no objects found) as success with
             // empty list, not an error. This is a common case when querying
             // for objects that may not exist (e.g., no certificates installed).
+            // 将 io_error（表示未找到对象）视为成功并返回空列表，
+            // 而不是错误。这在查询可能不存在的对象时是常见情况
+            // （例如未安装任何证书）。
             if (ec && ec.value() == boost::system::errc::io_error)
             {
                 callback(boost::system::errc::make_error_code(
@@ -145,12 +149,16 @@ void getAssociatedSubTreePaths(
 {
     dbus::utility::async_method_call(
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda
         [callback = std::move(callback)](
             const boost::system::error_code& ec,
             const MapperGetSubTreePathsResponse& subtreePaths) {
             // Treat io_error (which means no objects found) as success with
             // empty list, not an error. This is a common case when querying
             // for objects that may not exist.
+            // 将 io_error（表示未找到对象）视为成功并返回空列表，
+            // 而不是错误。这在查询可能不存在的对象时是常见
+            // 情况。
             if (ec && ec.value() == boost::system::errc::io_error)
             {
                 callback(boost::system::errc::make_error_code(
@@ -194,12 +202,16 @@ void getAssociatedSubTreePathsById(
 {
     dbus::utility::async_method_call(
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda
         [callback = std::move(callback)](
             const boost::system::error_code& ec,
             const MapperGetSubTreePathsResponse& subtreePaths) {
             // Treat io_error (which means no objects found) as success with
             // empty list, not an error. This is a common case when querying
             // for objects that may not exist.
+            // 将 io_error（表示未找到对象）视为成功并返回空列表，
+            // 而不是错误。这在查询可能不存在的对象时是常见
+            // 情况。
             if (ec && ec.value() == boost::system::errc::io_error)
             {
                 callback(boost::system::errc::make_error_code(

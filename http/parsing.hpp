@@ -37,6 +37,10 @@ class BmcwebSaxParse : public nlohmann::json::json_sax_t
 // nlohmann documentation. Likely because they don't want to treat it as part of
 // ABI. While not ideal, it is done rather than copy/pasting the code from
 // nlohmann which would be worse.
+// 注意，它位于 nlohmann 的 details 命名空间中，但在
+// nlohmann 文档里有提及。可能是因为他们不想把它当作 ABI
+// 的一部分。虽然并不理想，但这样做总比从 nlohmann
+// 复制粘贴代码要好。
 #if NLOHMANN_JSON_VERSION_MAJOR > 3 ||                                         \
     (NLOHMANN_JSON_VERSION_MAJOR == 3 && NLOHMANN_JSON_VERSION_MINOR >= 12)
     nlohmann::detail::json_sax_dom_parser<
@@ -47,6 +51,7 @@ class BmcwebSaxParse : public nlohmann::json::json_sax_t
 #endif
 
     // Depth counter treating arrays and objects as the same level
+    // 深度计数器，将数组和对象视为同一层级
     int currentDepth = 0;
     constexpr static int maxDepth = 10;
 
@@ -194,6 +199,7 @@ inline std::optional<nlohmann::json> parseStringAsJson(std::string_view body)
 {
     nlohmann::json jsonOut;
     // Arbitrarily limit to 1MB payloads
+    // 任意限制为 1MB 的 payload
     if (body.size() > 1048576U)
     {
         BMCWEB_LOG_WARNING("Request body is too large");

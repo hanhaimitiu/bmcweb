@@ -33,6 +33,10 @@ std::optional<boost::asio::const_buffer> ZstdDecompressor::decompress(
     // appear very small, but decompress to be very large, given that they're
     // highly decompressible. This algorithm assumes that at this time, the
     // whole file will fit in ram.
+    // 注意，此循环容易受到压缩炸弹攻击：它会解压那些看起来
+    // 很小、但因高度可压缩而解压后非常大的数据块。
+    // 此算法假定此时
+    // 整个文件都能放入内存（ram）。
     while (input.pos != input.size)
     {
         constexpr size_t frameSize = 4096;

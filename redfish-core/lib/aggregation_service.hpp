@@ -113,6 +113,7 @@ inline void handleAggregationSourceCollectionGet(
     json["Name"] = "Aggregation Source Collection";
 
     // Query D-Bus for satellite configs and add them to the Members array
+    // 查询 D-Bus 获取卫星（satellite）配置，并将其加入 Members 数组。
     RedfishAggregator::getInstance().getSatelliteConfigs(
         std::bind_front(populateAggregationSourceCollection, asyncResp));
 }
@@ -172,11 +173,16 @@ inline void populateAggregationSource(
     // same "Name".
     // TODO: We should use the "Name" from the satellite config whenever we add
     // support for including it in the data returned in satelliteInfo.
+    // TODO：当我们支持聚合多个卫星 BMC 时，可能需要修改此处。
+    // 否则所有 AggregationSource 资源将具有相同的 "Name"。
+    // TODO：当支持将卫星配置包含在 satelliteInfo 返回的数据中时，
+    // 应使用其中的 "Name"。
     asyncResp->res.jsonValue["Name"] = "Aggregation source";
     std::string hostName(sat->second.encoded_origin());
     asyncResp->res.jsonValue["HostName"] = std::move(hostName);
 
     // Include UserName property, defaulting to null
+    // 包含 UserName 属性，默认值为 null。
     auto& aggregator = RedfishAggregator::getInstance();
     auto it = aggregator.aggregationSources.find(aggregationSourceId);
     if (it != aggregator.aggregationSources.end() &&
@@ -190,6 +196,7 @@ inline void populateAggregationSource(
     }
 
     // The Redfish spec requires Password to be null in responses
+    // Redfish 规范要求响应中的 Password 为 null。
     asyncResp->res.jsonValue["Password"] = nullptr;
 }
 
@@ -205,6 +212,7 @@ inline void handleAggregationSourceGet(
 
     // Query D-Bus for satellite config corresponding to the specified
     // AggregationSource
+    // 查询 D-Bus 获取指定 AggregationSource 对应的卫星配置。
     RedfishAggregator::getInstance().getSatelliteConfigs(std::bind_front(
         populateAggregationSource, aggregationSourceId, asyncResp));
 }
@@ -223,6 +231,7 @@ inline void handleAggregationSourceHead(
         "</redfish/v1/JsonSchemas/AggregationService/AggregationSource.json>; rel=describedby");
 
     // Needed to prevent unused variable error
+    // 用于避免未使用变量错误。
     BMCWEB_LOG_DEBUG("Added link header to response from {}",
                      aggregationSourceId);
 }
@@ -291,6 +300,7 @@ inline void handleAggregationSourceCollectionPost(
     crow::utility::setPortDefaults(*url);
 
     // Check for duplicate hostname
+    // 检查主机名是否重复。
     auto& aggregator = RedfishAggregator::getInstance();
     for (const auto& [existingPrefix, existingSource] :
          aggregator.aggregationSources)
@@ -304,6 +314,7 @@ inline void handleAggregationSourceCollectionPost(
     }
 
     // Validate username and password
+    // 校验用户名和密码。
     if (!validateCredentialField(username, "UserName", asyncResp->res))
     {
         return;
@@ -332,14 +343,17 @@ inline void afterGetSatelliteConfigsForPatch(
     const std::unordered_map<std::string, boost::urls::url>& satelliteInfo)
 {
     // Check if it exists in Entity Manager sources
+    // 检查其是否存在于 Entity Manager 的配置源中。
     if (satelliteInfo.contains(aggregationSourceId))
     {
         // Source exists but is read-only (from Entity Manager)
+        // 源存在但为只读（来自 Entity Manager）。
         messages::propertyNotWritable(asyncResp->res, "UserName");
         return;
     }
 
     // Doesn't exist anywhere
+    // 在任何地方都不存在。
     messages::resourceNotFound(asyncResp->res, "AggregationSource",
                                aggregationSourceId);
 }
@@ -364,6 +378,7 @@ inline void handleAggregationSourcePatch(
     }
 
     // Validate username and password
+    // 校验用户名和密码。
     if (!validateCredentialField(username, "UserName", asyncResp->res))
     {
         return;
@@ -374,11 +389,13 @@ inline void handleAggregationSourcePatch(
     }
 
     // Check if the aggregation source exists in writable sources
+    // 检查该聚合源是否存在于可写的配置源中。
     auto& aggregator = RedfishAggregator::getInstance();
     auto it = aggregator.aggregationSources.find(aggregationSourceId);
     if (it != aggregator.aggregationSources.end())
     {
         // Update only the fields that were provided
+        // 只更新提供的字段。
         if (username.has_value())
         {
             it->second.username = *username;
@@ -394,6 +411,7 @@ inline void handleAggregationSourcePatch(
 
     // Not in writable sources, query D-Bus to check if it exists in
     // Entity Manager sources
+    // 不在可写配置源中，查询 D-Bus 检查其是否存在于 Entity Manager 的配置源中。
     RedfishAggregator::getInstance().getSatelliteConfigs(std::bind_front(
         afterGetSatelliteConfigsForPatch, asyncResp, aggregationSourceId));
 }

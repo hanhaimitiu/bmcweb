@@ -59,6 +59,8 @@ extern "C"
 #pragma clang diagnostic ignored "-Wreserved-identifier"
 // This is a hack to workaround profiler data not being written on shutdown,
 // because libfuzzer steals the signal handler.
+// 这是一个 hack，用于绕过退出时性能分析数据未被写入的问题，
+// 因为 libfuzzer 抢占了信号处理函数。
 int __llvm_profile_write_file(void) __attribute__((weak));
 #pragma clang diagnostic pop
 
@@ -95,6 +97,8 @@ void runUntilDone(boost::asio::io_context& io, crow::TestStream& clientSide)
         }
         // If we've run out of work to do, close the connection and see if more
         // work happens before we consider this done.
+        // 如果没有更多工作要做，则关闭连接，并在认为完成之前
+        // 查看是否还有新的工作出现。
         if (!closed)
         {
             clientSide.close();
@@ -110,6 +114,8 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     // Set the logging level to error. If the code is correct, this should never
     // log anything, although we don't test that at this moment.
+    // 将日志级别设置为 error。如果代码正确，则不应记录
+    // 任何内容，尽管目前我们不对此进行测试。
     crow::getBmcwebCurrentLoggingLevel() = crow::LogLevel::Error;
     boost::asio::io_context io;
 

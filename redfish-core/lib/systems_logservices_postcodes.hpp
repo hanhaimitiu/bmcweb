@@ -63,6 +63,7 @@ inline void handleSystemsLogServicesPostCodesGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -112,6 +113,7 @@ inline void handleSystemsLogServicesPostCodesPost(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -125,13 +127,16 @@ inline void handleSystemsLogServicesPostCodesPost(
     BMCWEB_LOG_DEBUG("Do delete all postcodes entries.");
 
     // Make call to post-code service to request clear all
+    // 调用 post-code 服务以请求清除全部
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec) {
             if (ec)
             {
                 // TODO Handle for specific error code
+                // TODO：处理特定的错误码
                 BMCWEB_LOG_ERROR("doClearPostCodes resp_handler got error {}",
                                  ec);
                 asyncResp->res.result(
@@ -156,6 +161,12 @@ inline void handleSystemsLogServicesPostCodesPost(
  *
  * @return bool true if the parsing is successful, false the parsing fails
  */
+/* @brief 解析 post code ID 并获取当前值和索引值
+ *        例如：postCodeID=B1-2，currentValue=1，index=2
+ * @param[in]  postCodeID     Post Code ID
+ * @param[out] currentValue   当前值
+ * @param[out] index          索引值
+ * @return bool 解析成功返回 true，解析失败返回 false */
 inline bool parsePostCode(std::string_view postCodeID, uint64_t& currentValue,
                           uint16_t& index)
 {
@@ -199,6 +210,7 @@ static bool fillPostCodeEntry(
     const uint64_t skip = 0, const uint64_t top = 0)
 {
     // Get the Message from the MessageRegistry
+    // 从 MessageRegistry（消息注册表）获取 Message
     const registries::Message* message =
         registries::getMessage("OpenBMC.0.2.BIOSPOSTCode");
     if (message == nullptr)
@@ -231,6 +243,8 @@ static bool fillPostCodeEntry(
 
         // skip if no specific codeIndex is specified and currentCodeIndex does
         // not fall between top and skip
+        // 如果未指定具体的 codeIndex，且 currentCodeIndex 不在
+        // top 和 skip 之间，则跳过
         if ((codeIndex == 0) &&
             (currentCodeIndex <= skip || currentCodeIndex > top))
         {
@@ -239,28 +253,40 @@ static bool fillPostCodeEntry(
 
         // skip if a specific codeIndex is specified and does not match the
         // currentIndex
+        // 如果指定了具体的 codeIndex，且与 currentIndex
+        // 不匹配，则跳过
         if ((codeIndex > 0) && (currentCodeIndex != codeIndex))
         {
             // This is done for simplicity. 1st entry is needed to calculate
             // time offset. To improve efficiency, one can get to the entry
             // directly (possibly with flatmap's nth method)
+            // 这样做是为了简单起见。计算时间偏移需要第一条记录。
+            // 为了提高效率，可以直接定位到该记录
+            // （或许可以用 flatmap 的 nth 方法）
             continue;
         }
 
         // currentCodeIndex is within top and skip or equal to specified code
         // index
+        // currentCodeIndex 在 top 和 skip 之间，或等于指定的
+        // code index
 
         // Get the Created time from the timestamp
+        // 从时间戳获取 Created（创建）时间
         std::string entryTimeStr;
         entryTimeStr = redfish::time_utils::getDateTimeUintUs(usecSinceEpoch);
 
         // assemble messageArgs: BootIndex, TimeOffset(100us), PostCode(hex)
+        // 组装 messageArgs：BootIndex、TimeOffset（100us）、PostCode（十六进制）
         std::ostringstream timeOffsetStr;
         // Set Fixed -Point Notation
+        // 设置定点记数法（fixed-point）
         timeOffsetStr << std::fixed;
         // Set precision to 4 digits
+        // 设置精度为 4 位小数
         timeOffsetStr << std::setprecision(4);
         // Add double to stream
+        // 将 double 值写入流
         timeOffsetStr << static_cast<double>(usTimeOffset) / 1000 / 1000;
 
         std::string bootIndexStr = std::to_string(bootIndex);
@@ -280,6 +306,7 @@ static bool fillPostCodeEntry(
         }
 
         // Get Severity template from message registry
+        // 从消息注册表获取 Severity（严重级别）模板
         std::string severity;
         if (message != nullptr)
         {
@@ -287,6 +314,7 @@ static bool fillPostCodeEntry(
         }
 
         // Format entry
+        // 格式化条目
         nlohmann::json::object_t bmcLogEntry;
         bmcLogEntry["@odata.type"] = "#LogEntry.v1_9_0.LogEntry";
         bmcLogEntry["@odata.id"] = boost::urls::format(
@@ -311,6 +339,8 @@ static bool fillPostCodeEntry(
 
         // codeIndex is only specified when querying single entry, return only
         // that entry in this case
+        // codeIndex 仅在查询单条记录时指定，这种情况下
+        // 只返回该条记录
         if (codeIndex != 0)
         {
             asyncResp->res.jsonValue.update(bmcLogEntry);
@@ -322,6 +352,7 @@ static bool fillPostCodeEntry(
     }
 
     // Return value is always false when querying multiple entries
+    // 查询多条记录时返回值始终为 false
     return false;
 }
 
@@ -334,6 +365,7 @@ inline void getPostCodeForEntry(
     if (!parsePostCode(entryId, codeIndex, bootIndex))
     {
         // Requested ID was not found
+        // 未找到请求的 ID
         messages::resourceNotFound(asyncResp->res, "LogEntry", entryId);
         return;
     }
@@ -341,6 +373,7 @@ inline void getPostCodeForEntry(
     if (bootIndex == 0 || codeIndex == 0)
     {
         // 0 is an invalid index
+        // 0 是无效的索引
         messages::resourceNotFound(asyncResp->res, "LogEntry", entryId);
         return;
     }
@@ -348,6 +381,7 @@ inline void getPostCodeForEntry(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, entryId, bootIndex,
          codeIndex](const boost::system::error_code& ec,
                     const boost::container::flat_map<
@@ -386,6 +420,7 @@ inline void getPostCodeForBoot(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, bootIndex, bootCount, entryCount, skip,
          top](const boost::system::error_code& ec,
               const boost::container::flat_map<
@@ -418,6 +453,7 @@ inline void getPostCodeForBoot(
             }
 
             // continue to previous bootIndex
+            // 继续处理上一个 bootIndex
             if (bootIndex < bootCount)
             {
                 getPostCodeForBoot(asyncResp,
@@ -478,6 +514,7 @@ inline void handleSystemsLogServicesPostCodesEntriesGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -523,6 +560,7 @@ inline void handleSystemsLogServicesPostCodesEntriesEntryAdditionalDataGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -545,6 +583,7 @@ inline void handleSystemsLogServicesPostCodesEntriesEntryAdditionalDataGet(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, postCodeID, currentValue](
             const boost::system::error_code& ec,
             const std::vector<std::tuple<std::vector<uint8_t>,
@@ -605,6 +644,7 @@ inline void handleSystemsLogServicesPostCodesEntriesEntryGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;

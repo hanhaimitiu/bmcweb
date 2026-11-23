@@ -18,16 +18,22 @@ namespace x3 = boost::spirit::x3;
 
 // Represents a string literal
 // (ie 'Enabled')
+// 表示一个字符串字面量
+// （如 'Enabled'）
 struct QuotedString : std::string
 {};
 
 // Represents a string that matches an identifier
 // Looks similar to a json pointer
+// 表示一个匹配标识符的字符串
+// 看起来类似 json pointer
 struct UnquotedString : std::string
 {};
 
 // Because some program elements can reference BooleanOp recursively,
 // they need to be forward declared so that x3::forward_ast can be used
+// 因为某些程序元素可以递归引用 BooleanOp，
+// 所以需要前向声明以便使用 x3::forward_ast
 struct LogicalAnd;
 struct Comparison;
 using BooleanOp =
@@ -45,6 +51,7 @@ enum class ComparisonOpEnum
 };
 
 // An expression that has been negated with not
+// 被 not 取反的表达式
 struct LogicalNot
 {
     std::optional<char> isLogicalNot;

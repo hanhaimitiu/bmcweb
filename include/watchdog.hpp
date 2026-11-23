@@ -36,6 +36,7 @@ class ServiceWatchdog
             return;
         }
         // Pet the watchdog N times faster than required.
+        // 以所需频率的 N 倍喂狗（pet watchdog）。
         uint64_t petRatio = 4;
         watchdogTime = std::chrono::duration<uint64_t, std::micro>(
             usecondTimeout / petRatio);

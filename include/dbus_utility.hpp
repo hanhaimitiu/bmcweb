@@ -70,10 +70,12 @@ using ManagedObjectType =
     std::vector<std::pair<sdbusplus::object_path, DBusInterfacesMap>>;
 
 // Map of service name to list of interfaces
+// 服务名到接口列表的映射
 using MapperServiceMap =
     std::vector<std::pair<std::string, std::vector<std::string>>>;
 
 // Map of object paths to MapperServiceMaps
+// 对象路径到 MapperServiceMaps 的映射
 using MapperGetSubTreeResponse =
     std::vector<std::pair<std::string, MapperServiceMap>>;
 

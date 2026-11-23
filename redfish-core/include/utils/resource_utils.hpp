@@ -26,6 +26,7 @@ namespace resource_utils
  * @brief Fetches resource status.health from DBus interfaces
  *
  */
+/* @brief 从 DBus 接口获取资源的 status.health */
 inline void determineResourceHealth(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const nlohmann::json::json_pointer& jsonPtr, bool functional)
@@ -51,6 +52,7 @@ inline void determineResourceState(
     BMCWEB_LOG_DEBUG("determineResourceState");
 
     // Absent takes priority over unavailable
+    // Absent 优先于 unavailable
     if (!present)
     {
         asyncResp->res.jsonValue[jsonPtr]["Status"]["State"] =
@@ -103,6 +105,7 @@ inline void getStatusPresentState(
             return;
         }
         // Interface is missing, default to true for Enabled
+        // 缺少接口时，Enabled 默认为 true
         present = true;
     }
     dbus::utility::getProperty<bool>(
@@ -134,6 +137,13 @@ inline void getResourceState(
  * @param[in] path D-Bus object path
  * @param[in] jsonPtr JSON pointer to where the parent JSON object is
  */
+/* @brief 获取第一个实现 Inventory.Item 或
+ *        State.Decorator.Availability 的服务的 status.state。若无服务
+ *        实现这些接口，则默认为 Status.State Enabled
+ * @param[in] asyncResp 要更新的 AsyncResp 对象
+ * @param[in] services 服务到接口的映射
+ * @param[in] path D-Bus 对象路径
+ * @param[in] jsonPtr 指向父 JSON 对象的 JSON pointer */
 inline void getResourceState(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const dbus::utility::MapperServiceMap& services, const std::string& path,
@@ -170,6 +180,7 @@ inline void afterGetResourceHealth(
             return;
         }
         // Interface missing, default to OK
+        // 缺少接口时，默认为 OK
         functional = true;
     }
     determineResourceHealth(asyncResp, jsonPtr, functional);
@@ -181,6 +192,9 @@ inline void afterGetResourceHealth(
  * Queries interface:
  * - xyz.openbmc_project.State.Decorator.OperationalStatus::Functional
  */
+/* @brief 获取资源 status.health 的状态
+ * 查询接口：
+ * - xyz.openbmc_project.State.Decorator.OperationalStatus::Functional */
 inline void getResourceHealth(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& service, const std::string& path,
@@ -202,6 +216,13 @@ inline void getResourceHealth(
  * @param[in] path D-Bus object path
  * @param[in] jsonPtr JSON pointer to where the parent JSON object is
  */
+/* @brief 获取第一个实现 State.Decorator.OperationalStatus 的服务的
+ *        status.health。若没有服务实现该接口，则默认为
+ *        Status.Health OK
+ * @param[in] asyncResp 要更新的 AsyncResp 对象
+ * @param[in] services 服务到接口的映射
+ * @param[in] path D-Bus 对象路径
+ * @param[in] jsonPtr 指向父 JSON 对象的 JSON pointer */
 inline void getResourceHealth(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const dbus::utility::MapperServiceMap& services, const std::string& path,

@@ -16,6 +16,7 @@ using ::testing::ElementsAreArray;
 TEST(AlphaNum, NumberTests)
 {
     // testcases for the algorithm
+    // 该算法的测试用例
     EXPECT_EQ(alphanumComp("", ""), 0);
     EXPECT_LT(alphanumComp("", "a"), 0);
     EXPECT_GT(alphanumComp("a", ""), 0);

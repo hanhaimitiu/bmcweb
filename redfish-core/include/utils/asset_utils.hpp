@@ -65,6 +65,7 @@ inline void extractAssetInfo(
         assetData["SerialNumber"] = *serialNumber;
     }
     // SparePartNumber is optional on D-Bus so skip if it is empty
+    // SparePartNumber 在 D-Bus 上是可选的，因此为空时跳过
     if (includeSparePartNumber && sparePartNumber != nullptr &&
         !sparePartNumber->empty())
     {

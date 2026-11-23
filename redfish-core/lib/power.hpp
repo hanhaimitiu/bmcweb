@@ -126,10 +126,14 @@ inline void afterPowerCapSettingGet(
 
     // Put multiple "sensors" into a single PowerControl, 0,
     // so only create the first one
+    // 将多个 "sensor" 放入一个 PowerControl（索引 0），
+    // 因此只创建第一个。
     if (tempArray.empty())
     {
         // Mandatory properties odata.id and MemberId
         // A warning without a odata.type
+        // 必需属性 odata.id 和 MemberId。
+        // 缺少 odata.type 时给出警告。
         nlohmann::json::object_t powerControl;
         powerControl["@odata.type"] = "#Power.v1_0_0.PowerControl";
         powerControl["@odata.id"] =
@@ -190,6 +194,8 @@ inline void afterPowerCapSettingGet(
     // LimitException is Mandatory attribute as per OCP
     // Baseline Profile - v1.0.0, so currently making it
     // "NoAction" as default value to make it OCP Compliant.
+    // 根据 OCP Baseline Profile - v1.0.0，LimitException 是必需属性，
+    // 因此目前将其默认值设为 "NoAction"，以满足 OCP 合规要求。
     sensorJson["PowerLimit"]["LimitException"] =
         power::PowerLimitException::NoAction;
 
@@ -197,6 +203,7 @@ inline void afterPowerCapSettingGet(
     {
         // Redfish specification indicates PowerLimit should
         // be null if the limit is not enabled.
+        // Redfish 规范指出，如果未启用限制，PowerLimit 应为 null。
         sensorJson["PowerLimit"]["LimitInWatts"] =
             powerCap * std::pow(10, scale);
     }
@@ -283,6 +290,8 @@ inline void handleChassisPowerGet(
     // for the chassis that implements the Chassis inventory item.
     // This prevents things like power supplies providing the
     // chassis power limit
+    // 该回调验证只对实现了 Chassis inventory item 的机箱提供电源限制。
+    // 这可以防止诸如电源（power supplies）提供机箱电源限制之类的情况。
 
     dbus::utility::getSubTreePaths(
         "/xyz/openbmc_project/inventory", 0, chassisInterfaces,

@@ -228,13 +228,16 @@ TEST(FillSensorStatus, Success)
     auto properties = dbus::utility::DBusPropertiesMap();
 
     // Cases where no properties specified
+    // 未指定任何属性的情况
 
     // Default status
+    // 默认状态
     fillSensorStatus(properties, sensorJson, nullptr);
     EXPECT_EQ(sensorJson["Status"]["State"], resource::State::Enabled);
     EXPECT_EQ(sensorJson["Status"]["Health"], resource::Health::OK);
 
     // Existing health retained
+    // 保留已有的 health
     sensorJson.clear();
     sensorJson["Status"]["Health"] = resource::Health::Warning;
     fillSensorStatus(properties, sensorJson, nullptr);
@@ -242,6 +245,7 @@ TEST(FillSensorStatus, Success)
     EXPECT_EQ(sensorJson["Status"]["Health"], resource::Health::Warning);
 
     // Existing health retained
+    // 保留已有的 health
     sensorJson.clear();
     sensorJson["Status"]["Health"] = resource::Health::Critical;
     fillSensorStatus(properties, sensorJson, nullptr);
@@ -249,6 +253,7 @@ TEST(FillSensorStatus, Success)
     EXPECT_EQ(sensorJson["Status"]["Health"], resource::Health::Critical);
 
     // Cases with different properties
+    // 带有不同属性的情况
 
     properties = {
         {"Available", true},
@@ -357,6 +362,7 @@ TEST(FillSensorIdentity, Success)
     }
 
     // Add properties, all are correct
+    // 添加属性，全部正确
     isExcerpt = true;
     unit = "/Reading"_json_pointer;
     properties = {
@@ -407,6 +413,7 @@ TEST(FillSensorIdentity, Success)
     EXPECT_EQ(unit.to_string(), "/Reading");
 
     // Add invalid properties
+    // 添加无效属性
     properties = {
         {"Implementation",
          "xyz.openbmc_project.Sensor.Type.ImplementationType.BADTYPE"},
@@ -621,6 +628,9 @@ TEST(MapPropertiesBySubnode, Success)
          * Remove these properties and keep the rest for validation of
          * the results.
          */
+        /* fan_tach 在其他地方设置了 ReadingRangeMax 和 ReadingRangeMin。
+         * 移除这些属性，保留其余属性以用于
+         * 验证结果。 */
         expectedProps = {
             valueElement,
             {"xyz.openbmc_project.Sensor.Threshold.Warning", "WarningHigh",
@@ -719,6 +729,7 @@ TEST(GetFanPercent, Success)
     percentValue.reset();
 
     // Check for expected rounding
+    // 检查是否符合预期的舍入
     value = 200;
     maxValue = 300;
     minValue = 0;

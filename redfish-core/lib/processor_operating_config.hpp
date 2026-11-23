@@ -40,11 +40,13 @@ namespace redfish
 {
 
 // OperatingConfig D-Bus Types
+// OperatingConfig 的 D-Bus 类型。
 using TurboProfileProperty = std::vector<std::tuple<uint32_t, size_t>>;
 using BaseSpeedPrioritySettingsProperty =
     std::vector<std::tuple<uint32_t, std::vector<uint32_t>>>;
 // uint32_t and size_t may or may not be the same type, requiring a dedup'd
 // variant
+// uint32_t 和 size_t 可能是也可能不是同一类型，因此需要使用去重后的 variant。
 
 inline void afterGetOperatingConfigData(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -143,6 +145,10 @@ inline void afterGetOperatingConfigData(
  * @param[in]       service     D-Bus service name to query.
  * @param[in]       objPath     D-Bus object to query.
  */
+/* 请求给定 D-Bus 对象的所有属性，并填充 Redfish OperatingConfig 响应中的相关条目。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] service 要查询的 D-Bus 服务名。
+ * @param[in] objPath 要查询的 D-Bus 对象。 */
 inline void getOperatingConfigData(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& service, const std::string& objPath)
@@ -175,9 +181,12 @@ inline void afterGetOperatingConfigCollection(
         // Not expected that there will be multiple matching
         // CPU objects, but if there are just use the first
         // one.
+        // 预计不会有多个匹配的 CPU 对象，
+        // 但如果有，就使用第一个。
 
         // Use the common search routine to construct the
         // Collection of all Config objects under this CPU.
+        // 使用通用搜索例程来构造该 CPU 下所有 Config 对象的集合。
         constexpr std::array<std::string_view, 1> interface{
             "xyz.openbmc_project.Inventory.Item.Cpu.OperatingConfig"};
         collection_util::getCollectionMembers(
@@ -203,6 +212,7 @@ inline void handleOperatingConfigCollectionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -223,6 +233,7 @@ inline void handleOperatingConfigCollectionGet(
 
     // First find the matching CPU object so we know how to
     // constrain our search for related Config objects.
+    // 首先找到匹配的 CPU 对象，以便知道如何限定对相关 Config 对象的搜索。
     const std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.Control.Processor.CurrentOperatingConfig"};
     dbus::utility::getSubTreePaths(
@@ -246,6 +257,7 @@ inline void afterGetOperatingConfig(
     for (const auto& [objectPath, serviceMap] : subtree)
     {
         // Ignore any configs without matching cpuX/configY
+        // 忽略任何不匹配 cpuX/configY 的配置。
         if (!objectPath.ends_with(expectedEnding) || serviceMap.empty())
         {
             continue;
@@ -262,6 +274,8 @@ inline void afterGetOperatingConfig(
         // Just use the first implementation of the object - not
         // expected that there would be multiple matching
         // services
+        // 直接使用该对象的第一个实现 ——
+        // 预计不会有多个匹配的服务。
         getOperatingConfigData(asyncResp, serviceMap.begin()->first,
                                objectPath);
         return;
@@ -282,6 +296,7 @@ inline void handleOperationConfigGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -295,6 +310,7 @@ inline void handleOperationConfigGet(
     }
     // Ask for all objects implementing OperatingConfig so we can search
     // for one with a matching name
+    // 请求所有实现 OperatingConfig 的对象，以便搜索名称匹配的对象。
     constexpr std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.Inventory.Item.Cpu.OperatingConfig"};
     dbus::utility::getSubTree("/xyz/openbmc_project/inventory", 0, interfaces,

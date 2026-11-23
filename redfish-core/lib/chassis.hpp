@@ -52,6 +52,7 @@ namespace redfish
 {
 
 // Interfaces that support indicator LED functionality
+// 支持指示灯 LED 功能的接口。
 constexpr std::array<const char*, 3> hasIndicatorLedInterfaces = {
     "xyz.openbmc_project.Inventory.Item.Chassis",
     "xyz.openbmc_project.Inventory.Item.Panel",
@@ -116,6 +117,13 @@ inline chassis::ChassisType translateChassisTypeToRedfish(
  *
  * @return None.
  */
+/* @brief 通过 dbus 检索资源以链接到机箱。
+ * @param[in] asyncResp 用于完成异步调用的共享指针。
+ * @param[in] path 要查找存储的机箱 dbus 路径。
+ * 对 path + "/storage" 调用 Association 端点，并添加如下链接：
+ * json["Links"]["Storage@odata.count"] =
+ *   {"@odata.id", "/redfish/v1/Storage/" + resourceId}
+ * @return 无。 */
 inline void getStorageLink(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                            const sdbusplus::object_path& path)
 {
@@ -123,6 +131,7 @@ inline void getStorageLink(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         "xyz.openbmc_project.ObjectMapper", (path / "storage").str,
         "xyz.openbmc_project.Association", "endpoints",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::vector<std::string>& storageList) {
             if (ec)
@@ -156,6 +165,8 @@ inline void getStorageLink(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @brief Handles the CurrentPowerState property response and populates
  *        PowerState/Status fields on the chassis response.
  */
+/* @brief 处理 CurrentPowerState 属性的响应，
+ * 并在机箱响应中填充 PowerState/Status 字段。 */
 inline void handleChassisPowerState(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const boost::system::error_code& ec, const std::string& chassisState)
@@ -166,6 +177,7 @@ inline void handleChassisPowerState(
         {
             // Service not available, no error, just don't return
             // chassis state info
+            // 服务不可用，这不是错误，只是不返回机箱状态信息。
             BMCWEB_LOG_DEBUG("Service not available {}", ec);
             return;
         }
@@ -176,6 +188,7 @@ inline void handleChassisPowerState(
 
     BMCWEB_LOG_DEBUG("Chassis state: {}", chassisState);
     // Verify Chassis State
+    // 校验机箱状态。
     if (chassisState == "xyz.openbmc_project.State.Chassis.PowerState.On")
     {
         asyncResp->res.jsonValue["PowerState"] = resource::PowerState::On;
@@ -211,6 +224,9 @@ inline void handleChassisPowerState(
  *
  * @return None.
  */
+/* @brief 检索机箱状态对象。
+ * @param[in] asyncResp 用于完成异步调用的共享指针。
+ * @return 无。 */
 inline void getChassisState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     dbus::utility::getProperty<std::string>(
@@ -223,6 +239,7 @@ inline void getChassisState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 /**
  * Retrieves physical security properties over dbus
  */
+/* 通过 dbus 检索物理安全（physical security）属性。 */
 inline void handlePhysicalSecurityGetSubTree(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const boost::system::error_code& ec,
@@ -232,10 +249,12 @@ inline void handlePhysicalSecurityGetSubTree(
     {
         // do not add err msg in redfish response, because this is not
         //     mandatory property
+        // 不要在 redfish 响应中添加错误消息，因为这不是必需属性。
         BMCWEB_LOG_INFO("DBUS error: no matched iface {}", ec);
         return;
     }
     // Iterate over all retrieved ObjectPaths.
+    // 遍历所有检索到的 ObjectPath。
     for (const auto& object : subtree)
     {
         if (!object.second.empty())
@@ -248,6 +267,7 @@ inline void handlePhysicalSecurityGetSubTree(
                 service.first, object.first,
                 "xyz.openbmc_project.Chassis.Intrusion", "Status",
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                 [asyncResp](const boost::system::error_code& ec1,
                             const std::string& value) {
                     if (ec1)
@@ -255,6 +275,7 @@ inline void handlePhysicalSecurityGetSubTree(
                         // do not add err msg in redfish response, because this
                         // is not
                         //     mandatory property
+                        // 不要在 redfish 响应中添加错误消息，因为这不是必需属性。
                         BMCWEB_LOG_ERROR("DBUS response error {}", ec1);
                         return;
                     }
@@ -346,6 +367,7 @@ inline void getChassisContains(
     if (!jValue.is_array())
     {
         // Create the array if it was empty
+        // 如果数组为空，则创建该数组。
         jValue = nlohmann::json::array();
     }
     for (const auto& p : downstreamChassisPaths)
@@ -415,6 +437,10 @@ inline void afterGetChassisProcessorLinks(
  * @param[in,out]   asyncResp   Async HTTP response.
  * @param[in]       chassisPath D-Bus object path of the chassis.
  */
+/* @brief 通过遍历从机箱对象出发的 "containing" 关联来填充 Processors 链接，
+ * 以找到所有关联的处理器。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] chassisPath 机箱的 D-Bus 对象路径。 */
 inline void getChassisProcessorLinks(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const sdbusplus::object_path& chassisPath)
@@ -438,6 +464,8 @@ inline void getChassisProcessorLinks(
  * ChassisCollection derived class for delivering Chassis Collection Schema
  *  Functions triggers appropriate requests on DBus
  */
+/* ChassisCollection 派生类，用于提供 Chassis Collection Schema。
+ * 相关函数会在 DBus 上触发相应的请求。 */
 inline void requestRoutesChassisCollection(App& app)
 {
     BMCWEB_ROUTE(app, "/redfish/v1/Chassis/")
@@ -454,6 +482,7 @@ inline void getChassisLocationCode(
         connectionName, path,
         "xyz.openbmc_project.Inventory.Decorator.LocationCode", "LocationCode",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& property) {
             if (ec)
@@ -502,6 +531,7 @@ inline void handleDecoratorAssetProperties(
         asyncResp->res.jsonValue["Thermal"]["@odata.id"] =
             boost::urls::format("/redfish/v1/Chassis/{}/Thermal", chassisId);
         // Power object
+        // Power 对象。
         asyncResp->res.jsonValue["Power"]["@odata.id"] =
             boost::urls::format("/redfish/v1/Chassis/{}/Power", chassisId);
     }
@@ -527,11 +557,13 @@ inline void handleDecoratorAssetProperties(
                             chassisId);
 
     // SensorCollection
+    // SensorCollection。
     asyncResp->res.jsonValue["Sensors"]["@odata.id"] =
         boost::urls::format("/redfish/v1/Chassis/{}/Sensors", chassisId);
     asyncResp->res.jsonValue["Status"]["State"] = resource::State::Enabled;
 
     // TODO (Alexander): Support Multi Computer System
+    // TODO (Alexander)：支持多计算机系统（Multi Computer System）。
     if constexpr (!BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         nlohmann::json::array_t computerSystems;
@@ -573,6 +605,8 @@ inline void handleChassisProperties(
     // Chassis Type is a required property in Redfish
     // If there is an error or some enum we don't support just sit it to Rack
     // Mount
+    // ChassisType 是 Redfish 中的必需属性。
+    // 如果出现错误或遇到不支持的枚举值，将其设为 RackMount。
     asyncResp->res.jsonValue["ChassisType"] = chassis::ChassisType::RackMount;
 
     if (type != nullptr)
@@ -597,6 +631,7 @@ inline void handleChassisGetSubTree(
         return;
     }
     // Iterate over all retrieved ObjectPaths.
+    // 遍历所有检索到的 ObjectPath。
     for (const std::pair<
              std::string,
              std::vector<std::pair<std::string, std::vector<std::string>>>>&
@@ -616,6 +651,8 @@ inline void handleChassisGetSubTree(
 
         // Multi-host Processor URIs are not resolvable yet. The
         // Processor resource returns 404 under multi-host.
+        // 多主机（multi-host）下的 Processor URI 暂不可解析。
+        // 在多主机模式下，Processor 资源返回 404。
         if constexpr (!BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
         {
             getChassisProcessorLinks(asyncResp, objPath);
@@ -641,6 +678,7 @@ inline void handleChassisGetSubTree(
         dbus::utility::getAssociationEndPoints(
             path + "/drive",
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [asyncResp, chassisId](const boost::system::error_code& ec3,
                                    const dbus::utility::MapperEndPoints& resp) {
                 if (ec3 || resp.empty())
@@ -675,6 +713,7 @@ inline void handleChassisGetSubTree(
                 dbus::utility::getProperty<std::string>(
                     connectionName, path, assetTagInterface, "AssetTag",
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp, chassisId](const boost::system::error_code& ec2,
                                            const std::string& property) {
                         if (ec2)
@@ -692,6 +731,7 @@ inline void handleChassisGetSubTree(
                 dbus::utility::getProperty<bool>(
                     connectionName, path, replaceableInterface, "HotPluggable",
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp, chassisId](const boost::system::error_code& ec2,
                                            const bool property) {
                         if (ec2)
@@ -710,6 +750,7 @@ inline void handleChassisGetSubTree(
                 dbus::utility::getProperty<std::string>(
                     connectionName, path, revisionInterface, "Version",
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp, chassisId](const boost::system::error_code& ec2,
                                            const std::string& property) {
                         if (ec2)
@@ -764,6 +805,7 @@ inline void handleChassisGetSubTree(
     }
 
     // Couldn't find an object with that name.  return an error
+    // 找不到具有该名称的对象，返回错误。
     messages::resourceNotFound(asyncResp->res, "Chassis", chassisId);
 }
 
@@ -823,6 +865,7 @@ inline void handleChassisPatch(
     dbus::utility::getSubTree(
         "/xyz/openbmc_project/inventory", 0, chassisInterfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, chassisId,
          locationIndicatorActive{*locationIndicatorActive}](
             const boost::system::error_code& ec,
@@ -835,6 +878,7 @@ inline void handleChassisPatch(
             }
 
             // Iterate over all retrieved ObjectPaths.
+            // 遍历所有检索到的 ObjectPath。
             for (const std::pair<std::string,
                                  std::vector<std::pair<
                                      std::string, std::vector<std::string>>>>&
@@ -891,6 +935,8 @@ inline void handleChassisPatch(
  * Chassis override class for delivering Chassis Schema
  * Functions triggers appropriate requests on DBus
  */
+/* Chassis 覆写类，用于提供 Chassis Schema。
+ * 相关函数会在 DBus 上触发相应的请求。 */
 inline void requestRoutesChassis(App& app)
 {
     BMCWEB_ROUTE(app, "/redfish/v1/Chassis/<str>/")
@@ -911,9 +957,11 @@ inline void doChassisPowerCycle(
         "xyz.openbmc_project.State.Chassis"};
 
     // Use mapper to get subtree paths.
+    // 使用 mapper 获取子树路径。
     dbus::utility::getSubTreePaths(
         "/", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreePathsResponse& chassisList) {
@@ -933,12 +981,15 @@ inline void doChassisPowerCycle(
                 "/xyz/openbmc_project/state/chassis_system0";
 
             /* Look for system reset chassis path */
+            /* 查找系统重置（system reset）的机箱路径。 */
             if ((std::ranges::find(chassisList, objectPath)) ==
                 chassisList.end())
             {
                 /* We prefer to reset the full chassis_system, but if it doesn't
                  * exist on some platforms, fall back to a host-only power reset
                  */
+                /* 我们优先重置完整的 chassis_system，
+                 * 但如果某些平台上不存在该对象，则回退到仅重置主机的电源。 */
                 objectPath = "/xyz/openbmc_project/state/chassis0";
             }
 
@@ -993,6 +1044,9 @@ inline void handleChassisResetActionInfoPost(
  * Function handles POST method request.
  * Analyzes POST body before sending Reset request data to D-Bus.
  */
+/* ChassisResetAction 类支持 Reset 操作的 POST 方法。
+ * 该函数处理 POST 方法请求。
+ * 在向 D-Bus 发送重置请求数据之前，先分析 POST 请求体。 */
 
 inline void requestRoutesChassisResetAction(App& app)
 {
@@ -1034,6 +1088,7 @@ inline void handleChassisResetActionInfoGet(
  * ChassisResetActionInfo derived class for delivering Chassis
  * ResetType AllowableValues using ResetInfo schema.
  */
+/* ChassisResetActionInfo 派生类，使用 ResetInfo schema 提供 Chassis ResetType 的 AllowableValues。 */
 inline void requestRoutesChassisResetActionInfo(App& app)
 {
     BMCWEB_ROUTE(app, "/redfish/v1/Chassis/<str>/ResetActionInfo/")

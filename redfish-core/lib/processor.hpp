@@ -60,6 +60,10 @@ namespace redfish
  * @param[in]       service     D-Bus service to query.
  * @param[in]       objPath     D-Bus object to query.
  */
+/* @brief 通过向给定 D-Bus 对象请求数据，填充处理器的 uuid 信息。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] service 要查询的 D-Bus 服务。
+ * @param[in] objPath 要查询的 D-Bus 对象。 */
 inline void getProcessorUUID(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& service, const std::string& objPath)
@@ -86,6 +90,7 @@ inline void getCpuDataByInterface(
     BMCWEB_LOG_DEBUG("Get CPU resources by interface.");
 
     // Set the default value of state and health
+    // 设置 state 和 health 的默认值。
     bool present = true;
     bool available = true;
     bool functional = true;
@@ -100,6 +105,7 @@ inline void getCpuDataByInterface(
                 if (cpuPresent == nullptr)
                 {
                     // Important property not in desired type
+                    // 重要属性的类型不符合预期。
                     messages::internalError(asyncResp->res);
                     return;
                 }
@@ -286,6 +292,10 @@ inline void getCpuDataByService(
  * @return Returns as a string, the throttle cause in Redfish terms. If
  * translation cannot be done, returns "Unknown" throttle reason.
  */
+/* @brief 将 throttle cause 的 DBUS 属性转换为 Redfish 表示。
+ * @param[in] dbusSource 来自 DBUS 的 throttle cause。
+ * @return 以字符串形式返回 Redfish 术语中的 throttle cause。
+ * 如果无法转换，则返回 "Unknown" 的 throttle 原因。 */
 inline processor::ThrottleCause dbusToRfThrottleCause(
     const std::string& dbusSource)
 {
@@ -414,6 +424,7 @@ inline void afterGetCpuAssetData(
         asyncResp->res.jsonValue["Manufacturer"] = *manufacturer;
 
         // Otherwise would be unexpected.
+        // 否则将出乎意料。
         if (manufacturer->contains("Intel"))
         {
             asyncResp->res.jsonValue["ProcessorArchitecture"] =
@@ -506,6 +517,7 @@ inline void afterGetProcessorFirmwareVersion(
         if (ec.value() == EBADR)
         {
             // Software.Version not present on this object
+            // 该对象上没有 Software.Version。
             BMCWEB_LOG_DEBUG("No Version property to report");
             return;
         }
@@ -530,6 +542,7 @@ inline void afterGetProcessorFirmwareVersionSubTree(
         if (ec.value() == EBADR)
         {
             // No "ran_on" association — processor has no firmware to report
+            // 没有 "ran_on" 关联 —— 处理器没有可上报的固件。
             BMCWEB_LOG_DEBUG("No firmware association for processor");
             return;
         }
@@ -540,6 +553,7 @@ inline void afterGetProcessorFirmwareVersionSubTree(
     if (subtree.empty())
     {
         // Association resolves to no Software.Version object
+        // 关联未解析到任何 Software.Version 对象。
         return;
     }
     if (subtree.size() > 1)
@@ -593,11 +607,14 @@ inline void getAcceleratorDataByService(
 }
 
 // OperatingConfig D-Bus Types
+// OperatingConfig 的 D-Bus 类型。
 using TurboProfileProperty = std::vector<std::tuple<uint32_t, size_t>>;
 using BaseSpeedPrioritySettingsProperty =
     std::vector<std::tuple<uint32_t, std::vector<uint32_t>>>;
 // uint32_t and size_t may or may not be the same type, requiring a dedup'd
 // variant
+// uint32_t 和 size_t 可能是也可能不是同一类型，
+// 因此需要使用去重后的 variant。
 
 /**
  * Fill out the HighSpeedCoreIDs in a Processor resource from the given
@@ -608,6 +625,10 @@ using BaseSpeedPrioritySettingsProperty =
  *                                      to use to determine the list of high
  *                                      speed cores.
  */
+/* 根据给定的 OperatingConfig D-Bus 属性，填充 Processor 资源中的 HighSpeedCoreIDs。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] baseSpeedSettings 基准速度优先级组的完整列表，
+ * 用于确定高速核心的列表。 */
 inline void highSpeedCoreIdsHandler(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const BaseSpeedPrioritySettingsProperty& baseSpeedSettings)
@@ -615,6 +636,8 @@ inline void highSpeedCoreIdsHandler(
     // The D-Bus property does not indicate which bucket is the "high
     // priority" group, so let's discern that by looking for the one with
     // highest base frequency.
+    // D-Bus 属性并未指明哪个组是 "高优先级" 组，
+    // 因此我们通过查找基准频率最高的组来判断。
     auto highPriorityGroup = baseSpeedSettings.cend();
     uint32_t highestBaseSpeed = 0;
     for (auto it = baseSpeedSettings.cbegin(); it != baseSpeedSettings.cend();
@@ -633,6 +656,8 @@ inline void highSpeedCoreIdsHandler(
 
     // There may not be any entries in the D-Bus property, so only populate
     // if there was actually something there.
+    // D-Bus 属性中可能没有任何条目，
+    // 因此只有在确实有内容时才填充。
     if (highPriorityGroup != baseSpeedSettings.cend())
     {
         jsonCoreIds = std::get<std::vector<uint32_t>>(*highPriorityGroup);
@@ -678,6 +703,7 @@ inline void afterGetCpuConfigData(
 
         // Reuse the D-Bus config object name for the Redfish
         // URI
+        // 将 D-Bus 配置对象的名称复用于 Redfish URI。
         size_t baseNamePos = dbusPath.rfind('/');
         if (baseNamePos == std::string::npos ||
             baseNamePos == (dbusPath.size() - 1))
@@ -685,6 +711,9 @@ inline void afterGetCpuConfigData(
             // If the AppliedConfig was somehow not a valid path,
             // skip adding any more properties, since everything
             // else is tied to this applied config.
+            // 如果 AppliedConfig 不知何故不是有效路径，
+            // 则跳过添加更多属性，
+            // 因为其他一切都与该 applied config 相关联。
             messages::internalError(asyncResp->res);
             return;
         }
@@ -698,12 +727,15 @@ inline void afterGetCpuConfigData(
         // Once we found the current applied config, queue another
         // request to read the base freq core ids out of that
         // config.
+        // 一旦找到当前应用的配置，就再排队一个请求，
+        // 从该配置中读取基准频率的核心 ID。
         dbus::utility::getProperty<BaseSpeedPrioritySettingsProperty>(
             service, dbusPath,
             "xyz.openbmc_project.Inventory.Item.Cpu."
             "OperatingConfig",
             "BaseSpeedPrioritySettings",
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [asyncResp](
                 const boost::system::error_code& ec2,
                 const BaseSpeedPrioritySettingsProperty& baseSpeedList) {
@@ -734,6 +766,11 @@ inline void afterGetCpuConfigData(
  * @param[in]       service     D-Bus service to query.
  * @param[in]       objPath     D-Bus object to query.
  */
+/* 通过向给定 D-Bus 对象请求数据，填充 Processor 资源中 OperatingConfig 相关的项目。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] cpuId CPU D-Bus 名称。
+ * @param[in] service 要查询的 D-Bus 服务。
+ * @param[in] objPath 要查询的 D-Bus 对象。 */
 inline void getCpuConfigData(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& cpuId, const std::string& service,
@@ -742,6 +779,7 @@ inline void getCpuConfigData(
     BMCWEB_LOG_INFO("Getting CPU operating configs for {}", cpuId);
 
     // First, GetAll CurrentOperatingConfig properties on the object
+    // 首先，获取对象上 CurrentOperatingConfig 的所有属性。
     dbus::utility::getAllProperties(
         service, objPath,
         "xyz.openbmc_project.Control.Processor.CurrentOperatingConfig",
@@ -770,6 +808,10 @@ inline void afterGetProcessorLocationCode(
  * @param[in]       service     D-Bus service to query.
  * @param[in]       objPath     D-Bus object to query.
  */
+/* @brief 通过向给定 D-Bus 对象请求数据，填充处理器的位置信息。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] service 要查询的 D-Bus 服务。
+ * @param[in] objPath 要查询的 D-Bus 对象。 */
 inline void getProcessorLocationCode(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& service, const std::string& objPath)
@@ -789,6 +831,10 @@ inline void getProcessorLocationCode(
  * @param[in]       service     D-Bus service to query.
  * @param[in]       objPath     D-Bus object to query.
  */
+/* 通过向给定 D-Bus 对象请求数据，填充 Processor 资源中的唯一标识符。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] service 要查询的 D-Bus 服务。
+ * @param[in] objPath 要查询的 D-Bus 对象。 */
 inline void getCpuUniqueId(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                            const std::string& service,
                            const std::string& objectPath)
@@ -799,6 +845,7 @@ inline void getCpuUniqueId(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         "xyz.openbmc_project.Inventory.Decorator.UniqueIdentifier",
         "UniqueIdentifier",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& id) {
             if (ec)
@@ -877,12 +924,15 @@ inline void handleProcessorSubtree(
     for (const auto& [objectPath, serviceMap] : subtree)
     {
         // Ignore any objects which don't end with our desired cpu name
+        // 忽略任何不以我们所需的 cpu 名称结尾的对象。
         sdbusplus::object_path path(objectPath);
         if (path.filename() == processorId)
         {
             // Filter out objects that don't have the CPU-specific
             // interfaces to make sure we can return 404 on non-CPUs
             // (e.g. /redfish/../Processors/dimm0)
+            // 过滤掉没有 CPU 特有接口的对象，以确保对非 CPU 对象返回 404
+            // （例如 /redfish/../Processors/dimm0）。
             for (const auto& [serviceName, interfaceList] : serviceMap)
             {
                 if (std::ranges::find_first_of(interfaceList,
@@ -893,6 +943,9 @@ inline void handleProcessorSubtree(
                     // required interfaces, and potentially ignore any other
                     // matching objects. Assume all interfaces we want to
                     // process must be on the same object path.
+                    // 处理第一个同时匹配 cpu 名称和所需接口的对象，
+                    // 并可能忽略其他匹配的对象。
+                    // 假设我们要处理的所有接口都位于同一个对象路径上。
 
                     callback(objectPath, serviceMap);
                     return;
@@ -913,6 +966,11 @@ inline void handleProcessorSubtree(
  * @param[in]       callback        Callback to continue processing request upon
  *                                  successfully finding object.
  */
+/* 查找代表所请求 Processor 的 D-Bus 对象，并用结果调用 handler。
+ * 如果未找到匹配的对象，则在响应中添加 404 错误，且不调用 handler。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] processorId Redfish Processor Id。
+ * @param[in] callback 成功找到对象后用于继续处理请求的回调。 */
 inline void getProcessorObject(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& processorId,
@@ -923,6 +981,7 @@ inline void getProcessorObject(
     BMCWEB_LOG_DEBUG("Get available system processor resources.");
 
     // GetSubTree on all interfaces which provide info about a Processor
+    // 对提供 Processor 信息的所有接口执行 GetSubTree。
     constexpr std::array<std::string_view, 9> interfaces = {
         "xyz.openbmc_project.Common.UUID",
         "xyz.openbmc_project.Inventory.Decorator.Asset",
@@ -1029,6 +1088,13 @@ inline void getProcessorData(
  * @param[in]       cpuObjectPath   Path of CPU object to modify.
  * @param[in]       serviceMap      Service map for CPU object.
  */
+/* 处理 AppliedOperatingConfig 属性的 PATCH 操作。
+ * 对输入数据做基本校验，然后设置 D-Bus 属性。
+ * @param[in,out] resp 异步 HTTP 响应。
+ * @param[in] processorId Processor 的 Id。
+ * @param[in] appliedConfigUri 要应用的新属性值。
+ * @param[in] cpuObjectPath 要修改的 CPU 对象的路径。
+ * @param[in] serviceMap CPU 对象的服务映射。 */
 inline void patchAppliedOperatingConfig(
     const std::shared_ptr<bmcweb::AsyncResp>& resp,
     const std::string& processorId, const boost::urls::url& appliedConfigUri,
@@ -1036,6 +1102,7 @@ inline void patchAppliedOperatingConfig(
     const dbus::utility::MapperServiceMap& serviceMap)
 {
     // Check that the property even exists by checking for the interface
+    // 通过检查接口来确认该属性是否存在。
     const std::string* controlService = nullptr;
     for (const auto& [serviceName, interfaceList] : serviceMap)
     {
@@ -1055,6 +1122,7 @@ inline void patchAppliedOperatingConfig(
     }
 
     // Check that the config URI is a child of the cpu URI being patched.
+    // 检查 config URI 是否是正在 PATCH 的 cpu URI 的子路径。
     boost::urls::url expectedPrefix = boost::urls::format(
         "/redfish/v1/Systems/{}/Processors/{}/OperatingConfigs/",
         BMCWEB_REDFISH_SYSTEM_URI_NAME, processorId);
@@ -1069,6 +1137,8 @@ inline void patchAppliedOperatingConfig(
     // Generate the D-Bus path of the OperatingConfig object, by assuming
     // it's a direct child of the CPU object. Strip the expectedPrefix from
     // the config URI to get the "filename", and append to the CPU's path.
+    // 生成 OperatingConfig 对象的 D-Bus 路径，假设它是 CPU 对象的直接子对象。
+    // 从 config URI 中去掉 expectedPrefix 以得到 "文件名"，然后追加到 CPU 路径上。
     std::string configBaseName =
         appliedConfigUri.buffer().substr(expectedPrefix.buffer().size());
     sdbusplus::object_path configPath(cpuObjectPath);
@@ -1077,6 +1147,7 @@ inline void patchAppliedOperatingConfig(
     BMCWEB_LOG_INFO("Setting config to {}", configPath.str);
 
     // Set the property, with handler to check error responses
+    // 设置该属性，并用 handler 检查错误响应。
     setDbusProperty(
         resp, "AppliedOperatingConfig", *controlService, cpuObjectPath,
         "xyz.openbmc_project.Control.Processor.CurrentOperatingConfig",
@@ -1123,6 +1194,7 @@ inline void handleProcessorGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -1155,6 +1227,7 @@ inline void doPatchProcessor(
     if (locationIndicatorActive)
     {
         // Utility function handles reporting errors
+        // 工具函数，用于处理错误上报。
         setLocationIndicatorActive(asyncResp, objectPath,
                                    *locationIndicatorActive);
     }
@@ -1172,6 +1245,7 @@ inline void handleProcessorPatch(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -1209,6 +1283,7 @@ inline void handleProcessorPatch(
 
     // Check for 404 and find matching D-Bus object, then run
     // property patch handlers if that all succeeds.
+    // 检查 404 并查找匹配的 D-Bus 对象，如果一切成功，再运行属性 PATCH handler。
     getProcessorObject(
         asyncResp, processorId,
         std::bind_front(doPatchProcessor, asyncResp, processorId,
@@ -1227,6 +1302,7 @@ inline void handleProcessorCollectionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -1262,6 +1338,7 @@ inline void requestRoutesProcessor(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app, "/redfish/v1/Systems/<str>/Processors/")
         .privileges(redfish::privileges::headProcessorCollection)
         .methods(boost::beast::http::verb::head)(

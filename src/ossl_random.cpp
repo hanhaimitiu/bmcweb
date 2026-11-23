@@ -74,6 +74,8 @@ bool constantTimeStringCompare(std::string_view a, std::string_view b)
 {
     // Important note, this function is ONLY constant time if the two input
     // sizes are the same
+    // 重要提示：只有当两个输入大小相同时，
+    // 此函数才是常数时间的。
     if (a.size() != b.size())
     {
         return false;

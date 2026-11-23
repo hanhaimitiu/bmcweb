@@ -27,6 +27,7 @@ namespace redfish
 /**
  * BiosService class supports handle get method for bios.
  */
+/* BiosService 类支持处理 BIOS 的 get 方法。 */
 inline void handleBiosServiceGet(
     crow::App& app, const crow::Request& req,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -39,6 +40,7 @@ inline void handleBiosServiceGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -61,6 +63,7 @@ inline void handleBiosServiceGet(
             BMCWEB_REDFISH_SYSTEM_URI_NAME);
 
     // Get the ActiveSoftwareImage and SoftwareImages
+    // 获取 ActiveSoftwareImage 和 SoftwareImages。
     sw_util::populateSoftwareInformation(asyncResp, sw_util::biosPurpose, "",
                                          true);
 }
@@ -80,6 +83,10 @@ inline void requestRoutesBiosService(App& app)
  * Function handles POST method request.
  * Analyzes POST body message before sends Reset request data to D-Bus.
  */
+/* BiosReset 类支持处理重置 BIOS 的 POST 方法。
+ * 该类直接从 D-Bus 检索并发送数据。
+ * 该函数处理 POST 方法请求。
+ * 在向 D-Bus 发送重置请求数据之前，先分析 POST 请求体消息。 */
 inline void handleBiosResetPost(
     crow::App& app, const crow::Request& req,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -93,6 +100,7 @@ inline void handleBiosResetPost(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;

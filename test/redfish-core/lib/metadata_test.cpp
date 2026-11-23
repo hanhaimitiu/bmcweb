@@ -19,6 +19,8 @@ Example from Redfish and OData whitepaper.
 
 https://www.dmtf.org/sites/default/files/standards/documents/DSP2052_1.0.0.pdf
 */
+/* 来自 Redfish 和 OData 白皮书的示例。
+ * https://www.dmtf.org/sites/default/files/standards/documents/DSP2052_1.0.0.pdf */
 constexpr std::string_view content =
     "<edmx:Edmx xmlns:edms=\"http://docs.oasis-open.org/odata/ns/edmx\" Version=\"4.0\">\n"
     "  <edmx:Reference Uri=\"http://contoso.org/schemas/ExternalSchema.xml\">\n"

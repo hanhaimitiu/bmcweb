@@ -69,6 +69,7 @@ inline void handleSetLocationIndicatorActive(
         if (ec == boost::system::errc::io_error)
         {
             // Not found
+            // 未找到。
             BMCWEB_LOG_WARNING("Manager {} not found", managerId);
             messages::resourceNotFound(asyncResp->res, "Manager", managerId);
             return;
@@ -93,6 +94,9 @@ inline void handleSetLocationIndicatorActive(
  * @param[in,out]   asyncResp                   Async HTTP response.
  * @param[in]       locationIndicatorActive     Value of the property
  */
+/* 设置 locationIndicatorActive。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] locationIndicatorActive 属性的值。 */
 inline void setLocationIndicatorActiveState(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     bool locationIndicatorActive, const std::string& managerId)
@@ -145,6 +149,8 @@ inline void setBMCTransition(
  *
  * @param[in] asyncResp - Shared pointer for completing asynchronous calls
  */
+/* 该函数重启 BMC。
+ * @param[in] asyncResp - 用于完成异步调用的共享指针 */
 inline void doBMCGracefulRestart(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -164,6 +170,9 @@ inline void doBMCForceRestart(
  * Analyzes POST body before sending Reset (Reboot) request data to D-Bus.
  * OpenBMC supports ResetType "GracefulRestart" and "ForceRestart".
  */
+/* ManagerResetAction 处理 POST 方法请求。
+ * 在向 D-Bus 发送 Reset（重启）请求数据之前，先分析 POST 请求体。
+ * OpenBMC 支持 ResetType "GracefulRestart" 和 "ForceRestart"。 */
 
 inline void handleManagerResetAction(
     crow::App& app, const crow::Request& req,
@@ -217,6 +226,12 @@ inline void handleManagerResetAction(
  *
  * OpenBMC only supports ResetType "ResetAll".
  */
+/* 该函数处理 ResetToDefaults POST 方法请求。
+ * 分析 POST 请求体消息，并通过调用 BMC code updater 的 factory reset
+ * 然后进行 BMC 重启来恢复 BMC 出厂设置。
+ * BMC code updater 的 factory reset 会擦除整个 BMC 读写文件系统，
+ * 其中包括网络设置等内容。
+ * OpenBMC 仅支持 ResetType "ResetAll"。 */
 
 inline void handleManagerResetToDefaultsAction(
     crow::App& app, const crow::Request& req,
@@ -256,6 +271,7 @@ inline void handleManagerResetToDefaultsAction(
 
     crow::connections::systemBus->async_method_call(
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec) {
             if (ec)
             {
@@ -265,6 +281,8 @@ inline void handleManagerResetToDefaultsAction(
             }
             // Factory Reset doesn't actually happen until a reboot
             // Can't erase what the BMC is running on
+            // Factory Reset 实际上要到重启时才真正生效。
+            // 无法擦除 BMC 正在运行的内容。
             doBMCGracefulRestart(asyncResp);
         },
         getBMCUpdateServiceName(), getBMCUpdateServicePath(),
@@ -275,6 +293,7 @@ inline void handleManagerResetToDefaultsAction(
  * ManagerResetActionInfo derived class for delivering Manager
  * ResetType AllowableValues using ResetInfo schema.
  */
+/* ManagerResetActionInfo 派生类，使用 ResetInfo schema 提供 Manager ResetType 的 AllowableValues。 */
 inline void handleManagerResetActionInfo(
     crow::App& app, const crow::Request& req,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -321,6 +340,11 @@ inline void handleManagerResetActionInfo(
  * @param[in] path - object path
  * @return none
  */
+/* @brief 通过 DBus 检索 BMC manager 的位置数据。
+ * @param[in] asyncResp 用于完成异步调用的共享指针。
+ * @param[in] connectionName - 服务名。
+ * @param[in] path - 对象路径。
+ * @return 无。 */
 inline void getLocation(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                         const std::string& connectionName,
                         const std::string& path)
@@ -331,6 +355,7 @@ inline void getLocation(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         connectionName, path,
         "xyz.openbmc_project.Inventory.Decorator.LocationCode", "LocationCode",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& property) {
             if (ec)
@@ -347,6 +372,7 @@ inline void getLocation(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         });
 }
 // avoid name collision systems.hpp
+// 避免与 systems.hpp 中的名称冲突。
 inline void managerGetLastResetTime(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -356,6 +382,7 @@ inline void managerGetLastResetTime(
         "xyz.openbmc_project.State.BMC", "/xyz/openbmc_project/state/bmc0",
         "xyz.openbmc_project.State.BMC", "LastRebootTime",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const uint64_t lastResetTime) {
             if (ec)
@@ -366,9 +393,12 @@ inline void managerGetLastResetTime(
 
             // LastRebootTime is epoch time, in milliseconds
             // https://github.com/openbmc/phosphor-dbus-interfaces/blob/7f9a128eb9296e926422ddc312c148b625890bb6/xyz/openbmc_project/State/BMC.interface.yaml#L19
+            // LastRebootTime 是以毫秒为单位的 epoch 时间。
+            // https://github.com/openbmc/phosphor-dbus-interfaces/blob/7f9a128eb9296e926422ddc312c148b625890bb6/xyz/openbmc_project/State/BMC.interface.yaml#L19
             uint64_t lastResetTimeStamp = lastResetTime / 1000;
 
             // Convert to ISO 8601 standard
+            // 转换为 ISO 8601 标准。
             asyncResp->res.jsonValue["LastResetTime"] =
                 redfish::time_utils::getDateTimeUint(lastResetTimeStamp);
         });
@@ -382,11 +412,16 @@ inline void managerGetLastResetTime(
  *
  * @return void
  */
+/* @brief 设置正在运行的固件镜像。
+ * @param[i,o] asyncResp - 异步响应对象。
+ * @param[i] runningFirmwareTarget - 要设为正在运行的镜像。
+ * @return 无。 */
 inline void setActiveFirmwareImage(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& runningFirmwareTarget)
 {
     // Get the Id from /redfish/v1/UpdateService/FirmwareInventory/<Id>
+    // 从 /redfish/v1/UpdateService/FirmwareInventory/<Id> 中获取 Id。
     std::string::size_type idPos = runningFirmwareTarget.rfind('/');
     if (idPos == std::string::npos)
     {
@@ -406,10 +441,12 @@ inline void setActiveFirmwareImage(
     std::string firmwareId = runningFirmwareTarget.substr(idPos);
 
     // Make sure the image is valid before setting priority
+    // 在设置优先级之前，确保镜像有效。
     sdbusplus::object_path objPath("/xyz/openbmc_project/software");
     dbus::utility::getManagedObjects(
         getBMCUpdateServiceName(), objPath,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, firmwareId, runningFirmwareTarget](
             const boost::system::error_code& ec,
             const dbus::utility::ManagedObjectType& subtree) {
@@ -466,6 +503,8 @@ inline void setActiveFirmwareImage(
             // Only support Immediate
             // An addition could be a Redfish Setting like
             // ActiveSoftwareImageApplyTime and support OnReset
+            // 仅支持 Immediate。
+            // 可以补充一个类似 ActiveSoftwareImageApplyTime 的 Redfish Setting 来支持 OnReset。
             sdbusplus::asio::setProperty(
                 *crow::connections::systemBus, getBMCUpdateServiceName(),
                 "/xyz/openbmc_project/software/" + firmwareId,
@@ -525,6 +564,7 @@ inline void setDateTime(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         return;
     }
     // Set the absolute datetime
+    // 设置绝对日期时间。
     bool relative = false;
     bool interactive = false;
     crow::connections::systemBus->async_method_call(
@@ -584,6 +624,7 @@ inline void checkForQuiesced(
         "/org/freedesktop/systemd1/unit/obmc_2dbmc_2dservice_2dquiesce_400_2etarget",
         "org.freedesktop.systemd1.Unit", "ActiveState",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& val) {
             if (!ec)
@@ -765,6 +806,7 @@ inline void handleManagerGet(
 
     // Manager.Reset (an action) can be many values, OpenBMC only
     // supports BMC reboot.
+    // Manager.Reset（一个 action）可以有许多取值，OpenBMC 仅支持 BMC 重启。
     nlohmann::json& managerReset =
         asyncResp->res.jsonValue["Actions"]["#Manager.Reset"];
     managerReset["target"] = boost::urls::format(
@@ -775,6 +817,8 @@ inline void handleManagerGet(
     // ResetToDefaults (Factory Reset) has values like
     // PreserveNetworkAndUsers and PreserveNetwork that aren't supported
     // on OpenBMC
+    // ResetToDefaults（Factory Reset）有 PreserveNetworkAndUsers 和 PreserveNetwork 等取值，
+    // OpenBMC 不支持这些。
     nlohmann::json& resetToDefaults =
         asyncResp->res.jsonValue["Actions"]["#Manager.ResetToDefaults"];
     resetToDefaults["target"] = boost::urls::format(
@@ -794,6 +838,7 @@ inline void handleManagerGet(
     if constexpr (BMCWEB_KVM)
     {
         // Fill in GraphicalConsole info
+        // 填充 GraphicalConsole 信息。
         asyncResp->res.jsonValue["GraphicalConsole"]["ServiceEnabled"] = true;
         asyncResp->res.jsonValue["GraphicalConsole"]["MaxConcurrentSessions"] =
             4;
@@ -820,6 +865,7 @@ inline void handleManagerGet(
     managerGetLastResetTime(asyncResp);
 
     // ManagerDiagnosticData is added for all BMCs.
+    // 为所有 BMC 添加 ManagerDiagnosticData。
     nlohmann::json& managerDiagnosticData =
         asyncResp->res.jsonValue["ManagerDiagnosticData"];
     managerDiagnosticData["@odata.id"] = boost::urls::format(
@@ -831,6 +877,7 @@ inline void handleManagerGet(
         "org.freedesktop.systemd1", "/org/freedesktop/systemd1",
         "org.freedesktop.systemd1.Manager", "Progress",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec, double val) {
             if (ec)
             {
@@ -944,6 +991,7 @@ inline void handleManagerCollectionGet(
     }
     // Collections don't include the static data added by SubRoute
     // because it has a duplicate entry for members
+    // 集合不包含 SubRoute 添加的静态数据，因为其 members 存在重复条目。
     asyncResp->res.jsonValue["@odata.id"] = "/redfish/v1/Managers";
     asyncResp->res.jsonValue["@odata.type"] =
         "#ManagerCollection.ManagerCollection";

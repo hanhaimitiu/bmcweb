@@ -71,6 +71,7 @@ TEST(getPreferredContentType, PositiveTest)
               ContentType::HTML);
 
     // String the chrome gives
+    // Chrome 给出的字符串
     EXPECT_EQ(getPreferredContentType(
                   "text/html,"
                   "application/xhtml+xml,"
@@ -105,6 +106,7 @@ TEST(getPreferredContentType, PositiveTest)
     EXPECT_EQ(getPreferredContentType("*/*", cborJson), ContentType::ANY);
 
     // Application types with odd characters
+    // 包含特殊字符的 Application 类型
     EXPECT_EQ(getPreferredContentType(
                   "application/prs.nprend, application/json", cborJson),
               ContentType::JSON);
@@ -114,6 +116,7 @@ TEST(getPreferredContentType, PositiveTest)
               ContentType::JSON);
 
     // Q values are ignored, but should parse
+    // Q 值会被忽略，但应能正常解析
     EXPECT_EQ(getPreferredContentType(
                   "application/rdf+xml;q=0.9, application/json", cborJson),
               ContentType::JSON);

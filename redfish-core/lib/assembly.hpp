@@ -50,6 +50,12 @@ namespace redfish
  * @param[in] assemblyJsonPtr - json-keyname on the assembly list output.
  * @return None.
  */
+/* @brief 获取给定组件的 Location code（位置码）。
+ * @param[in] asyncResp 用于异步调用的共享指针。
+ * @param[in] serviceName 承载该组件的服务。
+ * @param[in] assembly 组件对象。
+ * @param[in] assemblyJsonPtr 组件列表输出中的 json 键名。
+ * @return 无。 */
 inline void afterGetAssemblyLocationCode(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& assembly,
@@ -140,6 +146,11 @@ inline void afterGetDbusObject(
  * chassis.
  * @return None.
  */
+/* @brief 获取与给定机箱相关联的组件属性。
+ * @param[in] asyncResp 用于异步调用的共享指针。
+ * @param[in] chassisId 组件所关联的机箱。
+ * @param[in] assemblies 与该机箱关联的所有组件列表。
+ * @return 无。 */
 inline void getAssemblyProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& chassisId, const std::vector<std::string>& assemblies)
@@ -219,6 +230,9 @@ inline void afterHandleChassisAssemblyGet(
  *
  * @return None.
  */
+/* @param[in] asyncResp 用于异步调用的共享指针。
+ * @param[in] chassisID 组件所关联的机箱。
+ * @return 无。 */
 inline void handleChassisAssemblyGet(
     App& app, const crow::Request& req,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,

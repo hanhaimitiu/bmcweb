@@ -80,6 +80,7 @@ struct PasswordData
 };
 
 // function used to get user input
+// 用于获取用户输入的函数
 inline int pamFunctionConversation(int numMsg, const struct pam_message** msgs,
                                    struct pam_response** resp, void* appdataPtr)
 {
@@ -124,6 +125,11 @@ inline int pamFunctionConversation(int numMsg, const struct pam_message** msgs,
  * @param password The provided password.
  * @param token The provided MFA token.
  * @returns PAM error code or PAM_SUCCESS for success. */
+/* @brief 尝试通过 PAM 进行用户名/密码认证。
+ * @param username 提供的用户名，即账户名。
+ * @param password 提供的密码。
+ * @param token 提供的 MFA 令牌。
+ * @returns PAM 错误码，成功时返回 PAM_SUCCESS。 */
 inline int pamAuthenticateUser(std::string_view username,
                                std::string_view password,
                                std::optional<std::string> token)
@@ -162,6 +168,7 @@ inline int pamAuthenticateUser(std::string_view username,
     }
 
     /* check that the account is healthy */
+    /* 检查账户状态是否正常健康 */
     retval = pam_acct_mgmt(localAuthHandle, PAM_DISALLOW_NULL_AUTHTOK);
     if (retval != PAM_SUCCESS)
     {

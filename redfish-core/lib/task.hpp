@@ -140,6 +140,7 @@ struct TaskData : std::enable_shared_from_this<TaskData>
             const auto last = getTaskToRemove();
 
             // destroy all references
+            // 销毁所有引用
             (*last)->timer.cancel();
             (*last)->match.reset();
             tasks.erase(last);
@@ -153,6 +154,8 @@ struct TaskData : std::enable_shared_from_this<TaskData>
      * @brief Get the first completed/aborted task or oldest running task to
      * remove
      */
+    /* @brief 获取第一个已完成/已中止的任务，或运行时间最长的任务
+     * 以便移除 */
     static std::deque<std::shared_ptr<TaskData>>::iterator getTaskToRemove()
     {
         static constexpr std::array<std::string_view, 5> activeStates = {
@@ -226,6 +229,7 @@ struct TaskData : std::enable_shared_from_this<TaskData>
         timer.expires_after(timeout);
         timer.async_wait(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [self = shared_from_this()](boost::system::error_code ec) {
                 if (ec == boost::asio::error::operation_aborted)
                 {
@@ -234,6 +238,7 @@ struct TaskData : std::enable_shared_from_this<TaskData>
                 if (!ec)
                 {
                     // change ec to error as timer expired
+                    // 由于定时器已过期，将 ec 改为错误
                     ec = boost::asio::error::operation_aborted;
                 }
                 self->match.reset();
@@ -244,6 +249,7 @@ struct TaskData : std::enable_shared_from_this<TaskData>
                 self->messages.emplace_back(
                     messages::taskAborted(std::to_string(self->index)));
                 // Send event :TaskAborted
+                // 发送事件：TaskAborted
                 sendTaskEvent(self->state, self->index);
                 self->callback(ec, msg, self);
             });
@@ -252,6 +258,17 @@ struct TaskData : std::enable_shared_from_this<TaskData>
     static void sendTaskEvent(std::string_view state, size_t index)
     {
         // TaskState enums which should send out an event are:
+        // "Starting" = taskResumed
+        // "Running" = taskStarted
+        // "Suspended" = taskPaused
+        // "Interrupted" = taskPaused
+        // "Pending" = taskPaused
+        // "Stopping" = taskAborted
+        // "Completed" = taskCompletedOK
+        // "Killed" = taskRemoved
+        // "Exception" = taskCompletedWarning
+        // "Cancelled" = taskCancelled
+        // 应发出事件的 TaskState 枚举有：
         // "Starting" = taskResumed
         // "Running" = taskStarted
         // "Suspended" = taskPaused
@@ -318,20 +335,25 @@ struct TaskData : std::enable_shared_from_this<TaskData>
             static_cast<sdbusplus::bus_t&>(*crow::connections::systemBus),
             matchStr,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [self = shared_from_this()](sdbusplus::message_t& message) {
                 boost::system::error_code ec;
 
                 // callback to return True if callback is done, callback needs
                 // to update status itself if needed
+                // 回调完成时返回 True；如果需要，回调需
+                // 自行更新状态
                 if (self->callback(ec, message, self) == task::completed)
                 {
                     self->timer.cancel();
                     self->finishTask();
 
                     // Send event
+                    // 发送事件
                     sendTaskEvent(self->state, self->index);
 
                     // reset the match after the callback was successful
+                    // 回调成功后重置 match
                     boost::asio::post(
                         crow::connections::systemBus->get_io_context(),
                         [self] { self->match.reset(); });
@@ -342,6 +364,7 @@ struct TaskData : std::enable_shared_from_this<TaskData>
         extendTimer(timeout);
         messages.emplace_back(messages::taskStarted(std::to_string(index)));
         // Send event : TaskStarted
+        // 发送事件：TaskStarted
         sendTaskEvent(state, index);
     }
 
@@ -370,6 +393,7 @@ inline void requestRoutesTaskMonitor(App& app)
         .privileges(redfish::privileges::getTask)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& strParam) {
@@ -387,6 +411,8 @@ inline void requestRoutesTaskMonitor(App& app)
 
                         // we compare against the string version as on failure
                         // strtoul returns 0
+                        // 我们使用字符串版本进行比较，因为失败时
+                        // strtoul 会返回 0
                         return std::to_string(task->index) == strParam;
                     });
 
@@ -398,6 +424,7 @@ inline void requestRoutesTaskMonitor(App& app)
                 }
                 std::shared_ptr<task::TaskData>& ptr = *find;
                 // monitor expires after 204
+                // 发送 204 后监控过期
                 if (ptr->gave204)
                 {
                     messages::resourceNotFound(asyncResp->res, "Task",
@@ -414,6 +441,7 @@ inline void requestRoutesTask(App& app)
         .privileges(redfish::privileges::getTask)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& strParam) {
@@ -431,6 +459,8 @@ inline void requestRoutesTask(App& app)
 
                         // we compare against the string version as on failure
                         // strtoul returns 0
+                        // 我们使用字符串版本进行比较，因为失败时
+                        // strtoul 会返回 0
                         return std::to_string(task->index) == strParam;
                     });
 
@@ -495,6 +525,7 @@ inline void requestRoutesTaskCollection(App& app)
         .privileges(redfish::privileges::getTaskCollection)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 if (!redfish::setUpRedfishRoute(app, req, asyncResp))
@@ -532,6 +563,7 @@ inline void requestRoutesTaskService(App& app)
         .privileges(redfish::privileges::getTaskService)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 if (!redfish::setUpRedfishRoute(app, req, asyncResp))

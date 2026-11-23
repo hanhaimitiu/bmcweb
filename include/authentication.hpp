@@ -79,6 +79,8 @@ inline std::shared_ptr<persistent_data::UserSession> performBasicAuth(
 
     // Attempt to locate an existing Basic Auth session from the same ip address
     // and user
+    // 尝试从相同的 IP 地址和用户
+    // 查找已有的 Basic Auth 会话
     for (auto& session :
          persistent_data::SessionStore::getInstance().getSessions())
     {
@@ -172,10 +174,12 @@ inline std::shared_ptr<persistent_data::UserSession> performCookieAuth(
         if constexpr (!BMCWEB_INSECURE_DISABLE_CSRF)
         {
             // RFC7231 defines methods that need csrf protection
+            // RFC7231 定义了需要 csrf 保护的方法
             if (method != boost::beast::http::verb::get)
             {
                 std::string_view csrf = reqHeader["X-XSRF-TOKEN"];
                 // Make sure both tokens are filled
+                // 确保两个 token 都已填充
                 if (csrf.empty() || sessionOut->csrfToken.empty())
                 {
                     return nullptr;
@@ -186,6 +190,7 @@ inline std::shared_ptr<persistent_data::UserSession> performCookieAuth(
                     return nullptr;
                 }
                 // Reject if csrf token not available
+                // 如果 csrf token 不可用则拒绝
                 if (!bmcweb::constantTimeStringCompare(csrf,
                                                        sessionOut->csrfToken))
                 {
@@ -214,10 +219,13 @@ inline std::shared_ptr<persistent_data::UserSession> performTLSAuth(
 }
 
 // checks if request can be forwarded without authentication
+// 检查请求是否可以在不认证的情况下转发
 inline bool isOnAllowlist(std::string_view url, boost::beast::http::verb method)
 {
     // Handle the case where the router registers routes as both ending with /
     // and not.
+    // 处理路由注册时同时存在以 / 结尾
+    // 和不以 / 结尾的情况。
     if (url.ends_with('/') && url != "/")
     {
         url.remove_suffix(1);
@@ -239,6 +247,8 @@ inline bool isOnAllowlist(std::string_view url, boost::beast::http::verb method)
 
     // it's allowed to POST on session collection & login without
     // authentication
+    // 允许在不认证的情况下对 session 集合和 login
+    // 执行 POST
     if (boost::beast::http::verb::post == method)
     {
         if ((url == "/redfish/v1/SessionService/Sessions") ||

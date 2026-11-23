@@ -46,6 +46,7 @@ TEST(ServerSentEvent, SseWorks)
                                                      openHandler, closeHandler);
     conn->start(req);
     // Connect
+    // 连接
     {
         constexpr std::string_view expected =
             "HTTP/1.1 200 OK\r\n"
@@ -67,6 +68,7 @@ TEST(ServerSentEvent, SseWorks)
         EXPECT_TRUE(out.str().empty());
     }
     // Send one event
+    // 发送第一个事件
     {
         conn->sendSseEvent("TestEventId", "TestEventContent");
         std::string_view expected = "id: TestEventId\n"
@@ -87,6 +89,7 @@ TEST(ServerSentEvent, SseWorks)
         EXPECT_TRUE(out.str().empty());
     }
     // Send second event
+    // 发送第二个事件
     {
         conn->sendSseEvent("TestEventId2", "TestEvent\nContent2");
         constexpr std::string_view expected =
@@ -107,6 +110,7 @@ TEST(ServerSentEvent, SseWorks)
         EXPECT_TRUE(out.str().empty());
     }
     // close the remote
+    // 关闭远端连接
     {
         out.close();
         while (!closeCalled)

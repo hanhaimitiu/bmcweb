@@ -57,6 +57,8 @@ inline void afterGetTemperatureValue(
     /* Don't return an error for a failure to fill in properties from any of
      * the sensors in the list. Just skip it.
      */
+    /* 列表中的任何传感器填充属性失败时都不返回错误，
+     * 直接跳过即可。 */
     if (sensor_utils::objectExcerptToJson(
             path, chassisId, sensor_utils::ChassisSubNode::thermalMetricsNode,
             sensor::ReadingType::Temperature, valuesDict, item))

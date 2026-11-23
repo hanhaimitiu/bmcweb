@@ -28,6 +28,7 @@ namespace
 {
 
 // A value that has been parsed as a time string per Edm.DateTimeOffset
+// 已按 Edm.DateTimeOffset 解析为时间字符串的值
 struct DateTimeString
 {
     time_utils::usSinceEpoch value = time_utils::usSinceEpoch::zero();
@@ -35,6 +36,8 @@ struct DateTimeString
     // The following is created by dumping all key names of type
     // Edm.DateTimeOffset.  While imperfect that it's a hardcoded list, these
     // keys don't change that often
+    // 以下内容是通过导出所有 Edm.DateTimeOffset 类型的键名生成的。
+    // 虽然是硬编码列表并不完美，但这些键并不经常变化
     static constexpr auto timeKeys = std::to_array<std::string_view>(
         {"AccountExpiration",
          "CalibrationTime",
@@ -100,6 +103,8 @@ struct DateTimeString
 
 // Class that can convert an arbitrary AST type into a structured value
 // Pulling from the json pointer when required
+// 可将任意 AST 类型转换为结构化值的类
+// 在需要时从 json 指针中提取
 struct ValueVisitor
 {
     using result_type = std::variant<std::monostate, double, int64_t,
@@ -131,6 +136,7 @@ ValueVisitor::result_type ValueVisitor::operator()(
     const filter_ast::UnquotedString& x)
 {
     // find key including paths with / in them
+    // 查找键，包括其中包含 / 的路径
     const nlohmann::json* it =
         json_util::findNestedKey(static_cast<std::string_view>(x), body);
     if (it == nullptr)
@@ -158,6 +164,7 @@ ValueVisitor::result_type ValueVisitor::operator()(
     if (uValue != nullptr)
     {
         // For now all values are coerced to signed
+        // 目前所有值都被强制转换为有符号数
         if (*uValue > std::numeric_limits<int64_t>::max())
         {
             BMCWEB_LOG_WARNING("Parsed uint is outside limits");
@@ -208,6 +215,8 @@ bool ApplyFilter::operator()(const filter_ast::LogicalNot& x)
 
 // Helper function to reduce the number of permutations of a single comparison
 // For all possible types.
+// 辅助函数，用于减少单次比较在所有可能类型下的
+// 排列组合数量。
 bool doDoubleComparison(double left, filter_ast::ComparisonOpEnum comparator,
                         double right)
 {
@@ -221,6 +230,8 @@ bool doDoubleComparison(double left, filter_ast::ComparisonOpEnum comparator,
         case filter_ast::ComparisonOpEnum::Equals:
             // Note, floating point comparisons are hard.  Compare equality
             // based on epsilon
+            // 注意，浮点数比较比较棘手。相等性基于 epsilon
+            // 进行比较
             return std::fabs(left - right) <=
                    std::numeric_limits<double>::epsilon();
         case filter_ast::ComparisonOpEnum::NotEquals:
@@ -300,6 +311,7 @@ bool ApplyFilter::operator()(const filter_ast::Comparison& x)
         right = boost::apply_visitor(numeric, x.right);
 
     // Numeric comparisons
+    // 数值比较
     const double* lDoubleValue = std::get_if<double>(&left);
     const double* rDoubleValue = std::get_if<double>(&right);
     const int64_t* lIntValue = std::get_if<int64_t>(&left);
@@ -310,11 +322,13 @@ bool ApplyFilter::operator()(const filter_ast::Comparison& x)
         if (rDoubleValue != nullptr)
         {
             // Both sides are doubles, do the comparison as doubles
+            // 两边都是 double，按 double 进行比较
             return doDoubleComparison(*lDoubleValue, x.token, *rDoubleValue);
         }
         if (rIntValue != nullptr)
         {
             // If right arg is int, promote right arg to double
+            // 如果右侧参数是 int，则将其提升为 double
             return doDoubleComparison(*lDoubleValue, x.token,
                                       static_cast<double>(*rIntValue));
         }
@@ -324,18 +338,21 @@ bool ApplyFilter::operator()(const filter_ast::Comparison& x)
         if (rIntValue != nullptr)
         {
             // Both sides are ints, do the comparison as ints
+            // 两边都是 int，按 int 进行比较
             return doIntComparison(*lIntValue, x.token, *rIntValue);
         }
 
         if (rDoubleValue != nullptr)
         {
             // Left arg is int, promote left arg to double
+            // 左侧参数是 int，将其提升为 double
             return doDoubleComparison(static_cast<double>(*lIntValue), x.token,
                                       *rDoubleValue);
         }
     }
 
     // String comparisons
+    // 字符串比较
     const std::string* lStrValue = std::get_if<std::string>(&left);
     const std::string* rStrValue = std::get_if<std::string>(&right);
 
@@ -344,6 +361,8 @@ bool ApplyFilter::operator()(const filter_ast::Comparison& x)
 
     // If we're trying to compare a date string to a string, construct a
     // datestring from the string
+    // 如果要将日期字符串与字符串比较，则从该字符串
+    // 构造一个日期字符串
     if (lDateValue != nullptr && rStrValue != nullptr)
     {
         rDateValue = &right.emplace<DateTimeString>(std::string(*rStrValue));
@@ -410,6 +429,7 @@ bool memberMatches(const nlohmann::json& member,
 }
 
 // Applies a filter expression to a member array
+// 将过滤表达式应用到成员数组
 bool applyFilterToCollection(nlohmann::json& body,
                              const filter_ast::LogicalAnd& filterParam)
 {

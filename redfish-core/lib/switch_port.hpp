@@ -115,6 +115,7 @@ inline void afterGetFabricSwitchPortInfo(
         if (*speed != 0 && *speed != std::numeric_limits<uint64_t>::max())
         {
             // Convert from bits per second to Gigabits per second (Gbps)
+            // 从 bits per second 转换为 Gigabits per second (Gbps)。
             static constexpr int gbpsToBps = 1 << 30;
             const double convertedSpeed =
                 static_cast<double>(*speed) / gbpsToBps;

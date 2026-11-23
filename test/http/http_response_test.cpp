@@ -41,6 +41,7 @@ std::string getData(boost::beast::http::response<bmcweb::HttpBody>& m)
     boost::beast::http::response_serializer<bmcweb::HttpBody> sr{m};
     sr.split(true);
     // Reads buffers into ret
+    // 将缓冲区读入 ret
     auto reader =
         [&sr, &ret](const boost::system::error_code& ec2, const auto& buffer) {
             EXPECT_FALSE(ec2);
@@ -51,6 +52,7 @@ std::string getData(boost::beast::http::response<bmcweb::HttpBody>& m)
     boost::system::error_code ec;
 
     // Read headers
+    // 读取头部
     while (!sr.is_header_done())
     {
         sr.next(ec, reader);
@@ -59,6 +61,7 @@ std::string getData(boost::beast::http::response<bmcweb::HttpBody>& m)
     ret.clear();
 
     // Read body
+    // 读取正文
     while (!sr.is_done())
     {
         sr.next(ec, reader);

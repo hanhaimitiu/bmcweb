@@ -17,6 +17,8 @@ TEST(SSLKeyHandler, GenerateVerifyRoundTrip)
 {
     /* Verifies that we can generate a certificate, then read back in the
      * certificate that was read */
+    /* 验证我们能够生成证书，然后重新读取
+     * 已生成的证书 */
     DuplicatableFileHandle myFile("");
     std::string cert = generateSslCertificate("TestCommonName");
 

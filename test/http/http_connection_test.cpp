@@ -34,6 +34,7 @@ struct FakeHandler
         Adaptor&& /*adaptor*/)
     {
         // Handle Upgrade should never be called
+        // 不应调用 Handle Upgrade
         EXPECT_FALSE(true);
     }
 

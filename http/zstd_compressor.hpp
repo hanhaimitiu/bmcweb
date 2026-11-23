@@ -31,6 +31,7 @@ class ZstdCompressor
     ZstdCompressor() = default;
 
     // must be called before compress.
+    // 必须在 compress 之前调用。
     bool init(size_t sourceSize);
     std::optional<std::span<const uint8_t>> compress(
         std::span<const uint8_t> buffIn, bool more);

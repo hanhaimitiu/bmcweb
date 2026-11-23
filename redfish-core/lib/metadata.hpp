@@ -57,6 +57,7 @@ inline std::string getMetadataPieceForFile(
             {
                 std::string ns = schemaNode->Attribute("Namespace");
                 // BMCWEB_LOG_DEBUG("Found namespace {}", ns);
+                // BMCWEB_LOG_DEBUG("Found namespace {}", ns);（调试日志：记录找到的命名空间）
                 std::string alias;
                 if (std::string_view(ns).starts_with("RedfishExtensions"))
                 {

@@ -68,10 +68,13 @@ int runWebserver()
     iface->initialize();
 
     // Load the persistent data
+    // 加载持久化数据
     persistent_data::getConfig();
 
     // Static assets need to be initialized before Authorization, because auth
     // needs to build the whitelist from the static routes
+    // 静态资源需要在 Authorization 之前初始化，因为 auth
+    // 需要从静态路由构建白名单。
 
     if constexpr (BMCWEB_STATIC_HOSTING)
     {
@@ -88,11 +91,13 @@ int runWebserver()
         redfish::RedfishService::getInstance(app);
 
         // Create EventServiceManager instance and initialize Config
+        // 创建 EventServiceManager 实例并初始化 Config
         redfish::EventServiceManager::getInstance();
 
         if constexpr (BMCWEB_REDFISH_AGGREGATION)
         {
             // Create RedfishAggregator instance and initialize Config
+            // 创建 RedfishAggregator 实例并初始化 Config
             redfish::RedfishAggregator::getInstance();
         }
     }

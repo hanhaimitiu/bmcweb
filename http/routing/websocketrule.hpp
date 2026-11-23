@@ -29,6 +29,7 @@ class WebSocketRule : public BaseRule
     {
         isUpgrade = true;
         // Clear GET handler
+        // 清除 GET handler
         methodsBitfield = 0;
     }
 

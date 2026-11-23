@@ -12,6 +12,9 @@ namespace zstd
 // A 1MB file of all ones created using
 // dd if=/dev/zero bs=1024 count=1024 | tr "\000" "\377" > ones-file
 // zstd -c ones-file | xxd -i
+// 一个 1MB 的全 1 文件，使用以下命令创建：
+// dd if=/dev/zero bs=1024 count=1024 | tr "\000" "\377" > ones-file
+// zstd -c ones-file | xxd -i
 constexpr std::array<unsigned char, 54> ones = {
     0x28, 0xb5, 0x2f, 0xfd, 0xa4, 0x00, 0x00, 0x10, 0x00, 0x54, 0x00,
     0x00, 0x10, 0xff, 0xff, 0x01, 0x00, 0xfb, 0xff, 0x39, 0xc0, 0x02,
@@ -22,6 +25,9 @@ constexpr std::array<unsigned char, 54> ones = {
 // A 1MB file of all zeros created using
 // dd if=/dev/zero of=zeros-file bs=1024 count=1024
 // zstd -c zeros-file | xxd -i
+// 一个 1MB 的全 0 文件，使用以下命令创建：
+// dd if=/dev/zero of=zeros-file bs=1024 count=1024
+// zstd -c zeros-file | xxd -i
 constexpr std::array<unsigned char, 54> zeros = {
     0x28, 0xb5, 0x2f, 0xfd, 0xa4, 0x00, 0x00, 0x10, 0x00, 0x54, 0x00,
     0x00, 0x10, 0x00, 0x00, 0x01, 0x00, 0xfb, 0xff, 0x39, 0xc0, 0x02,
@@ -30,6 +36,9 @@ constexpr std::array<unsigned char, 54> zeros = {
     0x10, 0x00, 0x03, 0x00, 0x10, 0x00, 0xf1, 0x3e, 0x16, 0xe1};
 
 // A 0 byte file created using
+// touch empty-file
+// zstd -c empty-file | xxd -i
+// 一个 0 字节文件，使用以下命令创建：
 // touch empty-file
 // zstd -c empty-file | xxd -i
 constexpr std::array<unsigned char, 13> empty{

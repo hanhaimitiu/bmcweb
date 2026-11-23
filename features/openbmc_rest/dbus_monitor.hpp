@@ -79,6 +79,7 @@ inline int onPropertyUpdate(sd_bus_message* m, void* userdata,
         }
 
         // data is type sa{sv}as and is an array[3] of string, object, array
+        // data 的类型为 sa{sv}as，是一个包含 string、object、array 的 array[3]
         json["interface"] = data[0];
         json["properties"] = data[1];
     }
@@ -111,6 +112,7 @@ inline int onPropertyUpdate(sd_bus_message* m, void* userdata,
             return 0;
         }
         // data is type oa{sa{sv}} which is an array[2] of string, object
+        // data 的类型为 oa{sa{sv}}，是一个包含 string、object 的 array[2]
         for (const auto& entry : *obj)
         {
             auto it = thisSession->second.interfaces.find(entry.first);
@@ -186,6 +188,8 @@ inline void handleDbusMonitorMessage(crow::websocket::Connection& conn,
 
     // These regexes derived on the rules here:
     // https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names
+    // 这些正则表达式依据此处的规则编写：
+    // https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names
     static std::regex validPath("^/([A-Za-z0-9_]+/?)*$");
     static std::regex validInterface(
         "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$");
@@ -215,6 +219,8 @@ inline void handleDbusMonitorMessage(crow::websocket::Connection& conn,
              "member='PropertiesChanged'");
         // If interfaces weren't specified, add a single match for all
         // interfaces
+        // 如果未指定 interfaces，则为所有接口
+        // 添加一个 match 规则
         if (thisSession.interfaces.empty())
         {
             BMCWEB_LOG_DEBUG("Creating match {}", propertiesMatchString);
@@ -227,6 +233,8 @@ inline void handleDbusMonitorMessage(crow::websocket::Connection& conn,
         {
             // If interfaces were specified, add a match for each
             // interface
+            // 如果指定了 interfaces，则为每个接口
+            // 添加一个 match 规则
             for (const std::string& interface : thisSession.interfaces)
             {
                 if (!std::regex_match(interface, validInterface))

@@ -180,6 +180,7 @@ inline void handleSystemsStorageGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -225,6 +226,7 @@ inline void afterSubtree(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     asyncResp->res.jsonValue["Status"]["State"] = resource::State::Enabled;
 
     // Storage subsystem to Storage link.
+    // Storage subsystem 到 Storage 的链接。
     nlohmann::json::array_t storageServices;
     nlohmann::json::object_t storageService;
     storageService["@odata.id"] =
@@ -266,6 +268,7 @@ inline void handleSystemsStorageDriveGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;

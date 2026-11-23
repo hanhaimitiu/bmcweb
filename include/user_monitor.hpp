@@ -34,6 +34,9 @@ inline void registerUserRemovedSignal()
 // Drop a user's Redfish sessions whenever User.Attributes.UserEnabled
 // transitions to false. Covers Redfish PATCH, IPMI `user disable`, and any
 // other writer of the property.
+// 当 User.Attributes.UserEnabled 变为 false 时，
+// 丢弃该用户的 Redfish 会话。涵盖 Redfish PATCH、
+// IPMI `user disable` 以及任何其他写入该属性的来源。
 inline void onUserPropertiesChanged(sdbusplus::message_t& msg)
 {
     std::string interface;
@@ -61,6 +64,7 @@ inline void onUserPropertiesChanged(sdbusplus::message_t& msg)
     if (!success || userEnabled == nullptr || *userEnabled)
     {
         // Property wasn't in this change, or user is being (re-)enabled.
+        // 本次变更中没有该属性，或者用户正在被（重新）启用。
         return;
     }
 

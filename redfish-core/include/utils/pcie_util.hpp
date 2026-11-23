@@ -34,6 +34,11 @@ namespace pcie_util
  *
  * @return void
  */
+/* @brief 通过对 inventory 的 GetSubTreePaths 搜索来填充
+ *        PCIe Device 列表
+ * @param[i,o] asyncResp  异步响应对象
+ * @param[i]   Name   用于在 asyncResp 中存储 PCIe 设备列表的 key
+ * @return void */
 
 inline void getPCIeDeviceList(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,

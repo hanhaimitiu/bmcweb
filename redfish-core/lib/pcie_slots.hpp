@@ -140,6 +140,7 @@ inline void onMapperAssociationDone(
         if (ec.value() == EBADR)
         {
             // This PCIeSlot have no chassis association.
+            // 该 PCIeSlot 没有机箱关联。
             return;
         }
         BMCWEB_LOG_ERROR("DBUS response error");
@@ -159,6 +160,7 @@ inline void onMapperAssociationDone(
     if (chassisName != chassisID)
     {
         // The pcie slot doesn't belong to the chassisID
+        // 该 pcie slot 不属于该 chassisID。
         return;
     }
 
@@ -209,6 +211,7 @@ inline void onMapperSubtreeDone(
 
             // The association of this PCIeSlot is used to determine whether
             // it belongs to this ChassisID
+            // 该 PCIeSlot 的关联用于确定它是否属于该 ChassisID。
             dbus::utility::getAssociationEndPoints(
                 std::string{pcieSlotAssociationPath},
                 [asyncResp, chassisID, pcieSlotPath, connectionName](

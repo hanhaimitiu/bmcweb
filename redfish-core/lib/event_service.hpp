@@ -142,6 +142,7 @@ inline void handleEventServiceSubscriptionsPost(
     url->normalize();
 
     // port_number returns zero if it is not a valid representable port
+    // 如果不是有效的可表示端口，port_number 返回零。
     if (url->has_port() && url->port_number() == 0)
     {
         BMCWEB_LOG_WARNING("{} is an invalid port in destination url",
@@ -256,6 +257,7 @@ inline void handleEventServiceSubscriptionsPost(
     else
     {
         // Default
+        // 默认值。
         subValue->userSub->subscriptionType = "RedfishEvent";
     }
 
@@ -285,12 +287,14 @@ inline void handleEventServiceSubscriptionsPost(
     else
     {
         // If not specified, use default "Event"
+        // 如果未指定，则使用默认的 "Event"。
         subValue->userSub->eventFormatType = "Event";
     }
 
     if (context)
     {
         // This value is selected arbitrarily.
+        // 该值是任意选定的。
         constexpr const size_t maxContextSize = 256;
         if (context->size() > maxContextSize)
         {
@@ -322,8 +326,13 @@ inline void handleEventServiceSubscriptionsPost(
                 // the size of the value + 2 * 2 quotes for each, +
                 // the colon and space between. example:
                 // "key": "value"
+                // 新增一个 json 值的大小为：键的长度 +
+                // 值的长度 + 两者各 2 个引号（共 4 个）+ 中间的冒号和空格。
+                // 示例：
+                // "key": "value"
                 cumulativeLen += item.first.size() + value->size() + 6;
                 // This value is selected to mirror http_connection.hpp
+                // 选择该值是为了与 http_connection.hpp 保持一致。
                 constexpr const uint16_t maxHeaderSizeED = 8096;
                 if (cumulativeLen > maxHeaderSizeED)
                 {
@@ -377,6 +386,8 @@ inline void handleEventServiceSubscriptionsPost(
 
         // If no registry prefixes are mentioned, consider all
         // supported prefixes
+        // 如果未提及任何 registry 前缀，
+        // 则考虑所有支持的前缀。
         if (subValue->userSub->registryPrefixes.empty())
         {
             registryPrefix.assign(supportedRegPrefixes.begin(),
@@ -392,6 +403,7 @@ inline void handleEventServiceSubscriptionsPost(
             bool validId = false;
 
             // Check for Message ID in each of the selected Registry
+            // 在每个选定的 Registry 中检查 Message ID。
             for (const std::string& it : registryPrefix)
             {
                 const registries::MessageEntries registry =
@@ -433,6 +445,7 @@ inline void handleEventServiceSubscriptionsPost(
     else
     {
         // Default "TerminateAfterRetries"
+        // 默认 "TerminateAfterRetries"。
         subValue->userSub->retryPolicy = "TerminateAfterRetries";
     }
     if (sendHeartbeat)
@@ -479,6 +492,7 @@ inline void handleEventServiceSubscriptionsPost(
                              "/redfish/v1/EventService/Subscriptions/" + id);
 
     // schedule a heartbeat
+    // 安排心跳（heartbeat）。
     if (subValue->userSub->sendHeartbeat)
     {
         subValue->scheduleNextHeartbeatEvent();
@@ -547,6 +561,7 @@ inline void requestRoutesEventService(App& app)
         .privileges(redfish::privileges::patchEventService)
         .methods(boost::beast::http::verb::patch)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 if (!redfish::setUpRedfishRoute(app, req, asyncResp))
@@ -578,6 +593,7 @@ inline void requestRoutesEventService(App& app)
                 if (retryAttempts)
                 {
                     // Supported range [1-3]
+                    // 支持范围 [1-3]。
                     if ((*retryAttempts < 1) || (*retryAttempts > 3))
                     {
                         messages::propertyValueOutOfRange(
@@ -592,6 +608,7 @@ inline void requestRoutesEventService(App& app)
                 if (retryInterval)
                 {
                     // Supported range [5 - 180]
+                    // 支持范围 [5 - 180]。
                     if ((*retryInterval < 5) || (*retryInterval > 180))
                     {
                         messages::propertyValueOutOfRange(
@@ -616,6 +633,7 @@ inline void requestRoutesSubmitTestEvent(App& app)
         .privileges(redfish::privileges::postEventService)
         .methods(boost::beast::http::verb::post)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 if (!redfish::setUpRedfishRoute(app, req, asyncResp))
@@ -626,6 +644,9 @@ inline void requestRoutesSubmitTestEvent(App& app)
                 // From the Redfish spec on EventId
                 // A service can ignore this value and replace it with its own.
                 // note that this parameter is intentionally ignored
+                // 来自 Redfish 规范中关于 EventId 的说明：
+                // 服务可以忽略该值，并用自己的值替换。
+                // 注意，该参数被有意忽略。
 
                 std::optional<std::string> eventId;
                 TestEvent testEvent;
@@ -667,6 +688,7 @@ inline void doSubscriptionCollection(
         if (ec.value() == EBADR || ec.value() == EHOSTUNREACH)
         {
             // This is an optional process so just return if it isn't there
+            // 这是可选流程，如果不存在则直接返回。
             return;
         }
 
@@ -696,6 +718,7 @@ inline void requestRoutesEventDestinationCollection(App& app)
         .privileges(redfish::privileges::getEventDestinationCollection)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 if (!redfish::setUpRedfishRoute(app, req, asyncResp))
@@ -773,6 +796,7 @@ inline void requestRoutesEventDestination(App& app)
         .privileges(redfish::privileges::getEventDestination)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& param) {
@@ -837,9 +861,13 @@ inline void requestRoutesEventDestination(App& app)
         // ConfigureSelf
         // https://github.com/openbmc/bmcweb/issues/220
         //.privileges(redfish::privileges::patchEventDestination)
+        // 下面的权限是错误的，应该是 ConfigureManager 或 ConfigureSelf。
+        // https://github.com/openbmc/bmcweb/issues/220
+        // .privileges(redfish::privileges::patchEventDestination)
         .privileges({{"ConfigureManager"}})
         .methods(boost::beast::http::verb::patch)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& param) {
@@ -938,6 +966,9 @@ inline void requestRoutesEventDestination(App& app)
                     // if Heartbeat interval or send heart were changed, cancel
                     // the heartbeat timer if running and start a new heartbeat
                     // if needed
+                    // 如果心跳间隔或 sendHeart 发生变化，
+                    // 若心跳定时器正在运行则取消它，
+                    // 并在需要时启动新的心跳。
                     subValue->heartbeatParametersChanged();
                 }
 
@@ -953,6 +984,9 @@ inline void requestRoutesEventDestination(App& app)
         // ConfigureSelf
         // https://github.com/openbmc/bmcweb/issues/220
         //.privileges(redfish::privileges::deleteEventDestination)
+        // 下面的权限是错误的，应该是 ConfigureManager 或 ConfigureSelf。
+        // https://github.com/openbmc/bmcweb/issues/220
+        // .privileges(redfish::privileges::deleteEventDestination)
         .privileges({{"ConfigureManager"}})
         .methods(boost::beast::http::verb::delete_)(
             std::bind_front(handleEventDestinationDelete, std::ref(app)));

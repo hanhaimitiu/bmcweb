@@ -19,11 +19,14 @@ namespace systemd_utils
  *
  * @return Service root UUID
  */
+/* @brief 获取服务根 UUID
+ * @return 服务根 UUID */
 
 inline std::string getUuid()
 {
     std::string ret;
     // This ID needs to match the one in ipmid
+    // 此 ID 需要与 ipmid 中的保持一致
     sd_id128_t appId{{0Xe0, 0Xe1, 0X73, 0X76, 0X64, 0X61, 0X47, 0Xda, 0Xa5,
                       0X0c, 0Xd0, 0Xcc, 0X64, 0X12, 0X45, 0X78}};
     sd_id128_t machineId{};

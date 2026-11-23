@@ -8,6 +8,13 @@
  * should be first pushed to the relevant registry in the DMTF
  * github organization.
  ***************************************************************/
+/*                 请先阅读此警告
+ * 这是一个自动生成的头文件，其中包含
+ * Redfish DMTF 定义消息的定义。
+ * 请勿在运行 parse_registries.py 脚本之外
+ * 修改此注册表。本文件中包含的定义归 DMTF 所有。
+ * 对这些文件的任何修改都应首先推送到
+ * DMTF github 组织中的相关注册表。 */
 #include "task_messages.hpp"
 
 #include "registries.hpp"
@@ -22,6 +29,9 @@
 
 // Clang can't seem to decide whether this header needs to be included or not,
 // and is inconsistent.  Include it for now
+// NOLINTNEXTLINE(misc-include-cleaner)
+// Clang 似乎无法确定是否需要包含此头文件，
+// 而且判断并不一致。暂时先包含它。
 // NOLINTNEXTLINE(misc-include-cleaner)
 #include <cstdint>
 // NOLINTNEXTLINE(misc-include-cleaner)
@@ -56,6 +66,10 @@ static nlohmann::json::object_t getLog(
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskStarted 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskStarted(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskStarted,
@@ -69,6 +83,10 @@ nlohmann::json::object_t taskStarted(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskCompletedOK 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskCompletedOK(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskCompletedOK,
@@ -82,6 +100,10 @@ nlohmann::json::object_t taskCompletedOK(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskCompletedWarning 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskCompletedWarning(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskCompletedWarning,
@@ -95,6 +117,10 @@ nlohmann::json::object_t taskCompletedWarning(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskAborted 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskAborted(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskAborted,
@@ -108,6 +134,10 @@ nlohmann::json::object_t taskAborted(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskCancelled 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskCancelled(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskCancelled,
@@ -121,6 +151,10 @@ nlohmann::json::object_t taskCancelled(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskRemoved 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskRemoved(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskRemoved,
@@ -134,6 +168,10 @@ nlohmann::json::object_t taskRemoved(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskPaused 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskPaused(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskPaused,
@@ -147,6 +185,10 @@ nlohmann::json::object_t taskPaused(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskResumed 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskResumed(std::string_view arg1)
 {
     return getLog(redfish::registries::TaskEvent::Index::taskResumed,
@@ -160,6 +202,10 @@ nlohmann::json::object_t taskResumed(std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 TaskProgressChanged 消息格式化为 JSON
+ * 有关更多信息请参见头文件。
+ * @endinternal */
 nlohmann::json::object_t taskProgressChanged(std::string_view arg1,
                                              uint64_t arg2)
 {

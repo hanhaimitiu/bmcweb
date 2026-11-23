@@ -34,6 +34,7 @@ inline void handleMessageRegistryFileCollectionGet(
     }
     // Collections don't include the static data added by SubRoute
     // because it has a duplicate entry for members
+    // 集合不包含 SubRoute 添加的静态数据，因为其 members 存在重复条目。
 
     asyncResp->res.jsonValue["@odata.type"] =
         "#MessageRegistryFileCollection.MessageRegistryFileCollection";
@@ -59,6 +60,7 @@ inline void requestRoutesMessageRegistryFileCollection(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app, "/redfish/v1/Registries/")
         .privileges(redfish::privileges::getMessageRegistryFileCollection)
         .methods(boost::beast::http::verb::get)(std::bind_front(
@@ -172,6 +174,7 @@ inline void handleMessageRegistryGet(
     nlohmann::json& messageObj = asyncResp->res.jsonValue["Messages"];
 
     // Go through the Message Registry and populate each Message
+    // 遍历 Message Registry 并填充每条 Message。
     const registries::MessageEntries registryEntries =
         registries::getRegistryMessagesFromPrefix(registry);
 

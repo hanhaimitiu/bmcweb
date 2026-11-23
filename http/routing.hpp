@@ -111,6 +111,8 @@ class Router
         Trie<crow::Node> trie;
         // rule index 0 has special meaning; preallocate it to avoid
         // duplication.
+        // rule index 0 有特殊含义；预先分配它以避免
+        // 重复。
         PerMethod() : rules(1) {}
 
         void internalAdd(std::string_view rule, BaseRule* ruleObject)
@@ -119,6 +121,8 @@ class Router
             trie.add(rule, static_cast<unsigned>(rules.size() - 1U));
             // directory case:
             //   request to `/about' url matches `/about/' rule
+            // 目录情况：
+            //   对 `/about' url 的请求匹配 `/about/' 规则
             if (rule.size() > 2 && rule.back() == '/')
             {
                 trie.add(rule.substr(0, rule.size() - 1),
@@ -202,6 +206,7 @@ class Router
             throw std::runtime_error("Trie internal structure corrupted!");
         }
         // Found a 404 route, switch that in
+        // 找到了 404 路由，切换过去
         if (found.ruleIndex != 0U)
         {
             route.rule = perMethod.rules[found.ruleIndex];
@@ -215,10 +220,12 @@ class Router
         FindRouteResponse findRoute;
 
         // Check to see if this url exists at any verb
+        // 检查该 url 是否存在于任一 HTTP 方法（verb）下
         for (size_t perMethodIndex = 0; perMethodIndex <= maxVerbIndex;
              perMethodIndex++)
         {
             // Make sure it's safe to deference the array at that index
+            // 确保在该索引处解引用数组是安全的
             static_assert(
                 maxVerbIndex < std::tuple_size_v<decltype(perMethods)>);
             FindRoute route = findRouteByPerMethod(req.url().encoded_path(),
@@ -287,6 +294,8 @@ class Router
 
         // TODO(ed) This should be able to use std::bind_front, but it doesn't
         // appear to work with the std::move on adaptor.
+        // TODO(ed)：这里应该可以使用 std::bind_front，但看起来
+        // 它无法与 adaptor 上的 std::move 一起工作。
         validatePrivilege(
             req, asyncResp, rule,
             [req, &rule, asyncResp,
@@ -304,6 +313,8 @@ class Router
         {
             // Couldn't find a normal route with any verb, try looking for a 404
             // route
+            // 用任何 verb 都找不到普通路由，尝试查找 404
+            // 路由
             if (foundRoute.allowHeader.empty())
             {
                 foundRoute.route = findRouteByPerMethod(
@@ -312,12 +323,14 @@ class Router
             else
             {
                 // See if we have a method not allowed (405) handler
+                // 查看是否有 method not allowed (405) 处理器
                 foundRoute.route = findRouteByPerMethod(
                     req->url().encoded_path(), methodNotAllowedRoutes);
             }
         }
 
         // Fill in the allow header if it's valid
+        // 如果有效则填写 allow 头
         if (!foundRoute.allowHeader.empty())
         {
             asyncResp->res.addHeader(boost::beast::http::field::allow,
@@ -326,6 +339,8 @@ class Router
 
         // If we couldn't find a real route or a 404 route, return a generic
         // response
+        // 如果找不到真实路由或 404 路由，则返回一个通用
+        // 响应
         if (foundRoute.route.rule == nullptr)
         {
             if (foundRoute.allowHeader.empty())

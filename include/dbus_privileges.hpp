@@ -27,6 +27,7 @@
 namespace crow
 {
 // Populate session with user information.
+// 用用户信息填充 session。
 inline bool populateUserInfo(
     persistent_data::UserSession& session,
     const dbus::utility::DBusPropertiesMap& userInfoMap)
@@ -60,6 +61,9 @@ inline bool populateUserInfo(
     // Set isConfigureSelfOnly based on D-Bus results.  This
     // ignores the results from both pamAuthenticateUser and the
     // value from any previous use of this session.
+    // 根据 D-Bus 结果设置 isConfigureSelfOnly。这会
+    // 忽略 pamAuthenticateUser 的结果以及该 session
+    // 之前使用时的取值。
     session.isConfigureSelfOnly = passwordExpired.value_or(false);
 
     session.userGroups.clear();
@@ -80,13 +84,16 @@ inline bool isUserPrivileged(
         return false;
     }
     // Get the user's privileges from the role
+    // 从 role 获取用户的权限
     redfish::Privileges userPrivileges =
         redfish::getUserPrivileges(*req.session);
 
     // Modify privileges if isConfigureSelfOnly.
+    // 如果 isConfigureSelfOnly 则修改权限。
     if (req.session->isConfigureSelfOnly)
     {
         // Remove all privileges except ConfigureSelf
+        // 移除除 ConfigureSelf 之外的所有权限
         userPrivileges =
             userPrivileges.intersection(redfish::Privileges{"ConfigureSelf"});
         BMCWEB_LOG_DEBUG("Operation limited to ConfigureSelf");
@@ -124,6 +131,7 @@ inline bool afterGetUserInfoValidate(
     if (!isUserPrivileged(req, asyncResp, rule))
     {
         // User is not privileged
+        // 用户没有权限
         BMCWEB_LOG_ERROR("Insufficient Privilege");
         asyncResp->res.result(boost::beast::http::status::forbidden);
         return false;

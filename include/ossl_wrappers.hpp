@@ -289,6 +289,7 @@ struct OpenSSLGeneralName
         else
         {
             // type is a NID: build an otherName SAN with that OID
+            // type 为 NID：用该 OID 构造一个 otherName SAN
             OpenSSLASN1String str(value, V_ASN1_UTF8STRING);
             ASN1_OBJECT* oid = OBJ_dup(OBJ_nid2obj(type));
             ASN1_TYPE* atype = ASN1_TYPE_new();
@@ -331,6 +332,11 @@ class OpenSSLGeneralNames
     // that it shouldn't be an rvalue.  rvalue keeps the API clear that the
     // element has been effectively moved out of even if std::move isn't
     // used.
+    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
+    // 这个参数并未被「移动」，但会被释放，因此 clang-tidy 会
+    // 提示它不应是右值。右值能让 API 更清楚地表明，即使没有
+    // 使用 std::move，该元素实际上也已被移出。
+    // （此处忽略 clang-tidy 警告）
     // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
     bool push(OpenSSLGeneralName&& name) const
     {
@@ -468,6 +474,7 @@ class OpenSSLEVPKeyCTX
         }
 
         // Set up curve parameters.
+        // 设置曲线参数。
         if (!ctx->setEcParamEnc(OPENSSL_EC_NAMED_CURVE))
         {
             BMCWEB_LOG_ERROR("Failed to set EC parameter encoding");
@@ -489,6 +496,8 @@ class OpenSSLEVPKeyCTX
 
         // Set new context for key generation, using curve parameters.
         // Don't check here; pkey only has parameters, not a full key yet.
+        // 使用曲线参数为密钥生成设置新的上下文。
+        // 此处不必检查；pkey 目前只有参数，还没有完整的密钥。
         ctx = OpenSSLEVPKeyCTX::newFromPkey(*pkey);
         if (!ctx)
         {
@@ -503,6 +512,7 @@ class OpenSSLEVPKeyCTX
         }
 
         // Generate key.
+        // 生成密钥。
         if (!ctx->keygen(*pkey))
         {
             BMCWEB_LOG_ERROR("Failed to generate key");
@@ -705,6 +715,7 @@ class OpenSSLX509
         std::chrono::system_clock::duration duration) const
     {
         // not before this moment
+        // 证书生效时间不早于此刻。
         X509_gmtime_adj(X509_getm_notBefore(ptr), 0);
         using std::chrono::floor;
         using OsslSeconds = std::chrono::duration<long>;
@@ -757,6 +768,7 @@ class OpenSSLX509
     bool sign() const
     {
         // Generate test key
+        // 生成测试密钥
         std::optional<OpenSSLEVPKeyCTX> ctx =
             OpenSSLEVPKeyCTX::newId(EVP_PKEY_EC);
         if (!ctx)
@@ -775,6 +787,7 @@ class OpenSSLX509
         OpenSSLEVPKey key = OpenSSLEVPKey::fromKeygen(ctx->get());
 
         // Sign cert with key
+        // 用密钥为证书签名
         if (X509_set_pubkey(ptr, key.ptr) != 1)
         {
             return false;
@@ -804,6 +817,7 @@ class OpenSSLX509
     std::string getCommonName() const
     {
         // Extract username contained in CommonName
+        // 提取 CommonName 中包含的用户名
         const X509_NAME* name = X509_get_subject_name(ptr);
         int index = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
         if (index < 0)
@@ -1188,6 +1202,9 @@ class OpenSSLSSL
     // Creates two memory BIOs for read/write and hands them to the SSL.
     // SSL_set_bio takes ownership, so the SSL_free in the destructor frees
     // them.
+    // 创建两个用于读写的内存 BIO 并交给 SSL。
+    // SSL_set_bio 会接管其所有权，因此析构函数中的 SSL_free 会
+    // 释放它们。
     bool setMemBio() const
     {
         BIO* rbio = BIO_new(BIO_s_mem());

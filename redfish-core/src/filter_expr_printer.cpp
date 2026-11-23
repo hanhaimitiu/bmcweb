@@ -27,6 +27,11 @@ namespace redfish
 //  Prints a $filter AST as a string to be compared, including explicit braces
 //  around all operations to help debugging AST issues.
 ///////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+//  AST 打印器
+//  将 $filter AST 打印为字符串以便比较，并在所有运算周围加上
+//  显式大括号，以帮助调试 AST 问题。
+// /////////////////////////////////////////////////////////////////////////
 
 using result_type = std::string;
 std::string FilterExpressionPrinter::operator()(double x) const
@@ -151,10 +156,13 @@ std::optional<filter_grammar::program> parseFilter(std::string_view expr)
     // Filter examples have unclear guidelines about between which arguments
     // spaces are allowed or disallowed.  Specification is not clear, so in
     // almost all cases we allow zero or more
+    // 过滤示例中对于参数之间是否允许或禁止空格的规定并不明确。
+    // 规范没有说清楚，因此在几乎所有情况下我们都允许零个或多个空格
     using boost::spirit::x3::space;
     using boost::spirit::x3::with;
 
     // Initialize recursion depth to 0 in the parsing context
+    // 在解析上下文中将递归深度初始化为 0
     using filter_grammar::RecursionDepth;
     size_t depth = 0;
     auto grammarRunnable = with<RecursionDepth>(std::ref(depth))[grammar];

@@ -34,6 +34,8 @@ namespace
 {
 // Pump data between the two SSL objects via their memory BIOs
 // until both sides report completion (or error).
+// 通过两个 SSL 对象的内存 BIO 在它们之间泵送数据，
+// 直到双方都报告完成（或出错）。
 void pumpHandshake(OpenSSLSSL& client, OpenSSLSSL& server)
 {
     for (int i = 0; i < 100; ++i)
@@ -57,6 +59,12 @@ void pumpHandshake(OpenSSLSSL& client, OpenSSLSSL& server)
 //             If nullptr, the client will not present a certificate.
 // outServerSsl: receives the server-side SSL handle on success.
 // Must be called from a TEST body so ASSERT_* can abort the test.
+// 通过内存 BIO 执行 TLS 握手，使服务器端的 SSL 对象
+// 将客户端证书视为其对等证书。
+// clientCert: 客户端提供给服务器的 X509 证书。
+//             如果为 nullptr，则客户端不提供证书。
+// outServerSsl: 成功时接收服务器端的 SSL 句柄。
+// 必须从 TEST 主体中调用，以便 ASSERT_* 能够中止测试。
 void mtlsHandshake(OpenSSLX509* clientCert,
                    std::optional<OpenSSLSSL>& outServerSsl)
 {
@@ -66,6 +74,7 @@ void mtlsHandshake(OpenSSLX509* clientCert,
     ASSERT_TRUE(clientCtx.valid());
 
     // ---- Generate a self-signed server certificate + key ----
+    // ---- 生成自签名的服务器证书 + 密钥 ----
     std::optional<OpenSSLEVPKey> serverKey = OpenSSLEVPKeyCTX::createPKey();
     ASSERT_TRUE(serverKey);
     if (!serverKey)
@@ -86,23 +95,30 @@ void mtlsHandshake(OpenSSLX509* clientCert,
     ASSERT_TRUE(serverCtx.usePrivateKey(*serverKey));
     // Ask the client for a certificate but don't verify it ourselves
     // (we let verifyMtlsUser handle the verification logic)
+    // 向客户端请求证书，但我们自己不验证它
+    // （由 verifyMtlsUser 处理验证逻辑）
     serverCtx.setVerifyPeer();
 
     // Trust the server certificate
+    // 信任服务器证书
     ASSERT_TRUE(clientCtx.addCertToStore(serverCert));
     clientCtx.setVerifyPeer();
 
     // ---- Prepare client certificate with a matching private key ----
+    // ---- 准备带有匹配私钥的客户端证书 ----
     std::optional<OpenSSLEVPKey> clientKey;
     if (clientCert != nullptr)
     {
         // Set required fields for TLS verification to succeed
+        // 设置 TLS 验证成功所需的字段
         ASSERT_TRUE(clientCert->setIssuerNameToSubject());
         clientCert->setSerialNumber(2);
         clientCert->setValidityPeriodFromNow(std::chrono::seconds(60 * 60));
 
         // Generate a new key and re-sign the cert so we have both
         // the certificate and its private key for the handshake.
+        // 生成新密钥并重新签署证书，以便我们同时拥有证书
+        // 及其私钥用于握手。
         clientKey = OpenSSLEVPKeyCTX::createPKey();
         ASSERT_TRUE(clientKey);
         if (!clientKey)
@@ -113,10 +129,12 @@ void mtlsHandshake(OpenSSLX509* clientCert,
         ASSERT_TRUE(clientCert->sign(*clientKey));
 
         // Trust the (re-signed) client cert on the server side
+        // 在服务器端信任（重新签署后的）客户端证书
         ASSERT_TRUE(serverCtx.addCertToStore(*clientCert));
     }
 
     // ---- Create SSL objects with memory BIOs ----
+    // ---- 使用内存 BIO 创建 SSL 对象 ----
     outServerSsl.emplace(serverCtx);
     ASSERT_TRUE(outServerSsl->valid());
     ASSERT_TRUE(outServerSsl->setMemBio());
@@ -139,6 +157,7 @@ void mtlsHandshake(OpenSSLX509* clientCert,
     }
 
     // ---- Perform the handshake ----
+    // ---- 执行握手 ----
     pumpHandshake(clientSsl, *outServerSsl);
 }
 
@@ -257,6 +276,7 @@ TEST(IsUPNMatch, MultipleCases)
 TEST(IsUPNMatch, CaseSensitivity)
 {
     // Domain names are case-insensitive per RFC standards
+    // 根据 RFC 标准，域名不区分大小写
     EXPECT_TRUE(isUPNMatch("user@DOMAIN.COM", "host.domain.com"));
     EXPECT_TRUE(isUPNMatch("user@Domain.Com", "host.DOMAIN.COM"));
     EXPECT_TRUE(isUPNMatch("user@domain.com", "host.DOMAIN.COM"));

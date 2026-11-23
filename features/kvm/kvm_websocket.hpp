@@ -36,6 +36,7 @@ class KvmSession : public std::enable_shared_from_this<KvmSession>
             boost::asio::ip::make_address("127.0.0.1"), 5900);
         hostSocket.async_connect(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             endpoint, [this, &connIn](const boost::system::error_code& ec) {
                 if (ec)
                 {
@@ -188,6 +189,7 @@ inline void requestRoutes(App& app)
         .privileges({{"ConfigureComponents", "ConfigureManager"}})
         .websocket()
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         .onopen([](crow::websocket::Connection& conn) {
             BMCWEB_LOG_DEBUG("Connection {} opened", logPtr(&conn));
 

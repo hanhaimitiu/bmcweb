@@ -16,6 +16,7 @@
 #include <utility>
 
 // Wrapper for boost::async_pipe ensuring proper pipe cleanup
+// 对 boost::async_pipe 的包装，确保正确清理管道
 class CredentialsPipe
 {
   public:
@@ -24,6 +25,8 @@ class CredentialsPipe
         boost::system::error_code ec;
 
         // Unclear why tidy complains here.
+        // NOLINTNEXTLINE(misc-include-cleaner)
+        // 不清楚 tidy 为什么在这里报错。
         // NOLINTNEXTLINE(misc-include-cleaner)
         boost::asio::connect_pipe(read, impl, ec);
         if (ec)
@@ -57,6 +60,7 @@ class CredentialsPipe
         pass = std::move(password);
 
         // Add +1 to ensure that the null terminator is included.
+        // 加 1 以确保包含 null 终止符。
         std::array<boost::asio::const_buffer, 2> buffer{
             {{user.data(), user.size() + 1}, {pass.data(), pass.size() + 1}}};
         boost::asio::async_write(impl, buffer,

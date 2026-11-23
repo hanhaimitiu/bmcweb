@@ -27,12 +27,15 @@ void FilesystemLogWatcher::resetRedfishFilePosition()
 {
     // Control would be here when Redfish file is created.
     // Reset File Position as new file is created
+    // 创建 Redfish 文件时流程会走到这里。
+    // 由于创建了新文件，重置文件位置
     redfishLogFilePosition = 0;
 }
 
 void FilesystemLogWatcher::cacheRedfishLogFile()
 {
     // Open the redfish file and read till the last record.
+    // 打开 redfish 文件并读取到最后一条记录。
 
     std::ifstream logStream(redfishEventLogFile);
     if (!logStream.good())
@@ -64,6 +67,7 @@ void FilesystemLogWatcher::readEventLogsFromFile()
                      static_cast<int>(redfishLogFilePosition));
 
     // Get the read pointer to the next log to be read.
+    // 获取指向下一条待读取日志的读指针。
     logStream.seekg(redfishLogFilePosition);
 
     event_log::UniqueEntryIDState state;
@@ -72,6 +76,7 @@ void FilesystemLogWatcher::readEventLogsFromFile()
     {
         BMCWEB_LOG_DEBUG("Redfish log file: found new event log entry");
         // Update Pointer position
+        // 更新指针位置
         redfishLogFilePosition = logStream.tellg();
 
         std::string idStr;
@@ -100,6 +105,7 @@ void FilesystemLogWatcher::readEventLogsFromFile()
     if (eventRecords.empty())
     {
         // No Records to send
+        // 没有可发送的记录
         BMCWEB_LOG_DEBUG("No log entries available to be transferred.");
         return;
     }
@@ -156,6 +162,8 @@ void FilesystemLogWatcher::onINotify(const boost::system::error_code& ec,
                                      "redfish event log file");
                     // Remove existing inotify watcher and add
                     // with new redfish event log file.
+                    // 移除现有的 inotify 监视器，
+                    // 并为新的 redfish 事件日志文件添加监视。
                     inotify_rm_watch(inotifyConn.native_handle(),
                                      fileWatchDesc);
                     fileWatchDesc = -1;
@@ -225,6 +233,8 @@ FilesystemLogWatcher::FilesystemLogWatcher(boost::asio::io_context& ioc) :
 
     // Add watch on directory to handle redfish event log file
     // create/delete.
+    // 在目录上添加监视，以处理 redfish 事件日志文件的
+    // 创建/删除。
     dirWatchDesc =
         inotify_add_watch(inotifyConn.native_handle(), redfishEventLogDir,
                           IN_CREATE | IN_MOVED_TO | IN_DELETE);
@@ -235,6 +245,7 @@ FilesystemLogWatcher::FilesystemLogWatcher(boost::asio::io_context& ioc) :
     }
 
     // Watch redfish event log file for modifications.
+    // 监视 redfish 事件日志文件的修改。
     fileWatchDesc = inotify_add_watch(inotifyConn.native_handle(),
                                       redfishEventLogFile, IN_MODIFY);
     if (fileWatchDesc < 0)
@@ -242,9 +253,12 @@ FilesystemLogWatcher::FilesystemLogWatcher(boost::asio::io_context& ioc) :
         BMCWEB_LOG_ERROR("inotify_add_watch failed for redfish log file.");
         // Don't return error if file not exist.
         // Watch on directory will handle create/delete of file.
+        // 如果文件不存在，不要返回错误。
+        // 对目录的监视会处理文件的创建/删除。
     }
 
     // monitor redfish event log file
+    // 监控 redfish 事件日志文件
     watchRedfishEventLogFile();
 
     if (redfishLogFilePosition != 0)

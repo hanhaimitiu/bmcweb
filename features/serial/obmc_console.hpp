@@ -34,6 +34,7 @@ namespace obmc_console
 {
 
 // Update this value each time we add new console route.
+// 每添加一条新的 console 路由时都要更新此值。
 static constexpr const uint maxSessions = 32;
 
 class ConsoleHandler : public std::enable_shared_from_this<ConsoleHandler>
@@ -174,6 +175,8 @@ inline ObmcConsoleMap& getConsoleHandlerMap()
 
 // Remove connection from the connection map and if connection map is empty
 // then remove the handler from handlers map.
+// 从 connection map 中移除连接，如果 connection map 为空，
+// 则从 handlers map 中移除对应的 handler。
 inline void onClose(crow::websocket::Connection& conn, const std::string& err)
 {
     BMCWEB_LOG_INFO("Closing websocket. Reason: {}", err);
@@ -187,6 +190,7 @@ inline void onClose(crow::websocket::Connection& conn, const std::string& err)
     BMCWEB_LOG_DEBUG("Remove connection {} from obmc console", logPtr(&conn));
 
     // Removed last connection so remove the path
+    // 移除了最后一个连接，因此删除该路径
     getConsoleHandlerMap().erase(iter);
 }
 
@@ -204,6 +208,7 @@ inline void connectConsoleSocket(crow::websocket::Connection& conn,
     }
 
     // Look up the handler
+    // 查找 handler
     auto iter = getConsoleHandlerMap().find(&conn);
     if (iter == getConsoleHandlerMap().end())
     {
@@ -234,6 +239,7 @@ inline void processConsoleObject(
     const ::dbus::utility::MapperGetObject& objInfo)
 {
     // Look up the handler
+    // 查找 handler
     auto iter = getConsoleHandlerMap().find(&conn);
     if (iter == getConsoleHandlerMap().end())
     {
@@ -262,6 +268,7 @@ inline void processConsoleObject(
     BMCWEB_LOG_DEBUG("Looking up unixFD for Service {} Path {}", consoleService,
                      consoleObjPath);
     // Call Connect() method to get the unix FD
+    // 调用 Connect() 方法获取 unix FD
     dbus::utility::async_method_call(
         [&conn](const boost::system::error_code& ec1,
                 const sdbusplus::message::unix_fd& unixfd) {
@@ -273,6 +280,8 @@ inline void processConsoleObject(
 
 // Query consoles from DBUS and find the matching to the
 // rules string.
+// 从 DBUS 查询 consoles，并查找与
+// 规则字符串匹配的对象。
 inline void onOpen(crow::websocket::Connection& conn)
 {
     std::string consoleLeaf;
@@ -292,6 +301,7 @@ inline void onOpen(crow::websocket::Connection& conn)
     conn.deferRead();
 
     // Keep old path for backward compatibility
+    // 保留旧路径以保持向后兼容
     if (conn.url().path() == "/console0")
     {
         consoleLeaf = "default";
@@ -300,6 +310,8 @@ inline void onOpen(crow::websocket::Connection& conn)
     {
         // Get the console id from console router path and prepare the console
         // object path and console service.
+        // 从 console 路由路径获取 console id，并准备 console
+        // object path 和 console service。
         consoleLeaf = conn.url().segments().back();
     }
     std::string consolePath =
@@ -309,6 +321,7 @@ inline void onOpen(crow::websocket::Connection& conn)
                      consolePath, conn.url().path());
 
     // mapper call lambda
+    // mapper 调用的 lambda
     constexpr std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.Console.Access"};
 

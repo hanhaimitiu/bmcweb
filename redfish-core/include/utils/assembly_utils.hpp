@@ -48,6 +48,7 @@ inline void afterGetChassisAssembly(
         if (ec.value() == boost::system::errc::io_error || ec.value() == EBADR)
         {
             // Not found
+            // 未找到
             callback(ec, std::vector<std::string>());
             return;
         }
@@ -72,6 +73,12 @@ inline void afterGetChassisAssembly(
  *
  * @return None.
  */
+/* @brief 根据给定的机箱 ID 获取机箱路径
+ * @param[in] asyncResp - 用于异步调用的共享指针。
+ * @param[in] chassisId - 组件所关联的
+ * 机箱。
+ * @param[in] callback
+ * @return 无。 */
 inline void getChassisAssembly(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& chassisId,

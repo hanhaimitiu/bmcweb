@@ -27,6 +27,7 @@ TEST(RedfishEventLog, GetUniqueEntryIDSuccess)
     ASSERT_EQ(success, true);
 
     // assert the prefix since the specific number can depend on timezone
+    // 只断言前缀，因为具体数字可能取决于时区
     ASSERT_TRUE(entryID.starts_with("946"));
 }
 
@@ -61,15 +62,19 @@ TEST(RedfishEventLog, GetUniqueEntryIDIndex)
     ASSERT_NE(index, std::string::npos);
 
     // ast-grep-ignore: bmcweb.common-errors.unsafe-int-parse
+    // ast-grep-ignore: bmcweb.common-errors.unsafe-int-parse
     const long n1 = std::stol(entryID2.substr(index + 1));
 
     // unique index for repeated timestamp is >= 0
+    // 重复时间戳的唯一索引 >= 0
     ASSERT_GE(n1, 0);
 
+    // ast-grep-ignore: bmcweb.common-errors.unsafe-int-parse
     // ast-grep-ignore: bmcweb.common-errors.unsafe-int-parse
     const long n2 = std::stol(entryID3.substr(entryID3.find('_') + 1));
 
     // unique index is monotonic increasing
+    // 唯一索引单调递增
     ASSERT_TRUE(n2 > n1);
 }
 
@@ -164,6 +169,7 @@ TEST(RedfishEventLog, FormatEventLogEntrySuccess)
     ASSERT_TRUE(logEntryJson.contains("EventTimestamp"));
 
     // May need to fix this, it should not pass like this.
+    // 可能需要修复此处，它不应以这种方式通过。
     ASSERT_EQ(logEntryJson["EventTimestamp"], "my-timestamp");
 
     ASSERT_TRUE(logEntryJson.contains("Context"));

@@ -58,6 +58,7 @@ class ConfigFile
     ~ConfigFile()
     {
         // Make sure we aren't writing stale sessions
+        // 确保我们不会写入过期的会话
         persistent_data::SessionStore::getInstance().applySessionTimeouts();
         if (persistent_data::SessionStore::getInstance().needsWrite())
         {
@@ -73,6 +74,9 @@ class ConfigFile
     // TODO(ed) this should really use protobuf, or some other serialization
     // library, but adding another dependency is somewhat outside the scope of
     // this application for the moment
+    // TODO(ed) 这里其实应该用 protobuf 或其他序列化库，
+    // 但添加新的依赖目前多少超出了本应用的
+    // 范围。
     void readData()
     {
         boost::beast::file_posix persistentFile;
@@ -97,6 +101,7 @@ class ConfigFile
                 return;
             }
             // call with exceptions disabled
+            // 调用时禁用异常
             std::optional<nlohmann::json> data = parseStringAsJson(str);
             if (!data)
             {
@@ -272,6 +277,11 @@ class ConfigFile
                         // want to at least attempt to gracefully support
                         // downgrades in that case, even if we don't officially
                         // support it
+                        // 对多余的字段不做任何处理。
+                        // 将来可能会遇到新增字段的情况，
+                        // 此时我们希望至少能尝试优雅地
+                        // 支持降级，即便我们并未正式支持
+                        // 这种情况。
                     }
                 }
             }
@@ -288,6 +298,7 @@ class ConfigFile
             needWrite = true;
         }
         // write revision changes or system uuid changes immediately
+        // 立即写入修订号变更或系统 UUID 变更
         if (needWrite)
         {
             writeData();
@@ -321,6 +332,7 @@ class ConfigFile
         }
 
         // set the permission of the file to 640
+        // 将文件权限设为 640
         std::filesystem::perms permission =
             std::filesystem::perms::owner_read |
             std::filesystem::perms::owner_write |
@@ -404,6 +416,10 @@ class ConfigFile
                 // Note, these are technically copies because nlohmann doesn't
                 // support key lookup by std::string_view.  At least the
                 // following code can use move
+                // https://github.com/nlohmann/json/issues/1529
+                // 注意，严格来说这些是副本，因为 nlohmann 不支持
+                // 用 std::string_view 做键查找。至少下面的代码
+                // 可以使用 move。
                 // https://github.com/nlohmann/json/issues/1529
                 std::string name(header.name_string());
                 headers[std::move(name)] = header.value();

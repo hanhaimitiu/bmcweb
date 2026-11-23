@@ -29,6 +29,7 @@ inline std::optional<long int> getJournalMetadataInt(JournalReadState& journal,
                                                      const char* field)
 {
     // Get the metadata from the requested field of the journal entry
+    // 从日志条目的指定字段获取元数据
     std::string metadata = journal.getData(field);
     if (metadata.empty())
     {
@@ -64,6 +65,7 @@ inline bool fillBMCJournalLogEntryJson(
     }
 
     // Get the Log Entry contents
+    // 获取 Log Entry 的内容
     std::string message;
     std::string syslogID = journal.getData("SYSLOG_IDENTIFIER");
     if (!syslogID.empty())
@@ -80,6 +82,7 @@ inline bool fillBMCJournalLogEntryJson(
     message += std::string(msg);
 
     // Get the severity from the PRIORITY field
+    // 从 PRIORITY 字段获取严重级别
     std::optional<long int> severity =
         getJournalMetadataInt(journal, "PRIORITY");
     if (!severity)
@@ -89,6 +92,7 @@ inline bool fillBMCJournalLogEntryJson(
     }
 
     // Get the Created time from the timestamp
+    // 从时间戳获取 Created 时间
     std::optional<std::string> entryTimeStr = getEntryTimestamp(journal);
     if (entryTimeStr)
     {
@@ -96,6 +100,7 @@ inline bool fillBMCJournalLogEntryJson(
     }
 
     // Fill in the log entry with the gathered data
+    // 用收集到的数据填充日志条目
     bmcJournalLogEntryJson["@odata.type"] = "#LogEntry.v1_9_0.LogEntry";
 
     std::string entryIdBase64 =

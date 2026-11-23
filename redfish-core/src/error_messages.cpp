@@ -8,6 +8,14 @@
  * should be first pushed to the relevant registry in the DMTF
  * github organization.
  ***************************************************************/
+/*                 请先阅读此警告
+ * 这是一个自动生成的头文件，包含
+ * Redfish DMTF 定义的消息定义。
+ * 不要在运行 parse_registries.py 脚本之外
+ * 修改此注册表。此文件中包含的定义
+ * 归 DMTF 所有。对这些文件的任何修改
+ * 都应先提交到 DMTF github 组织中的
+ * 相应注册表。 */
 #include "error_messages.hpp"
 
 #include "error_message_utils.hpp"
@@ -29,6 +37,9 @@
 
 // Clang can't seem to decide whether this header needs to be included or not,
 // and is inconsistent.  Include it for now
+// NOLINTNEXTLINE(misc-include-cleaner)
+// Clang 似乎无法确定是否需要包含这个头文件，
+// 而且表现不一致。暂时先包含它
 // NOLINTNEXTLINE(misc-include-cleaner)
 #include <cstdint>
 // NOLINTNEXTLINE(misc-include-cleaner)
@@ -61,6 +72,10 @@ static nlohmann::json::object_t getLog(redfish::registries::Base::Index name,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 Success（成功）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t success()
 {
     return getLog(redfish::registries::Base::Index::success, {});
@@ -78,6 +93,10 @@ void success(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 GeneralError（通用错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t generalError()
 {
     return getLog(redfish::registries::Base::Index::generalError, {});
@@ -96,6 +115,10 @@ void generalError(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 Created（已创建）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t created()
 {
     return getLog(redfish::registries::Base::Index::created, {});
@@ -114,6 +137,10 @@ void created(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 NoOperation（无操作）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t noOperation()
 {
     return getLog(redfish::registries::Base::Index::noOperation, {});
@@ -132,6 +159,10 @@ void noOperation(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyDuplicate（属性重复）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyDuplicate(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::propertyDuplicate,
@@ -151,6 +182,10 @@ void propertyDuplicate(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyUnknown（未知属性）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyUnknown(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::propertyUnknown,
@@ -170,6 +205,10 @@ void propertyUnknown(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueTypeError（属性值类型错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueTypeError(const nlohmann::json& arg1,
                                                 std::string_view arg2)
 {
@@ -193,6 +232,10 @@ void propertyValueTypeError(crow::Response& res, const nlohmann::json& arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueFormatError（属性值格式错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueFormatError(const nlohmann::json& arg1,
                                                   std::string_view arg2)
 {
@@ -216,6 +259,10 @@ void propertyValueFormatError(crow::Response& res, const nlohmann::json& arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueNotInList（属性值不在列表中）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueNotInList(const nlohmann::json& arg1,
                                                 std::string_view arg2)
 {
@@ -239,6 +286,10 @@ void propertyValueNotInList(crow::Response& res, const nlohmann::json& arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueOutOfRange（属性值超出范围）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueOutOfRange(const nlohmann::json& arg1,
                                                  std::string_view arg2)
 {
@@ -262,6 +313,10 @@ void propertyValueOutOfRange(crow::Response& res, const nlohmann::json& arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueError（属性值错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueError(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::propertyValueError,
@@ -281,6 +336,10 @@ void propertyValueError(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyNotWritable（属性不可写）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyNotWritable(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::propertyNotWritable,
@@ -300,6 +359,10 @@ void propertyNotWritable(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyNotUpdated（属性未更新）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyNotUpdated(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::propertyNotUpdated,
@@ -319,6 +382,10 @@ void propertyNotUpdated(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyMissing（属性缺失）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyMissing(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::propertyMissing,
@@ -338,6 +405,10 @@ void propertyMissing(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 MalformedJSON（格式错误的 JSON）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t malformedJSON()
 {
     return getLog(redfish::registries::Base::Index::malformedJSON, {});
@@ -356,6 +427,10 @@ void malformedJSON(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 InvalidJSON（无效的 JSON）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t invalidJSON(uint64_t arg1)
 {
     std::string arg1Str = std::to_string(arg1);
@@ -376,6 +451,10 @@ void invalidJSON(crow::Response& res, uint64_t arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 EmptyJSON（空 JSON）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t emptyJSON()
 {
     return getLog(redfish::registries::Base::Index::emptyJSON, {});
@@ -394,6 +473,10 @@ void emptyJSON(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionNotSupported（不支持的动作）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionNotSupported(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::actionNotSupported,
@@ -413,6 +496,10 @@ void actionNotSupported(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterMissing（缺少动作参数）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterMissing(std::string_view arg1,
                                                 std::string_view arg2)
 {
@@ -434,6 +521,10 @@ void actionParameterMissing(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterDuplicate（动作参数重复）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterDuplicate(std::string_view arg1,
                                                   std::string_view arg2)
 {
@@ -455,6 +546,10 @@ void actionParameterDuplicate(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterUnknown（未知动作参数）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterUnknown(std::string_view arg1,
                                                 std::string_view arg2)
 {
@@ -476,6 +571,10 @@ void actionParameterUnknown(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterValueTypeError（动作参数值类型错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterValueTypeError(
     const nlohmann::json& arg1, std::string_view arg2, std::string_view arg3)
 {
@@ -502,6 +601,10 @@ void actionParameterValueTypeError(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterValueFormatError（动作参数值格式错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterValueFormatError(
     const nlohmann::json& arg1, std::string_view arg2, std::string_view arg3)
 {
@@ -528,6 +631,10 @@ void actionParameterValueFormatError(
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterValueNotInList（动作参数值不在列表中）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterValueNotInList(
     std::string_view arg1, std::string_view arg2, std::string_view arg3)
 {
@@ -551,6 +658,10 @@ void actionParameterValueNotInList(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterValueOutOfRange（动作参数值超出范围）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterValueOutOfRange(
     std::string_view arg1, std::string_view arg2, std::string_view arg3)
 {
@@ -575,6 +686,10 @@ void actionParameterValueOutOfRange(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterValueError（动作参数值错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterValueError(const nlohmann::json& arg1,
                                                    std::string_view arg2)
 {
@@ -598,6 +713,10 @@ void actionParameterValueError(crow::Response& res, const nlohmann::json& arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterNotSupported（不支持的动作参数）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterNotSupported(std::string_view arg1,
                                                      std::string_view arg2)
 {
@@ -620,6 +739,10 @@ void actionParameterNotSupported(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ArraySizeTooLong（数组长度过长）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t arraySizeTooLong(std::string_view arg1, uint64_t arg2)
 {
     std::string arg2Str = std::to_string(arg2);
@@ -640,6 +763,10 @@ void arraySizeTooLong(crow::Response& res, std::string_view arg1, uint64_t arg2)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ArraySizeTooShort（数组长度过短）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t arraySizeTooShort(std::string_view arg1, uint64_t arg2)
 {
     std::string arg2Str = std::to_string(arg2);
@@ -661,6 +788,10 @@ void arraySizeTooShort(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryParameterValueTypeError（查询参数值类型错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryParameterValueTypeError(
     const nlohmann::json& arg1, std::string_view arg2)
 {
@@ -686,6 +817,10 @@ void queryParameterValueTypeError(
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryParameterValueFormatError（查询参数值格式错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryParameterValueFormatError(
     const nlohmann::json& arg1, std::string_view arg2)
 {
@@ -711,6 +846,10 @@ void queryParameterValueFormatError(
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryParameterValueError（查询参数值错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryParameterValueError(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::queryParameterValueError,
@@ -730,6 +869,10 @@ void queryParameterValueError(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryParameterOutOfRange（查询参数超出范围）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryParameterOutOfRange(
     std::string_view arg1, std::string_view arg2, std::string_view arg3)
 {
@@ -752,6 +895,10 @@ void queryParameterOutOfRange(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryNotSupportedOnResource（资源不支持该查询）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryNotSupportedOnResource()
 {
     return getLog(redfish::registries::Base::Index::queryNotSupportedOnResource,
@@ -771,6 +918,10 @@ void queryNotSupportedOnResource(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryNotSupportedOnOperation（操作不支持该查询）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryNotSupportedOnOperation()
 {
     return getLog(
@@ -790,6 +941,10 @@ void queryNotSupportedOnOperation(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryNotSupported（不支持的查询）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryNotSupported()
 {
     return getLog(redfish::registries::Base::Index::queryNotSupported, {});
@@ -808,6 +963,10 @@ void queryNotSupported(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryCombinationInvalid（查询组合无效）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryCombinationInvalid()
 {
     return getLog(redfish::registries::Base::Index::queryCombinationInvalid,
@@ -827,6 +986,10 @@ void queryCombinationInvalid(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 QueryParameterUnsupported（不支持的查询参数）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t queryParameterUnsupported(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::queryParameterUnsupported,
@@ -846,6 +1009,10 @@ void queryParameterUnsupported(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 SessionLimitExceeded（超出会话数限制）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t sessionLimitExceeded()
 {
     return getLog(redfish::registries::Base::Index::sessionLimitExceeded, {});
@@ -864,6 +1031,10 @@ void sessionLimitExceeded(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 EventSubscriptionLimitExceeded（超出事件订阅数限制）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t eventSubscriptionLimitExceeded()
 {
     return getLog(
@@ -883,6 +1054,10 @@ void eventSubscriptionLimitExceeded(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceCannotBeDeleted（资源无法删除）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceCannotBeDeleted()
 {
     return getLog(redfish::registries::Base::Index::resourceCannotBeDeleted,
@@ -902,6 +1077,10 @@ void resourceCannotBeDeleted(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceInUse（资源正在使用中）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceInUse()
 {
     return getLog(redfish::registries::Base::Index::resourceInUse, {});
@@ -920,6 +1099,10 @@ void resourceInUse(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceAlreadyExists（资源已存在）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceAlreadyExists(
     std::string_view arg1, std::string_view arg2, std::string_view arg3)
 {
@@ -942,6 +1125,10 @@ void resourceAlreadyExists(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceNotFound（未找到资源）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceNotFound(std::string_view arg1,
                                           std::string_view arg2)
 {
@@ -963,6 +1150,10 @@ void resourceNotFound(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PayloadTooLarge（请求体过大）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t payloadTooLarge()
 {
     return getLog(redfish::registries::Base::Index::payloadTooLarge, {});
@@ -981,6 +1172,10 @@ void payloadTooLarge(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 InsufficientStorage（存储空间不足）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t insufficientStorage()
 {
     return getLog(redfish::registries::Base::Index::insufficientStorage, {});
@@ -999,6 +1194,10 @@ void insufficientStorage(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 MissingOrMalformedPart（缺少或格式错误的 part）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t missingOrMalformedPart()
 {
     return getLog(redfish::registries::Base::Index::missingOrMalformedPart, {});
@@ -1017,6 +1216,10 @@ void missingOrMalformedPart(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 InvalidURI（无效的 URI）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t invalidURI(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::invalidURI,
@@ -1036,6 +1239,10 @@ void invalidURI(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 CreateFailedMissingReqProperties（创建失败：缺少必需的属性）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t createFailedMissingReqProperties(std::string_view arg1)
 {
     return getLog(
@@ -1058,6 +1265,10 @@ void createFailedMissingReqProperties(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 CreateLimitReachedForResource（已达到该资源的创建上限）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t createLimitReachedForResource()
 {
     return getLog(
@@ -1077,6 +1288,10 @@ void createLimitReachedForResource(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ServiceShuttingDown（服务正在关闭）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t serviceShuttingDown()
 {
     return getLog(redfish::registries::Base::Index::serviceShuttingDown, {});
@@ -1095,6 +1310,10 @@ void serviceShuttingDown(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ServiceInUnknownState（服务处于未知状态）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t serviceInUnknownState()
 {
     return getLog(redfish::registries::Base::Index::serviceInUnknownState, {});
@@ -1113,6 +1332,10 @@ void serviceInUnknownState(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 NoValidSession（没有有效会话）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t noValidSession()
 {
     return getLog(redfish::registries::Base::Index::noValidSession, {});
@@ -1131,6 +1354,10 @@ void noValidSession(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 InsufficientPrivilege（权限不足）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t insufficientPrivilege()
 {
     return getLog(redfish::registries::Base::Index::insufficientPrivilege, {});
@@ -1149,6 +1376,10 @@ void insufficientPrivilege(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 AccountModified（账户已修改）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t accountModified()
 {
     return getLog(redfish::registries::Base::Index::accountModified, {});
@@ -1167,6 +1398,10 @@ void accountModified(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 AccountNotModified（账户未修改）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t accountNotModified()
 {
     return getLog(redfish::registries::Base::Index::accountNotModified, {});
@@ -1185,6 +1420,10 @@ void accountNotModified(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 AccountRemoved（账户已删除）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t accountRemoved()
 {
     return getLog(redfish::registries::Base::Index::accountRemoved, {});
@@ -1203,6 +1442,10 @@ void accountRemoved(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 AccountForSessionNoLongerExists（会话对应的账户已不存在）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t accountForSessionNoLongerExists()
 {
     return getLog(
@@ -1222,6 +1465,10 @@ void accountForSessionNoLongerExists(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 InvalidObject（无效的对象）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t invalidObject(const boost::urls::url_view_base& arg1)
 {
     return getLog(redfish::registries::Base::Index::invalidObject,
@@ -1241,6 +1488,10 @@ void invalidObject(crow::Response& res, const boost::urls::url_view_base& arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 InternalError（内部错误）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t internalError()
 {
     return getLog(redfish::registries::Base::Index::internalError, {});
@@ -1262,6 +1513,10 @@ void internalError(crow::Response& res, const std::source_location location)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 UnrecognizedRequestBody（无法识别的请求体）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t unrecognizedRequestBody()
 {
     return getLog(redfish::registries::Base::Index::unrecognizedRequestBody,
@@ -1281,6 +1536,10 @@ void unrecognizedRequestBody(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceMissingAtURI（该 URI 处缺少资源）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceMissingAtURI(
     const boost::urls::url_view_base& arg1)
 {
@@ -1302,6 +1561,10 @@ void resourceMissingAtURI(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceAtUriInUnknownFormat（该 URI 处的资源格式未知）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceAtUriInUnknownFormat(
     const boost::urls::url_view_base& arg1)
 {
@@ -1324,6 +1587,10 @@ void resourceAtUriInUnknownFormat(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceAtUriUnauthorized（无权访问该 URI 处的资源）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceAtUriUnauthorized(
     const boost::urls::url_view_base& arg1, std::string_view arg2)
 {
@@ -1346,6 +1613,10 @@ void resourceAtUriUnauthorized(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 CouldNotEstablishConnection（无法建立连接）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t couldNotEstablishConnection(
     const boost::urls::url_view_base& arg1)
 {
@@ -1367,6 +1638,10 @@ void couldNotEstablishConnection(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 SourceDoesNotSupportProtocol（源不支持该协议）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t sourceDoesNotSupportProtocol(
     const boost::urls::url_view_base& arg1, std::string_view arg2)
 {
@@ -1391,6 +1666,10 @@ void sourceDoesNotSupportProtocol(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 AccessDenied（拒绝访问）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t accessDenied(const boost::urls::url_view_base& arg1)
 {
     return getLog(redfish::registries::Base::Index::accessDenied,
@@ -1410,6 +1689,10 @@ void accessDenied(crow::Response& res, const boost::urls::url_view_base& arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ServiceTemporarilyUnavailable（服务暂时不可用）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t serviceTemporarilyUnavailable(std::string_view arg1)
 {
     return getLog(
@@ -1431,6 +1714,10 @@ void serviceTemporarilyUnavailable(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 InvalidIndex（无效的索引）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t invalidIndex(uint64_t arg1)
 {
     std::string arg1Str = std::to_string(arg1);
@@ -1451,6 +1738,10 @@ void invalidIndex(crow::Response& res, uint64_t arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueModified（属性值已被修改）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueModified(std::string_view arg1,
                                                const nlohmann::json& arg2)
 {
@@ -1474,6 +1765,10 @@ void propertyValueModified(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceInStandby（资源处于待机状态）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceInStandby()
 {
     return getLog(redfish::registries::Base::Index::resourceInStandby, {});
@@ -1492,6 +1787,10 @@ void resourceInStandby(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceExhaustion（资源耗尽）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceExhaustion(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::resourceExhaustion,
@@ -1511,6 +1810,10 @@ void resourceExhaustion(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 StringValueTooLong（字符串值过长）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t stringValueTooLong(std::string_view arg1,
                                             uint64_t arg2)
 {
@@ -1533,6 +1836,10 @@ void stringValueTooLong(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 StringValueTooShort（字符串值过短）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t stringValueTooShort(std::string_view arg1,
                                              uint64_t arg2)
 {
@@ -1555,6 +1862,10 @@ void stringValueTooShort(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 SessionTerminated（会话已终止）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t sessionTerminated()
 {
     return getLog(redfish::registries::Base::Index::sessionTerminated, {});
@@ -1573,6 +1884,10 @@ void sessionTerminated(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 SubscriptionTerminated（订阅已终止）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t subscriptionTerminated()
 {
     return getLog(redfish::registries::Base::Index::subscriptionTerminated, {});
@@ -1591,6 +1906,10 @@ void subscriptionTerminated(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceTypeIncompatible（资源类型不兼容）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceTypeIncompatible(std::string_view arg1,
                                                   std::string_view arg2)
 {
@@ -1612,6 +1931,10 @@ void resourceTypeIncompatible(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PasswordChangeRequired（需要更改密码）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t passwordChangeRequired(
     const boost::urls::url_view_base& arg1)
 {
@@ -1632,6 +1955,10 @@ void passwordChangeRequired(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResetRequired（需要复位）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resetRequired(const boost::urls::url_view_base& arg1,
                                        std::string_view arg2)
 {
@@ -1653,6 +1980,10 @@ void resetRequired(crow::Response& res, const boost::urls::url_view_base& arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResetRecommended（建议复位）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resetRecommended(std::string_view arg1,
                                           std::string_view arg2)
 {
@@ -1674,6 +2005,10 @@ void resetRecommended(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ChassisPowerStateOnRequired（需要机箱电源状态为上电）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t chassisPowerStateOnRequired(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::chassisPowerStateOnRequired,
@@ -1693,6 +2028,10 @@ void chassisPowerStateOnRequired(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ChassisPowerStateOffRequired（需要机箱电源状态为断电）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t chassisPowerStateOffRequired(std::string_view arg1)
 {
     return getLog(
@@ -1713,6 +2052,10 @@ void chassisPowerStateOffRequired(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueConflict（属性值冲突）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueConflict(std::string_view arg1,
                                                std::string_view arg2)
 {
@@ -1734,6 +2077,10 @@ void propertyValueConflict(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueResourceConflict（属性值与资源冲突）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueResourceConflict(
     std::string_view arg1, const nlohmann::json& arg2,
     const boost::urls::url_view_base& arg3)
@@ -1761,6 +2108,10 @@ void propertyValueResourceConflict(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueExternalConflict（属性值与外部冲突）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueExternalConflict(
     std::string_view arg1, const nlohmann::json& arg2)
 {
@@ -1786,6 +2137,10 @@ void propertyValueExternalConflict(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueIncorrect（属性值不正确）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueIncorrect(std::string_view arg1,
                                                 const nlohmann::json& arg2)
 {
@@ -1809,6 +2164,10 @@ void propertyValueIncorrect(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceCreationConflict（资源创建冲突）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceCreationConflict(
     const boost::urls::url_view_base& arg1)
 {
@@ -1830,6 +2189,10 @@ void resourceCreationConflict(crow::Response& res,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionParameterValueConflict（动作参数值冲突）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionParameterValueConflict(std::string_view arg1,
                                                       std::string_view arg2)
 {
@@ -1853,6 +2216,10 @@ void actionParameterValueConflict(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 MaximumErrorsExceeded（超出最大错误数）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t maximumErrorsExceeded()
 {
     return getLog(redfish::registries::Base::Index::maximumErrorsExceeded, {});
@@ -1871,6 +2238,10 @@ void maximumErrorsExceeded(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PreconditionFailed（前置条件不满足）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t preconditionFailed()
 {
     return getLog(redfish::registries::Base::Index::preconditionFailed, {});
@@ -1889,6 +2260,10 @@ void preconditionFailed(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PreconditionRequired（需要前置条件）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t preconditionRequired()
 {
     return getLog(redfish::registries::Base::Index::preconditionRequired, {});
@@ -1907,6 +2282,10 @@ void preconditionRequired(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 HeaderMissing（缺少请求头）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t headerMissing(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::headerMissing,
@@ -1926,6 +2305,10 @@ void headerMissing(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 HeaderInvalid（请求头无效）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t headerInvalid(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::headerInvalid,
@@ -1945,6 +2328,10 @@ void headerInvalid(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 OperationFailed（操作失败）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t operationFailed()
 {
     return getLog(redfish::registries::Base::Index::operationFailed, {});
@@ -1963,6 +2350,10 @@ void operationFailed(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 OperationTimeout（操作超时）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t operationTimeout()
 {
     return getLog(redfish::registries::Base::Index::operationTimeout, {});
@@ -1981,6 +2372,10 @@ void operationTimeout(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 OperationNotAllowed（不允许该操作）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t operationNotAllowed()
 {
     return getLog(redfish::registries::Base::Index::operationNotAllowed, {});
@@ -1999,6 +2394,10 @@ void operationNotAllowed(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 UndeterminedFault（未确定的故障）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t undeterminedFault(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::undeterminedFault,
@@ -2018,6 +2417,10 @@ void undeterminedFault(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ConditionInRelatedResource（相关资源中存在状况）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t conditionInRelatedResource()
 {
     return getLog(redfish::registries::Base::Index::conditionInRelatedResource,
@@ -2037,6 +2440,10 @@ void conditionInRelatedResource(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 RestrictedRole（受限制的角色）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t restrictedRole(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::restrictedRole,
@@ -2056,6 +2463,10 @@ void restrictedRole(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 RestrictedPrivilege（受限制的权限）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t restrictedPrivilege(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::restrictedPrivilege,
@@ -2075,6 +2486,10 @@ void restrictedPrivilege(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 StrictAccountTypes（严格的账户类型）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t strictAccountTypes(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::strictAccountTypes,
@@ -2094,6 +2509,10 @@ void strictAccountTypes(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyDeprecated（属性已弃用）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyDeprecated(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::propertyDeprecated,
@@ -2113,6 +2532,10 @@ void propertyDeprecated(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ResourceDeprecated（资源已弃用）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t resourceDeprecated(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::resourceDeprecated,
@@ -2132,6 +2555,10 @@ void resourceDeprecated(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyValueDeprecated（属性值已弃用）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyValueDeprecated(std::string_view arg1,
                                                  std::string_view arg2)
 {
@@ -2153,6 +2580,10 @@ void propertyValueDeprecated(crow::Response& res, std::string_view arg1,
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ActionDeprecated（动作已弃用）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t actionDeprecated(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::actionDeprecated,
@@ -2172,6 +2603,10 @@ void actionDeprecated(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 NetworkNameResolutionNotConfigured（网络名称解析未配置）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t networkNameResolutionNotConfigured()
 {
     return getLog(
@@ -2192,6 +2627,10 @@ void networkNameResolutionNotConfigured(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 NetworkNameResolutionNotSupported（不支持网络名称解析）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t networkNameResolutionNotSupported()
 {
     return getLog(
@@ -2212,6 +2651,10 @@ void networkNameResolutionNotSupported(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 ServiceDisabled（服务已禁用）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t serviceDisabled(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::serviceDisabled,
@@ -2231,6 +2674,10 @@ void serviceDisabled(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 EventBufferExceeded（事件缓冲区溢出）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t eventBufferExceeded()
 {
     return getLog(redfish::registries::Base::Index::eventBufferExceeded, {});
@@ -2249,6 +2696,10 @@ void eventBufferExceeded(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 AuthenticationTokenRequired（需要认证令牌）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t authenticationTokenRequired()
 {
     return getLog(redfish::registries::Base::Index::authenticationTokenRequired,
@@ -2268,6 +2719,10 @@ void authenticationTokenRequired(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 OneTimePasscodeSent（已发送一次性密码）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t oneTimePasscodeSent(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::oneTimePasscodeSent,
@@ -2287,6 +2742,10 @@ void oneTimePasscodeSent(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 LicenseRequired（需要许可证）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t licenseRequired(std::string_view arg1)
 {
     return getLog(redfish::registries::Base::Index::licenseRequired,
@@ -2306,6 +2765,10 @@ void licenseRequired(crow::Response& res, std::string_view arg1)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 PropertyModified（属性已修改）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t propertyModified()
 {
     return getLog(redfish::registries::Base::Index::propertyModified, {});
@@ -2324,6 +2787,10 @@ void propertyModified(crow::Response& res)
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 GenerateSecretKeyRequired（需要生成密钥）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t generateSecretKeyRequired(
     const boost::urls::url_view_base& arg1)
 {

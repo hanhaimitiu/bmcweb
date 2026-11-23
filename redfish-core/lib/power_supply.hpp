@@ -118,6 +118,7 @@ inline void handlePowerSupplyCollectionHead(
     redfish::chassis_utils::getValidChassisPath(
         asyncResp, chassisId,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          chassisId](const std::optional<std::string>& validChassisPath) {
             if (!validChassisPath)
@@ -180,6 +181,7 @@ inline void afterGetValidPowerSupplyPath(
         if (ec.value() == boost::system::errc::io_error)
         {
             // Not found
+            // 未找到。
             callback(std::string(), std::string());
             return;
         }
@@ -276,6 +278,7 @@ inline void getPowerSupplyFirmwareVersion(
     dbus::utility::getProperty<std::string>(
         service, path, "xyz.openbmc_project.Software.Version", "Version",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& value) {
             if (ec)
@@ -301,6 +304,7 @@ inline void getPowerSupplyLocation(
         service, path, "xyz.openbmc_project.Inventory.Decorator.LocationCode",
         "LocationCode",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& value) {
             if (ec)
@@ -333,6 +337,7 @@ inline void handlePowerCapacityResponse(
         return;
     }
     // The PDI default is maxint (unknown); omit from Redfish if unset
+    // PDI 默认值为 maxint（未知）；如果未设置，则在 Redfish 中省略。
     if (value == std::numeric_limits<uint64_t>::max())
     {
         return;
@@ -366,6 +371,7 @@ inline void handleGetEfficiencyResponse(
         return;
     }
     // The PDI default value is 0, if it hasn't been set leave off
+    // PDI 默认值为 0，如果未设置则省略。
     if (value == 0)
     {
         return;
@@ -498,6 +504,7 @@ inline void handlePowerSupplyHead(
     }
 
     // Get the correct Path and Service that match the input parameters
+    // 获取与输入参数匹配的正确的 Path 和 Service。
     getValidPowerSupplyPath(
         asyncResp, chassisId, powerSupplyId,
         std::bind_front(doPowerSupplyHead, asyncResp, powerSupplyId));
@@ -548,6 +555,7 @@ inline void handlePowerSupplyPatch(
     if (locationIndicatorActive)
     {
         // Get the correct power supply Path that match the input parameters
+        // 获取与输入参数匹配的正确的电源（power supply）Path。
         getValidPowerSupplyPath(asyncResp, chassisId, powerSupplyId,
                                 std::bind_front(doPatchPowerSupply, asyncResp,
                                                 *locationIndicatorActive));

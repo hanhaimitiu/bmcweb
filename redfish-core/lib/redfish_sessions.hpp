@@ -85,6 +85,7 @@ inline void handleSessionGet(
         "</redfish/v1/JsonSchemas/Session/Session.json>; rel=describedby");
 
     // Note that control also reaches here via doPost and doDelete.
+    // 请注意，控制流也会通过 doPost 和 doDelete 到达这里。
     auto session =
         persistent_data::SessionStore::getInstance().getSessionByUid(sessionId);
 
@@ -120,6 +121,11 @@ inline void handleSessionDelete(
     // then the ConfigureSelf privilege does not apply.  In that
     // case, perform the authority check again without the user's
     // ConfigureSelf privilege.
+    // 执行正确的 ConfigureSelf 权限检查。
+    // 如果某个会话被用于 DELETE 其他用户的会话，
+    // 则 ConfigureSelf 权限不适用。
+    // 在这种情况下，再次执行权限检查，
+    // 但不包含该用户的 ConfigureSelf 权限。
     if (req.session != nullptr && !session->username.empty() &&
         session->username != req.session->username)
     {
@@ -202,6 +208,8 @@ inline void processAfterSessionCreation(
     // When session is created by webui-vue give it session cookies as a
     // non-standard Redfish extension. This is needed for authentication for
     // WebSockets-based functionality.
+    // 当会话由 webui-vue 创建时，为其提供 session cookies 作为非标准的 Redfish 扩展。
+    // 这是基于 WebSocket 的功能进行身份验证所必需的。
     if (!req.getHeaderValue("X-Requested-With").empty())
     {
         bmcweb::setSessionCookies(asyncResp->res, *session);
@@ -275,6 +283,7 @@ inline void handleSessionCollectionPost(
     }
 
     // User is authenticated - create session
+    // 用户已通过认证 —— 创建会话。
     std::shared_ptr<persistent_data::UserSession> session =
         persistent_data::SessionStore::getInstance().generateUserSession(
             username, req.ipAddress, clientId,
@@ -349,6 +358,9 @@ inline void handleSessionServicePatch(
         // are 30 seconds and 86400 seconds respectively as per the
         // session service schema mentioned at
         // https://redfish.dmtf.org/schemas/v1/SessionService.v1_1_7.json
+        // 根据 https://redfish.dmtf.org/schemas/v1/SessionService.v1_1_7.json
+        // 中所述的 session service schema，会话超时的最小值和最大值
+        // 分别为 30 秒和 86400 秒。
 
         if (*sessionTimeout <= 86400 && *sessionTimeout >= 30)
         {
@@ -398,6 +410,11 @@ inline void requestRoutesSession(App& app)
     // registry lists this endpoint as requiring login privilege, but because
     // this is the endpoint responsible for giving the login privilege, and it
     // is itself its own route, it needs to not require Login
+    // 注意，接下来的两条路由从技术上讲并不符合权限注册表，
+    // 因为登录机制的工作方式所致。
+    // 基础权限注册表将该端点列为需要 login 权限，
+    // 但由于该端点正是负责授予登录权限的端点，
+    // 且它本身就是一条独立路由，因此它不需要 Login 权限。
     BMCWEB_ROUTE(app, "/redfish/v1/SessionService/Sessions/")
         .privileges({})
         .methods(boost::beast::http::verb::post)(

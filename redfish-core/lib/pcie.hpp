@@ -71,6 +71,7 @@ inline void handlePCIeDevicePath(
         dbus::utility::getDbusObject(
             pcieDevicePath, pcieDeviceInterface,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [pcieDevicePath, asyncResp,
              callback](const boost::system::error_code& ec,
                        const dbus::utility::MapperGetObject& object) {
@@ -101,6 +102,7 @@ inline void getValidPCIeDevicePath(
     dbus::utility::getSubTreePaths(
         "/xyz/openbmc_project/inventory", 0, pcieDeviceInterface,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [pcieDeviceId, asyncResp,
          callback](const boost::system::error_code& ec,
                    const dbus::utility::MapperGetSubTreePathsResponse&
@@ -129,6 +131,7 @@ inline void handlePCIeDeviceCollectionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -159,6 +162,7 @@ inline void requestRoutesSystemPCIeDeviceCollection(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app, "/redfish/v1/Systems/<str>/PCIeDevices/")
         .privileges(redfish::privileges::getPCIeDeviceCollection)
         .methods(boost::beast::http::verb::get)(
@@ -298,6 +302,7 @@ inline void getPCIeDeviceSlotPath(
     dbus::utility::getAssociatedSubTreePaths(
         associationPath, path, 0, pcieSlotInterface,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::move(callback), asyncResp, pcieDevicePath](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreePathsResponse& endpoints) {
@@ -306,6 +311,7 @@ inline void getPCIeDeviceSlotPath(
                 if (ec.value() == EBADR)
                 {
                     // Missing association is not an error
+                    // 缺少关联不是错误。
                     return;
                 }
                 BMCWEB_LOG_ERROR(
@@ -330,6 +336,7 @@ inline void getPCIeDeviceSlotPath(
             {
                 // If the device doesn't have an association, return without
                 // PCIe Slot properties
+                // 如果设备没有关联，则直接返回，不返回 PCIe Slot 属性。
                 BMCWEB_LOG_DEBUG("PCIeDevice is not associated with PCIeSlot");
                 return;
             }
@@ -489,6 +496,7 @@ inline void addPCIeDeviceProperties(
         {
             // The default value of LanesInUse is "maxint", and the field will
             // be null if it is a default value.
+            // LanesInUse 的默认值是 "maxint"，如果是默认值，该字段将为 null。
             asyncResp->res.jsonValue["PCIeInterface"]["LanesInUse"] = nullptr;
         }
         else
@@ -499,6 +507,7 @@ inline void addPCIeDeviceProperties(
     }
     // The default value of MaxLanes is 0, and the field will be
     // left as off if it is a default value.
+    // MaxLanes 的默认值是 0，如果是默认值，该字段将被忽略。
     if (maxLanes != nullptr && *maxLanes != 0)
     {
         asyncResp->res.jsonValue["PCIeInterface"]["MaxLanes"] = *maxLanes;
@@ -540,6 +549,7 @@ inline void getPCIeDeviceProperties(
         service, pcieDevicePath,
         "xyz.openbmc_project.Inventory.Item.PCIeDevice",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          callback](const boost::system::error_code& ec,
                    const dbus::utility::DBusPropertiesMap& pcieDevProperties) {
@@ -637,6 +647,7 @@ inline void handlePCIeDeviceGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -673,6 +684,7 @@ inline void addPCIeFunctionList(
     {
         // Check if this function exists by
         // looking for a device ID
+        // 通过查找设备 ID 来检查该功能是否存在。
         std::string devIDProperty =
             "Function" + std::to_string(functionNum) + "DeviceId";
         const std::string* property = nullptr;
@@ -711,6 +723,7 @@ inline void handlePCIeFunctionCollectionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -725,6 +738,7 @@ inline void handlePCIeFunctionCollectionGet(
     getValidPCIeDevicePath(
         pcieDeviceId, asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, pcieDeviceId](const std::string& pcieDevicePath,
                                   const std::string& service) {
             asyncResp->res.addHeader(
@@ -753,6 +767,7 @@ inline void requestRoutesSystemPCIeFunctionCollection(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app,
                  "/redfish/v1/Systems/<str>/PCIeDevices/<str>/PCIeFunctions/")
         .privileges(redfish::privileges::getPCIeFunctionCollection)
@@ -784,6 +799,9 @@ inline void addPCIeFunctionProperties(
         // TODO: FunctionType and DeviceClass are Redfish enums. The D-Bus
         // property strings should be mapped correctly to ensure these
         // strings are Redfish enum values. For now just check for empty.
+        // TODO：FunctionType 和 DeviceClass 是 Redfish 枚举。
+        // 应正确映射 D-Bus 属性字符串，以确保这些字符串是 Redfish 枚举值。
+        // 目前只检查是否为空。
         if (property.first == functionName + "FunctionType")
         {
             if (!strProperty->empty())
@@ -850,6 +868,7 @@ inline void handlePCIeFunctionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -875,6 +894,7 @@ inline void handlePCIeFunctionGet(
     getValidPCIeDevicePath(
         pcieDeviceId, asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, pcieDeviceId, pcieFunctionId](
             const std::string& pcieDevicePath, const std::string& service) {
             getPCIeDeviceProperties(

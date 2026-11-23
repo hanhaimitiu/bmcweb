@@ -31,6 +31,7 @@ inline void requestRoutesThermal(App& app)
         .privileges(redfish::privileges::getThermal)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& chassisName) {
@@ -51,6 +52,7 @@ inline void requestRoutesThermal(App& app)
         .privileges(redfish::privileges::patchThermal)
         .methods(boost::beast::http::verb::patch)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& chassisName) {

@@ -34,6 +34,8 @@ inline void handleLogin(const crow::Request& req,
 {
     // This object needs to be declared at this scope so the strings
     // within it are not destroyed before we can use them
+    // 该对象必须声明在此作用域，以确保其中的字符串
+    // 在我们使用前不会被销毁
     nlohmann::json loginCredentials;
     if (parseRequestAsJson(req, loginCredentials) != JsonParseResult::Success)
     {
@@ -51,6 +53,7 @@ inline void handleLogin(const crow::Request& req,
     }
 
     // check for username/password in the root object
+    // 检查根对象中是否存在 username/password
     auto userIt = obj->find("username");
     if (userIt == obj->end())
     {
@@ -95,6 +98,7 @@ inline void handleLogin(const crow::Request& req,
     bmcweb::setSessionCookies(asyncResp->res, *session);
 
     // if content type is json, assume json token
+    // 如果 content type 是 json，则假定为 json token
     asyncResp->res.jsonValue["token"] = session->sessionToken;
 }
 

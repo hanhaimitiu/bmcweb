@@ -50,6 +50,11 @@ namespace redfish
  *
  * @return None.
  */
+/* @brief 通过 dbus 检索 hypervisor 状态属性。
+ * hypervisor 状态对象是可选的，因此只有当找到该对象时，
+ * 该函数才会设置状态变量。
+ * @param[in] asyncResp 用于完成异步调用的共享指针。
+ * @return 无。 */
 inline void getHypervisorState(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -59,6 +64,7 @@ inline void getHypervisorState(
         "/xyz/openbmc_project/state/hypervisor0",
         "xyz.openbmc_project.State.Host", "CurrentHostState",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& hostState) {
             if (ec)
@@ -66,11 +72,13 @@ inline void getHypervisorState(
                 BMCWEB_LOG_DEBUG("DBUS response error {}", ec);
                 // This is an optional D-Bus object so just return if
                 // error occurs
+                // 这是一个可选的 D-Bus 对象，出错时直接返回。
                 return;
             }
 
             BMCWEB_LOG_DEBUG("Hypervisor state: {}", hostState);
             // Verify Host State
+            // 校验主机（Host）状态。
             if (hostState == "xyz.openbmc_project.State.Host.HostState.Running")
             {
                 asyncResp->res.jsonValue["PowerState"] =
@@ -136,6 +144,11 @@ inline void getHypervisorState(
  *
  * @return None.
  */
+/* @brief 如果 hypervisor 对象存在有效操作，则填充 Actions。
+ * hypervisor 状态对象是可选的，因此只有当找到该对象时，
+ * 该函数才会设置 Action。
+ * @param[in] asyncResp 用于完成异步调用的共享指针。
+ * @return 无。 */
 inline void getHypervisorActions(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -145,6 +158,7 @@ inline void getHypervisorActions(
     dbus::utility::getDbusObject(
         "/xyz/openbmc_project/state/hypervisor0", interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](
             const boost::system::error_code& ec,
             const std::vector<std::pair<std::string, std::vector<std::string>>>&
@@ -154,6 +168,7 @@ inline void getHypervisorActions(
                 BMCWEB_LOG_DEBUG("DBUS response error {}", ec);
                 // This is an optional D-Bus object so just return if
                 // error occurs
+                // 这是一个可选的 D-Bus 对象，出错时直接返回。
                 return;
             }
 
@@ -161,6 +176,7 @@ inline void getHypervisorActions(
             {
                 // As noted above, this is an optional interface so just return
                 // if there is no instance found
+                // 如上所述，这是一个可选接口，如果未找到实例则直接返回。
                 return;
             }
 
@@ -168,11 +184,13 @@ inline void getHypervisorActions(
             {
                 // More then one hypervisor object is not supported and is an
                 // error
+                // 不支持多于一个 hypervisor 对象，这属于错误。
                 messages::internalError(asyncResp->res);
                 return;
             }
 
             // Object present so system support limited ComputerSystem Action
+            // 对象存在，因此系统支持有限的 ComputerSystem Action。
             nlohmann::json& reset =
                 asyncResp->res.jsonValue["Actions"]["#ComputerSystem.Reset"];
             reset["target"] =
@@ -211,6 +229,7 @@ inline bool extractHypervisorInterfaceData(
                                 break; // Interested on only "DHCPEnabled".
                                        // Stop parsing since we got the
                                        // "DHCPEnabled" value.
+                                       // 由于已获得 "DHCPEnabled" 值，停止解析。
                             }
                         }
                     }
@@ -267,6 +286,7 @@ inline bool extractHypervisorInterfaceData(
                             if (mask != nullptr)
                             {
                                 // convert it to the string
+                                // 将其转换为字符串。
                                 ipv4Address.netmask = getNetmask(*mask);
                             }
                         }
@@ -274,6 +294,7 @@ inline bool extractHypervisorInterfaceData(
                                  property.first == "Gateway")
                         {
                             // Type & Gateway is not used
+                            // Type 和 Gateway 未使用。
                             continue;
                         }
                         else
@@ -289,6 +310,7 @@ inline bool extractHypervisorInterfaceData(
             {
                 // System configuration shows up in the global namespace, so no
                 // need to check eth number
+                // 系统配置显示在全局命名空间中，因此无需检查 eth 编号。
                 if (ifacePair.first ==
                     "xyz.openbmc_project.Network.SystemConfiguration")
                 {
@@ -326,6 +348,9 @@ inline bool extractHypervisorInterfaceData(
  * @param callback a function that shall be called to convert Dbus output
  * into JSON
  */
+/* 从 Settings Manager 检索给定 Hypervisor Ethernet Interface 对象的所有属性。
+ * @param ethIfaceId 要在 DBus 上查询的 Hypervisor 以太网接口 id。
+ * @param callback 一个函数，用于将 Dbus 输出转换为 JSON。 */
 template <typename CallbackFunc>
 void getHypervisorIfaceData(const std::string& ethIfaceId,
                             CallbackFunc&& callback)
@@ -364,6 +389,11 @@ void getHypervisorIfaceData(const std::string& ethIfaceId,
  *
  * @return None.
  */
+/* @brief 设置 Hypervisor 接口的 IPAddress（DBUS）。
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @param[in] ipv4Address 来自传入请求的地址。
+ * @param[in] ethIfaceId Hypervisor 接口 Id。
+ * @return 无。 */
 inline void setHypervisorIPv4Address(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& ethIfaceId, const std::string& ipv4Address)
@@ -387,6 +417,11 @@ inline void setHypervisorIPv4Address(
  *
  * @return None.
  */
+/* @brief 设置 Hypervisor 接口的 SubnetMask（DBUS）。
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @param[in] subnet 来自传入请求的 SubnetMask。
+ * @param[in] ethIfaceId Hypervisor 接口 Id。
+ * @return 无。 */
 inline void setHypervisorIPv4Subnet(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& ethIfaceId, const uint8_t subnet)
@@ -410,6 +445,11 @@ inline void setHypervisorIPv4Subnet(
  *
  * @return None.
  */
+/* @brief 设置 Hypervisor 接口的 Gateway（DBUS）。
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @param[in] gateway 来自传入请求的 Gateway。
+ * @param[in] ethIfaceId Hypervisor 接口 Id。
+ * @return 无。 */
 inline void setHypervisorIPv4Gateway(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& gateway)
@@ -436,6 +476,13 @@ inline void setHypervisorIPv4Gateway(
  *
  * @return None
  */
+/* @brief 创建一个静态 IPv4 条目。
+ * @param[in] ifaceId 要在其上创建 IPv4 条目的接口 Id。
+ * @param[in] prefixLength 子网掩码的 IPv4 前缀表示法。
+ * @param[in] gateway 该接口网关的 IPv4 地址。
+ * @param[in] address 分配给该接口的 IPv4 地址。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void createHypervisorIPv4(
     const std::string& ifaceId, uint8_t prefixLength,
     const std::string& gateway, const std::string& address,
@@ -454,6 +501,10 @@ inline void createHypervisorIPv4(
  *
  * @return None
  */
+/* @brief 删除给定的 IPv4 接口。
+ * @param[in] ifaceId 要删除 IP 的接口 Id。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void deleteHypervisorIPv4(
     const std::string& ifaceId,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -515,6 +566,7 @@ inline void setDHCPEnabled(const std::string& ifaceId, bool ipv4DHCPEnabled,
 
     // Set the IPv4 address origin to the DHCP / Static as per the new value
     // of the DHCPEnabled property
+    // 根据 DHCPEnabled 属性的新值，将 IPv4 地址来源设置为 DHCP / Static。
     std::string origin;
     if (!ipv4DHCPEnabled)
     {
@@ -524,6 +576,7 @@ inline void setDHCPEnabled(const std::string& ifaceId, bool ipv4DHCPEnabled,
     {
         // DHCPEnabled is set to true. Delete the current IPv4 settings
         // to receive the new values from DHCP server.
+        // DHCPEnabled 被设为 true。删除当前的 IPv4 设置，以便从 DHCP 服务器接收新值。
         deleteHypervisorIPv4(ifaceId, asyncResp);
         origin = "xyz.openbmc_project.Network.IP.AddressOrigin.DHCP";
     }
@@ -543,6 +596,8 @@ inline void handleHypervisorIPv4StaticPatch(
     // Hypervisor considers the first IP address in the array list
     // as the Hypervisor's virtual management interface supports single IPv4
     // address
+    // Hypervisor 认为数组列表中的第一个 IP 地址即为有效地址，
+    // 因为 Hypervisor 的虚拟管理接口只支持单个 IPv4 地址。
     std::variant<nlohmann::json::object_t, std::nullptr_t>& thisJson = input[0];
     nlohmann::json::object_t* obj =
         std::get_if<nlohmann::json::object_t>(&thisJson);
@@ -556,6 +611,7 @@ inline void handleHypervisorIPv4StaticPatch(
         return;
     }
     // For the error string
+    // 用于错误字符串。
     std::string pathString = "IPv4StaticAddresses/1";
     std::string address;
     std::string subnetMask;
@@ -596,6 +652,7 @@ inline void handleHypervisorIPv4StaticPatch(
                      address);
     createHypervisorIPv4(ifaceId, prefixLength, gateway, address, asyncResp);
     // Set the DHCPEnabled to false since the Static IPv4 is set
+    // 由于设置了静态 IPv4，将 DHCPEnabled 设为 false。
     setDHCPEnabled(ifaceId, false, asyncResp);
 }
 
@@ -642,6 +699,7 @@ inline void handleHypervisorEthernetInterfaceCollectionGet(
     dbus::utility::getSubTreePaths(
         "/xyz/openbmc_project/network/hypervisor", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreePathsResponse& ifaceList) {
@@ -731,6 +789,7 @@ inline void handleHypervisorSystemGet(
     getHypervisorState(asyncResp);
     getHypervisorActions(asyncResp);
     // TODO: Add "SystemType" : "hypervisor"
+    // TODO：添加 "SystemType" : "hypervisor"。
 }
 
 inline void handleHypervisorEthernetInterfacePatch(
@@ -769,6 +828,7 @@ inline void handleHypervisorEthernetInterfacePatch(
     getHypervisorIfaceData(
         ifaceId,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, ifaceId, hostName = std::move(hostName),
          ipv4StaticAddresses = std::move(ipv4StaticAddresses),
          ipv4DHCPEnabled](bool success, const EthernetInterfaceData& ethData,
@@ -794,6 +854,7 @@ inline void handleHypervisorEthernetInterfacePatch(
                 }
 
                 // One and only one hypervisor instance supported
+                // 仅支持且必须只有一个 hypervisor 实例。
                 if (ipv4Static.size() != 1)
                 {
                     messages::propertyValueFormatError(asyncResp->res, "[]",
@@ -808,6 +869,9 @@ inline void handleHypervisorEthernetInterfacePatch(
                 // the IP address is allowed only if its statically
                 // configured. Deleting the address originated from DHCP
                 // is not allowed.
+                // 检查参数是否为 'null'。若为 null，表示用户想删除该 IP 地址。
+                // 只有当 IP 地址是静态配置时才允许删除。
+                // 不允许删除来自 DHCP 的地址。
                 if (std::holds_alternative<std::nullptr_t>(ipv4Json) &&
                     translateDhcpEnabledToBool(ethData.dhcpEnabled, true))
                 {
@@ -835,6 +899,9 @@ inline void handleHypervisorEthernetInterfacePatch(
             // Set this interface to disabled/inactive. This will be set
             // to enabled/active by the pldm once the hypervisor
             // consumes the updated settings from the user.
+            // 将该接口设为 disabled/inactive。
+            // 待 hypervisor 使用用户更新后的设置后，
+            // pldm 会将其设为 enabled/active。
             setIPv4InterfaceEnabled(ifaceId, false, asyncResp);
         });
     asyncResp->res.result(boost::beast::http::status::accepted);
@@ -844,11 +911,13 @@ inline void handleHypervisorResetActionGet(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     // Only return action info if hypervisor D-Bus object present
+    // 仅当 hypervisor D-Bus 对象存在时才返回 action info。
     constexpr std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.State.Host"};
     dbus::utility::getDbusObject(
         "/xyz/openbmc_project/state/hypervisor0", interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](
             const boost::system::error_code& ec,
             const std::vector<std::pair<std::string, std::vector<std::string>>>&
@@ -858,6 +927,7 @@ inline void handleHypervisorResetActionGet(
                 BMCWEB_LOG_DEBUG("DBUS response error {}", ec);
 
                 // No hypervisor objects found by mapper
+                // mapper 未找到 hypervisor 对象。
                 if (ec.value() == boost::system::errc::io_error)
                 {
                     messages::resourceNotFound(asyncResp->res, "ActionInfo",
@@ -870,6 +940,7 @@ inline void handleHypervisorResetActionGet(
             }
 
             // One and only one hypervisor instance supported
+            // 仅支持且必须只有一个 hypervisor 实例。
             if (objInfo.size() != 1)
             {
                 messages::internalError(asyncResp->res);
@@ -879,6 +950,8 @@ inline void handleHypervisorResetActionGet(
             // The hypervisor object only support the ability to
             // turn On The system object Action should be utilized
             // for other operations
+            // hypervisor 对象只支持开机操作，
+            // 其他操作应使用 system 对象的 Action。
 
             asyncResp->res.jsonValue["@odata.type"] =
                 "#ActionInfo.v1_1_2.ActionInfo";
@@ -911,6 +984,7 @@ inline void handleHypervisorSystemResetPost(
     }
 
     // Hypervisor object only support On operation
+    // Hypervisor 对象仅支持 On 操作。
     if (resetType != "On")
     {
         messages::actionParameterValueNotInList(
@@ -933,6 +1007,7 @@ inline void requestRoutesHypervisorSystems(App& app)
      * HypervisorInterfaceCollection class to handle the GET and PATCH on
      * Hypervisor Interface
      */
+    /* HypervisorInterfaceCollection 类，用于处理 Hypervisor Interface 的 GET 和 PATCH。 */
 
     BMCWEB_ROUTE(app, "/redfish/v1/Systems/hypervisor/EthernetInterfaces/")
         .privileges(redfish::privileges::getEthernetInterfaceCollection)

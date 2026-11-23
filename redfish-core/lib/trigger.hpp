@@ -878,6 +878,8 @@ inline bool fillTrigger(nlohmann::json& json, const std::string& id,
         // Current design of telemetry's Trigger interface shouldn't allow that
         // to happen. If the code goes here, then this is an internal error to
         // investigate.
+        // telemetry 的 Trigger 接口的当前设计不应允许这种情况发生。
+        // 如果代码走到这里，说明这是一个需要排查的内部错误。
         return false;
     }
 
@@ -972,6 +974,7 @@ inline void requestRoutesTriggerCollection(App& app)
         .privileges(redfish::privileges::getTriggersCollection)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 if (!redfish::setUpRedfishRoute(app, req, asyncResp))
@@ -1004,6 +1007,7 @@ inline void requestRoutesTrigger(App& app)
         .privileges(redfish::privileges::getTriggers)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& id) {
@@ -1016,6 +1020,7 @@ inline void requestRoutesTrigger(App& app)
                     telemetry::getDbusTriggerPath(id),
                     telemetry::triggerInterface,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                     [asyncResp,
                      id](const boost::system::error_code& ec,
                          const dbus::utility::DBusPropertiesMap& ret) {
@@ -1045,6 +1050,7 @@ inline void requestRoutesTrigger(App& app)
         .privileges(redfish::privileges::deleteTriggers)
         .methods(boost::beast::http::verb::delete_)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& id) {
@@ -1058,6 +1064,7 @@ inline void requestRoutesTrigger(App& app)
                 dbus::utility::async_method_call(
                     asyncResp,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                     [asyncResp, id](const boost::system::error_code& ec) {
                         if (ec.value() == EBADR)
                         {

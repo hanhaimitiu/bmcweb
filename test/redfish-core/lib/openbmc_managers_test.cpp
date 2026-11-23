@@ -57,6 +57,7 @@ TEST(AfterAsyncPopulatePid, EmptyManagedObjectsPopulatesStaticFields)
     EXPECT_EQ(profiles, (std::vector<std::string>{"ProfileA", "ProfileB"}));
 
     // No "Profile" key when currentProfile is empty.
+    // 当 currentProfile 为空时，不应有 "Profile" 键。
     EXPECT_FALSE(fan.contains("Profile"));
 }
 
@@ -216,6 +217,7 @@ TEST(AfterAsyncPopulatePid, FanZoneWithNoChassisMatchHasNoChassis)
 
     dbus::utility::ManagedObjectType managed;
     // No chassis interface in managed objects -> Chassis key is not populated.
+    // 受管对象中没有 chassis 接口 -> 不填充 Chassis 键。
     managed.emplace_back(sdbusplus::object_path("/xyz/zone0"),
                          std::move(interfaces));
 
@@ -301,6 +303,7 @@ TEST(AfterAsyncPopulatePid, MissingClassOnPidReturnsInternalError)
     dbus::utility::DBusPropertiesMap props;
     props.emplace_back("Name", "MyPid");
     // No "Class" property at all.
+    // 完全没有 "Class" 属性。
 
     dbus::utility::DBusInterfacesMap interfaces;
     interfaces.emplace_back("xyz.openbmc_project.Configuration.Pid",

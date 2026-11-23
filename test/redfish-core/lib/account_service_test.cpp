@@ -69,6 +69,8 @@ TEST(Conversion, PositiveToJson)
 
     // Default (empty timezone) uses the local zone, matching the previous
     // behavior of getDateTimeUint(value).
+    // 默认（空时区）使用本地时区，与 getDateTimeUint(value)
+    // 之前的行为一致。
     value = passwordExpirationToJson(1729188724);
     EXPECT_TRUE(value.is_string());
     EXPECT_EQ(value.get<std::string>(),

@@ -69,6 +69,7 @@ enum class IpVersion
 /**
  * Structure for keeping IPv4 data required by Redfish
  */
+/* 用于保存 Redfish 所需 IPv4 数据的结构体。 */
 struct IPv4AddressData
 {
     std::string id;
@@ -84,6 +85,7 @@ struct IPv4AddressData
 /**
  * Structure for keeping IPv6 data required by Redfish
  */
+/* 用于保存 Redfish 所需 IPv6 数据的结构体。 */
 struct IPv6AddressData
 {
     std::string id;
@@ -95,6 +97,7 @@ struct IPv6AddressData
 /**
  * Structure for keeping static route data required by Redfish
  */
+/* 用于保存 Redfish 所需静态路由数据的结构体。 */
 struct StaticGatewayData
 {
     std::string id;
@@ -107,6 +110,7 @@ struct StaticGatewayData
  * Structure for keeping basic single Ethernet Interface information
  * available from DBus
  */
+/* 用于保存从 DBus 获取的基本单个以太网接口信息的结构体。 */
 struct EthernetInterfaceData
 {
     uint32_t speed;
@@ -148,6 +152,7 @@ struct DHCPParameters
 
 // Helper function that changes bits netmask notation (i.e. /24)
 // into full dot notation
+// 辅助函数，将位掩码表示法（如 /24）转换为完整的点分表示法。
 inline std::string getNetmask(unsigned int bits)
 {
     uint32_t value = 0xffffffff << (32 - bits);
@@ -515,6 +520,7 @@ inline bool extractEthernetInterfaceData(
             }
             // System configuration shows up in the global namespace, so no need
             // to check eth number
+            // 系统配置显示在全局命名空间中，因此无需检查 eth 编号。
             if (ifacePair.first ==
                 "xyz.openbmc_project.Network.SystemConfiguration")
             {
@@ -537,6 +543,7 @@ inline bool extractEthernetInterfaceData(
 }
 
 // Helper function that extracts data for single ethernet ipv6 address
+// 辅助函数，用于提取单个以太网 IPv6 地址的数据。
 inline void extractIPV6Data(const std::string& ethifaceId,
                             const dbus::utility::ManagedObjectType& dbusData,
                             std::vector<IPv6AddressData>& ipv6Config)
@@ -546,9 +553,12 @@ inline void extractIPV6Data(const std::string& ethifaceId,
 
     // Since there might be several IPv6 configurations aligned with
     // single ethernet interface, loop over all of them
+    // 由于单个以太网接口可能对应多个 IPv6 配置，
+    // 因此遍历所有配置。
     for (const auto& objpath : dbusData)
     {
         // Check if proper pattern for object path appears
+        // 检查对象路径是否出现了正确的模式。
         if (objpath.first.str.starts_with(ipPathStart + "/"))
         {
             for (const auto& interface : objpath.second)
@@ -576,6 +586,7 @@ inline void extractIPV6Data(const std::string& ethifaceId,
 
                     // Instance IPv6AddressData structure, and set as
                     // appropriate
+                    // 实例化 IPv6AddressData 结构体，并进行相应设置。
                     IPv6AddressData& ipv6Address = ipv6Config.emplace_back();
                     ipv6Address.id =
                         objpath.first.str.substr(ipPathStart.size());
@@ -614,6 +625,7 @@ inline void extractIPV6Data(const std::string& ethifaceId,
                                  property.first == "Gateway")
                         {
                             // Type & Gateway is not used
+                            // Type 和 Gateway 未使用。
                         }
                         else
                         {
@@ -629,6 +641,7 @@ inline void extractIPV6Data(const std::string& ethifaceId,
 }
 
 // Helper function that extracts data for single ethernet ipv4 address
+// 辅助函数，用于提取单个以太网 IPv4 地址的数据。
 inline void extractIPData(const std::string& ethifaceId,
                           const dbus::utility::ManagedObjectType& dbusData,
                           std::vector<IPv4AddressData>& ipv4Config)
@@ -638,9 +651,12 @@ inline void extractIPData(const std::string& ethifaceId,
 
     // Since there might be several IPv4 configurations aligned with
     // single ethernet interface, loop over all of them
+    // 由于单个以太网接口可能对应多个 IPv4 配置，
+    // 因此遍历所有配置。
     for (const auto& objpath : dbusData)
     {
         // Check if proper pattern for object path appears
+        // 检查对象路径是否出现了正确的模式。
         if (objpath.first.str.starts_with(ipPathStart + "/"))
         {
             for (const auto& interface : objpath.second)
@@ -668,6 +684,7 @@ inline void extractIPData(const std::string& ethifaceId,
 
                     // Instance IPv4AddressData structure, and set as
                     // appropriate
+                    // 实例化 IPv4AddressData 结构体，并进行相应设置。
                     IPv4AddressData& ipv4Address = ipv4Config.emplace_back();
                     ipv4Address.id =
                         objpath.first.str.substr(ipPathStart.size());
@@ -700,6 +717,7 @@ inline void extractIPData(const std::string& ethifaceId,
                             if (mask != nullptr)
                             {
                                 // convert it to the string
+                                // 将其转换为字符串。
                                 ipv4Address.netmask = getNetmask(*mask);
                             }
                         }
@@ -707,6 +725,7 @@ inline void extractIPData(const std::string& ethifaceId,
                                  property.first == "Gateway")
                         {
                             // Type & Gateway is not used
+                            // Type 和 Gateway 未使用。
                         }
                         else
                         {
@@ -716,6 +735,7 @@ inline void extractIPData(const std::string& ethifaceId,
                         }
                     }
                     // Check if given address is local, or global
+                    // 检查给定地址是本地地址还是全局地址。
                     ipv4Address.linktype =
                         ipv4Address.address.starts_with("169.254.")
                             ? LinkType::Local
@@ -737,6 +757,11 @@ inline void extractIPData(const std::string& ethifaceId,
  *
  * @return None
  */
+/* @brief 修改分配给 NIC 的默认网关。
+ * @param[in] ifaceId 要修改默认网关的网络接口 Id。
+ * @param[in] gateway 新的网关值。赋空字符串表示删除网关。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void updateIPv4DefaultGateway(
     const std::string& ifaceId, const std::string& gateway,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -757,6 +782,11 @@ inline void updateIPv4DefaultGateway(
  *
  * @return None
  */
+/* @brief 删除该接口指定的静态 IP 地址。
+ * @param[in] ifaceId 要删除 IP 的接口 Id。
+ * @param[in] ipHash 要删除 IP 的 DBus Hash id。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void deleteIPAddress(const std::string& ifaceId,
                             const std::string& ipHash,
                             const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -785,6 +815,13 @@ inline void deleteIPAddress(const std::string& ifaceId,
  *
  * @return None
  */
+/* @brief 创建一个静态 IPv4 条目。
+ * @param[in] ifaceId 要在其上创建 IPv4 条目的接口 Id。
+ * @param[in] prefixLength 子网掩码的 IPv4 前缀表示法。
+ * @param[in] gateway 该接口网关的 IPv4 地址。
+ * @param[in] address 分配给该接口的 IPv4 地址。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void createIPv4(const std::string& ifaceId, uint8_t prefixLength,
                        const std::string& gateway, const std::string& address,
                        const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -819,6 +856,14 @@ inline void createIPv4(const std::string& ifaceId, uint8_t prefixLength,
  *
  * @return None
  */
+/* @brief 删除该接口的 IP 条目并创建替代的静态条目。
+ * @param[in] ifaceId 要在其上创建 IPv6 条目的接口 Id。
+ * @param[in] id 标识 DBus 条目的唯一 hash 条目。
+ * @param[in] prefixLength 子网掩码的前缀表示法。
+ * @param[in] address 分配给该接口的地址。
+ * @param[in] numStaticAddrs IPv4 静态地址的数量。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 
 inline void deleteAndCreateIPAddress(
     IpVersion version, const std::string& ifaceId, const std::string& id,
@@ -829,6 +874,7 @@ inline void deleteAndCreateIPAddress(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, version, ifaceId, address, prefixLength,
          gateway](const boost::system::error_code& ec) {
             if (ec)
@@ -903,6 +949,12 @@ inline bool extractIPv6DefaultGatewayData(
  *
  * @return None
  */
+/* @brief 用给定数据创建 IPv6。
+ * @param[in] ifaceId 要添加 IP 的接口 Id。
+ * @param[in] prefixLength 要添加的前缀长度。
+ * @param[in] address 要添加的 IP 地址。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void createIPv6(const std::string& ifaceId, uint8_t prefixLength,
                        const std::string& address,
                        const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -912,6 +964,7 @@ inline void createIPv6(const std::string& ifaceId, uint8_t prefixLength,
 
     auto createIpHandler =
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, address](const boost::system::error_code& ec) {
             if (ec)
             {
@@ -928,6 +981,8 @@ inline void createIPv6(const std::string& ifaceId, uint8_t prefixLength,
         };
     // Passing null for gateway, as per redfish spec IPv6StaticAddresses
     // object does not have associated gateway property
+    // 按照 redfish 规范，IPv6StaticAddresses 对象没有关联的网关属性，
+    // 因此这里为 gateway 传入 null。
     dbus::utility::async_method_call(
         asyncResp, std::move(createIpHandler), "xyz.openbmc_project.Network",
         path, "xyz.openbmc_project.Network.IP.Create", "IP",
@@ -944,6 +999,11 @@ inline void createIPv6(const std::string& ifaceId, uint8_t prefixLength,
  *
  * @return None
  */
+/* @brief 删除给定的 IPv6 静态网关。
+ * @param[in] ifaceId 要删除 IP 的接口 Id。
+ * @param[in] ipHash 要删除 IP 的 DBus Hash id。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void deleteIPv6Gateway(
     std::string_view ifaceId, std::string_view gatewayId,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -972,6 +1032,11 @@ inline void deleteIPv6Gateway(
  *
  * @return None
  */
+/* @brief 用给定数据创建 IPv6 静态默认网关。
+ * @param[in] ifaceId 要添加 IP 的接口 Id。
+ * @param[in] gateway 需要添加的网关地址。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void createIPv6DefaultGateway(
     std::string_view ifaceId, const std::string& gateway,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -1002,6 +1067,11 @@ inline void createIPv6DefaultGateway(
  *
  * @return None
  */
+/* @brief 删除该接口的 IPv6 默认网关条目，并创建替代的 IPv6 默认网关条目。
+ * @param[in] ifaceId 要在其上创建 IPv6 条目的接口 Id。
+ * @param[in] gateway 分配给该接口的 IPv6 网关。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 inline void deleteAndCreateIPv6DefaultGateway(
     std::string_view ifaceId, std::string_view gatewayId,
     const std::string& gateway,
@@ -1034,6 +1104,12 @@ inline void deleteAndCreateIPv6DefaultGateway(
  *
  * @return None
  */
+/* @brief 用给定数据设置 IPv6 默认网关。
+ * @param[in] ifaceId 要添加网关的接口 Id。
+ * @param[in] input 包含需要添加的地址。
+ * @param[in] staticGatewayData 系统中当前的静态网关。
+ * @param[io] asyncResp 将返回给客户端的响应对象。
+ * @return 无。 */
 
 inline void handleIPv6DefaultGateway(
     const std::string& ifaceId,
@@ -1049,6 +1125,7 @@ inline void handleIPv6DefaultGateway(
          input)
     {
         // find the next gateway entry
+        // 查找下一个网关条目。
         while (staticGatewayEntry != staticGatewayData.end())
         {
             if (staticGatewayEntry->protocol ==
@@ -1077,6 +1154,7 @@ inline void handleIPv6DefaultGateway(
         if (obj->empty())
         {
             // Do nothing, but make sure the entry exists.
+            // 什么都不做，但要确保该条目存在。
             if (staticGatewayEntry == staticGatewayData.end())
             {
                 messages::propertyValueFormatError(asyncResp->res, *obj,
@@ -1127,6 +1205,9 @@ inline void handleIPv6DefaultGateway(
  * @param callback a function that shall be called to convert Dbus output
  * into JSON
  */
+/* 从 EntityManager Network Manager 检索给定 Ethernet Interface 对象的所有属性。
+ * @param ethiface_id 要在 DBus 上查询的以太网接口 id。
+ * @param callback 一个函数，用于将 Dbus 输出转换为 JSON。 */
 template <typename CallbackFunc>
 void getEthernetIfaceData(const std::string& ethifaceId,
                           CallbackFunc&& callback)
@@ -1159,6 +1240,7 @@ void getEthernetIfaceData(const std::string& ethifaceId,
 
             extractIPData(ethifaceId, resp, ipv4Data);
             // Fix global GW
+            // 修正全局 GW（网关）。
             for (IPv4AddressData& ipv4 : ipv4Data)
             {
                 if (((ipv4.linktype == LinkType::Global) &&
@@ -1176,6 +1258,7 @@ void getEthernetIfaceData(const std::string& ethifaceId,
                 callback(false, ethData, ipv4Data, ipv6Data, ipv6GatewayData);
             }
             // Finally make a callback with useful data
+            // 最后用有用的数据执行回调。
             callback(true, ethData, ipv4Data, ipv6Data, ipv6GatewayData);
         });
 }
@@ -1186,6 +1269,8 @@ void getEthernetIfaceData(const std::string& ethifaceId,
  * @param callback a function that shall be called to convert Dbus output
  * into JSON.
  */
+/* 检索 Network Manager 中所有可用的 Ethernet Interface。
+ * @param callback 一个函数，用于将 Dbus 输出转换为 JSON。 */
 template <typename CallbackFunc>
 void getEthernetIfaceList(CallbackFunc&& callback)
 {
@@ -1193,11 +1278,13 @@ void getEthernetIfaceList(CallbackFunc&& callback)
     dbus::utility::getManagedObjects(
         "xyz.openbmc_project.Network", path,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<CallbackFunc>(callback)](
             const boost::system::error_code& ec,
             const dbus::utility::ManagedObjectType& resp) {
             // Callback requires vector<string> to retrieve all available
             // ethernet interfaces
+            // 回调需要 vector<string> 来检索所有可用的以太网接口。
             std::vector<std::string> ifaceList;
             ifaceList.reserve(resp.size());
             if (ec)
@@ -1207,14 +1294,17 @@ void getEthernetIfaceList(CallbackFunc&& callback)
             }
 
             // Iterate over all retrieved ObjectPaths.
+            // 遍历所有检索到的 ObjectPath。
             for (const auto& objpath : resp)
             {
                 // And all interfaces available for certain ObjectPath.
+                // 以及特定 ObjectPath 上所有可用的接口。
                 for (const auto& interface : objpath.second)
                 {
                     // If interface is
                     // xyz.openbmc_project.Network.EthernetInterface, this is
                     // what we're looking for.
+                    // 如果接口是 xyz.openbmc_project.Network.EthernetInterface，那就是我们要找的。
                     if (interface.first ==
                         "xyz.openbmc_project.Network.EthernetInterface")
                     {
@@ -1224,6 +1314,7 @@ void getEthernetIfaceList(CallbackFunc&& callback)
                             continue;
                         }
                         // and put it into output vector.
+                        // 并将其放入输出 vector。
                         ifaceList.emplace_back(ifaceId);
                     }
                 }
@@ -1232,6 +1323,7 @@ void getEthernetIfaceList(CallbackFunc&& callback)
             std::ranges::sort(ifaceList, AlphanumLess<std::string>());
 
             // Finally make a callback with useful data
+            // 最后用有用的数据执行回调。
             callback(true, ifaceList);
         });
 }
@@ -1239,6 +1331,7 @@ void getEthernetIfaceList(CallbackFunc&& callback)
 inline bool isHostnameValid(const std::string& hostname)
 {
     // A valid host name can never have the dotted-decimal form (RFC 1123)
+    // 有效的主机名永远不能是点分十进制形式（RFC 1123）。
     if (std::ranges::all_of(hostname, ::isdigit))
     {
         return false;
@@ -1247,6 +1340,10 @@ inline bool isHostnameValid(const std::string& hostname)
     // MUST handle host names of up to 63 characters (RFC 1123)
     // labels cannot start or end with hyphens (RFC 952)
     // labels can start with numbers (RFC 1123)
+    // 有效 FQDN 中的每个标签（主机名/子域）
+    // 必须能处理最长 63 个字符的主机名（RFC 1123）。
+    // 标签不能以连字符开头或结尾（RFC 952）。
+    // 标签可以以数字开头（RFC 1123）。
     const static std::regex pattern(
         "^[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9]$");
 
@@ -1257,6 +1354,8 @@ inline bool isDomainnameValid(const std::string& domainname)
 {
     // Can have multiple subdomains
     // Top Level Domain's min length is 2 character
+    // 可以有多个子域。
+    // 顶级域名的最小长度为 2 个字符。
     const static std::regex pattern(
         "^([A-Za-z0-9][a-zA-Z0-9\\-]{1,61}|[a-zA-Z0-9]{1,30}\\.)*[a-zA-Z]{2,}$");
 
@@ -1268,6 +1367,7 @@ inline void handleHostnamePatch(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     // SHOULD handle host names of up to 255 characters(RFC 1123)
+    // 应能处理最长 255 个字符的主机名（RFC 1123）。
     if (hostname.length() > 255)
     {
         messages::propertyValueFormatError(asyncResp->res, hostname,
@@ -1308,6 +1408,7 @@ inline void handleFqdnPatch(const std::string& ifaceId, const std::string& fqdn,
                             const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     // Total length of FQDN must not exceed 255 characters(RFC 1035)
+    // FQDN 的总长度不得超过 255 个字符（RFC 1035）。
     if (fqdn.length() > 255)
     {
         messages::propertyValueFormatError(asyncResp->res, fqdn, "FQDN");
@@ -1517,6 +1618,7 @@ enum class AddrChange
 };
 
 // Struct representing a dbus change
+// 表示 dbus 变更的结构体。
 struct AddressPatch
 {
     std::string address;
@@ -1554,6 +1656,7 @@ inline bool parseAddresses(
             if (thisAddress.existingDbusId.empty())
             {
                 // Received a DELETE action on an entry not assigned to the NIC
+                // 收到了针对未分配给该 NIC 的条目的 DELETE 操作。
                 messages::resourceCannotBeDeleted(res);
                 return false;
             }
@@ -1580,6 +1683,9 @@ inline bool parseAddresses(
             // not explicitly provided are assumed to be unmodified from the
             // current state of the interface. Merge existing state into the
             // current request.
+            // 查找地址/子网/网关的值。任何未显式提供的值，
+            // 均假定与接口的当前状态一致，未做修改。
+            // 将现有状态合并到当前请求中。
             if (address)
             {
                 if (!ip_util::ipv4VerifyIpAndGetBitcount(*address))
@@ -1624,6 +1730,7 @@ inline bool parseAddresses(
                 uint8_t prefixLength = 0;
                 // Ignore return code.  It came from internal, it's it's invalid
                 // nothing we can do
+                // 忽略返回码。它来自内部，如果无效我们也无能为力。
                 ip_util::ipv4VerifyIpAndGetBitcount(nicIpEntry->netmask,
                                                     &prefixLength);
 
@@ -1643,6 +1750,7 @@ inline bool parseAddresses(
             else if (thisAddress.existingDbusId.empty())
             {
                 // Default to null gateway
+                // 默认网关为 null。
                 gateway = "";
             }
             else
@@ -1651,6 +1759,7 @@ inline bool parseAddresses(
             }
 
             // Changing gateway from existing
+            // 正在更改网关（与现有值不同）。
             if (!thisAddress.gateway.empty() &&
                 thisAddress.gateway != "0.0.0.0")
             {
@@ -1659,6 +1768,8 @@ inline bool parseAddresses(
                     // A NIC can only have a single active gateway value.
                     // If any gateway in the array of static addresses
                     // mismatch the PATCH is in error.
+                    // 一个 NIC 只能有一个生效的网关值。
+                    // 如果静态地址数组中有任何网关与之不匹配，则 PATCH 出错。
                     std::string arg1 = pathString + "/Gateway";
                     std::string arg2 = lastGatewayPath + "/Gateway";
                     messages::propertyValueConflict(res, arg1, arg2);
@@ -1677,6 +1788,7 @@ inline bool parseAddresses(
     }
 
     // Delete the remaining IPs
+    // 删除剩余的 IP。
     while (nicIpEntry != ipv4Data.cend())
     {
         AddressPatch& thisAddress = addressesOut.emplace_back();
@@ -1705,6 +1817,7 @@ inline void handleIPv4StaticPatch(
 
     // If we're setting the gateway to something new, delete the
     // existing so we won't conflict
+    // 如果要把网关设置为新值，先删除现有网关以免冲突。
     if (!ethData.defaultGateway.empty() && ethData.defaultGateway != gatewayOut)
     {
         updateIPv4DefaultGateway(ifaceId, "", asyncResp);
@@ -1725,6 +1838,8 @@ inline void handleIPv4StaticPatch(
             {
                 // Update is a delete then a recreate
                 // Only need to update if there is an existing ip at this index
+                // Update 是先删除再重建。
+                // 只有该索引处已有 IP 时才需要更新。
                 if (!address.existingDbusId.empty())
                 {
                     BMCWEB_LOG_ERROR("Deleting id {} on interface {}",
@@ -1737,6 +1852,7 @@ inline void handleIPv4StaticPatch(
                 else
                 {
                     // Otherwise, just create a new one
+                    // 否则，直接新建一个。
                     BMCWEB_LOG_ERROR(
                         "creating ip {} prefix {} gateway {} on interface {}",
                         address.address, address.prefixLength, address.gateway,
@@ -1749,6 +1865,7 @@ inline void handleIPv4StaticPatch(
             default:
             {
                 // Leave alone
+                // 不处理。
             }
             break;
         }
@@ -1756,6 +1873,8 @@ inline void handleIPv4StaticPatch(
 
     // now update to the new gateway.
     // Default gateway is already empty, so no need to update if we're clearing
+    // 现在更新为新网关。
+    // 默认网关已经为空，因此如果要清空则无需更新。
     if (!gatewayOut.empty() && ethData.defaultGateway != gatewayOut)
     {
         updateIPv4DefaultGateway(ifaceId, gatewayOut, asyncResp);
@@ -1808,6 +1927,9 @@ inline void handleIPv6StaticAddressesPatch(
             // not explicitly provided are assumed to be unmodified from the
             // current state of the interface. Merge existing state into the
             // current request.
+            // 查找 address 和 prefixLength 的值。任何未显式提供的值，
+            // 均假定与接口的当前状态一致，未做修改。
+            // 将现有状态合并到当前请求中。
             if (!address)
             {
                 if (nicIpEntry == ipv6Data.end())
@@ -1851,6 +1973,9 @@ inline void handleIPv6StaticAddressesPatch(
                 // Requesting a DELETE/DO NOT MODIFY action for an item
                 // that isn't present on the eth(n) interface. Input JSON is
                 // in error, so bail out.
+                // 请求对 eth(n) 接口上不存在的条目执行 DELETE/DO NOT MODIFY 操作。
+                // 输入的 JSON 有误，
+                // 因此退出。
                 if (obj == nullptr)
                 {
                     messages::resourceCannotBeDeleted(asyncResp->res);
@@ -1937,6 +2062,8 @@ inline void parseInterfaceData(
         // When domain name is empty then it means, that it is a network
         // without domain names, and the host name itself must be treated as
         // FQDN
+        // 当域名为空时，表示这是一个没有域名的网络，
+        // 此时主机名本身必须作为 FQDN 处理。
         std::string fqdn = ethData.hostName;
         if (!ethData.domainnames.empty())
         {
@@ -2122,6 +2249,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
         .privileges(redfish::privileges::getEthernetInterfaceCollection)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& managerId) {
@@ -2149,8 +2277,10 @@ inline void requestEthernetInterfacesRoutes(App& app)
 
                 // Get eth interface list, and call the below callback for JSON
                 // preparation
+                // 获取 eth 接口列表，并调用下面的回调准备 JSON。
                 getEthernetIfaceList(
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp](const bool& success,
                                 const std::vector<std::string>& ifaceList) {
                         if (!success)
@@ -2186,6 +2316,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
                 postEthernetInterfaceSubOverManagerEthernetInterfaceCollection)
         .methods(boost::beast::http::verb::post)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& managerId) {
@@ -2259,6 +2390,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
                 {
                     // In OpenBMC implementation, VLANEnable cannot be false on
                     // create
+                    // 在 OpenBMC 实现中，创建时 VLANEnable 不能为 false。
                     messages::propertyValueIncorrect(asyncResp->res,
                                                      "VLAN/VLANEnable", false);
                     return;
@@ -2284,6 +2416,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
         .privileges(redfish::privileges::getEthernetInterface)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& managerId, const std::string& ifaceId) {
@@ -2302,6 +2435,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
                 getEthernetIfaceData(
                     ifaceId,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp, ifaceId](
                         const bool& success,
                         const EthernetInterfaceData& ethData,
@@ -2312,6 +2446,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
                         {
                             // TODO(Pawel)consider distinguish between non
                             // existing object, and other errors
+                            // TODO(Pawel)：考虑区分不存在的对象和其他错误。
                             messages::resourceNotFound(
                                 asyncResp->res, "EthernetInterface", ifaceId);
                             return;
@@ -2335,6 +2470,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
                 patchEthernetInterfaceSubOverManagerEthernetInterfaceCollection)
         .methods(boost::beast::http::verb::patch)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& managerId, const std::string& ifaceId) {
@@ -2402,9 +2538,11 @@ inline void requestEthernetInterfacesRoutes(App& app)
 
                 // Get single eth interface data, and call the below callback
                 // for JSON preparation
+                // 获取单个 eth 接口的数据，并调用下面的回调准备 JSON。
                 getEthernetIfaceData(
                     ifaceId,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp, ifaceId, hostname = std::move(hostname),
                      fqdn = std::move(fqdn), macAddress = std::move(macAddress),
                      ipv4StaticAddresses = std::move(ipv4StaticAddresses),
@@ -2427,6 +2565,8 @@ inline void requestEthernetInterfacesRoutes(App& app)
                             // ... otherwise return error
                             // TODO(Pawel)consider distinguish between non
                             // existing object, and other errors
+                            // ...否则返回错误。
+                            // TODO(Pawel)：考虑区分不存在的对象和其他错误。
                             messages::resourceNotFound(
                                 asyncResp->res, "EthernetInterface", ifaceId);
                             return;
@@ -2514,6 +2654,7 @@ inline void requestEthernetInterfacesRoutes(App& app)
                 deleteEthernetInterfaceSubOverManagerEthernetInterfaceCollection)
         .methods(boost::beast::http::verb::delete_)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& managerId, const std::string& ifaceId) {

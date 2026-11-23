@@ -71,6 +71,8 @@ class BaseRule
     {
         // If there are no privileges assigned, assume no privileges
         // required
+        // 如果没有分配任何权限，则假定不需要
+        // 任何权限
         if (privilegesSet.empty())
         {
             return true;

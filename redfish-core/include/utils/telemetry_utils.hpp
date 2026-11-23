@@ -100,6 +100,8 @@ inline std::optional<IncorrectMetricUri> getChassisSensorNode(
 
         // Those 2 segments cannot be validated here, as we don't know which
         // sensors exist at the moment of parsing.
+        // 这两段无法在此处校验，因为在解析时我们
+        // 不知道存在哪些传感器。
         std::string ignoredSenorId;
 
         if (crow::utility::readUrlSegments(*parsed, "redfish", "v1", "Chassis",

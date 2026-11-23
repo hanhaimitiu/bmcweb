@@ -121,6 +121,16 @@ inline void handleCollectionMembers(
  *
  * @return void
  */
+/* @brief 通过对 inventory 的 GetSubTreePaths 搜索
+ *        来填充集合成员
+ * @param[i,o] asyncResp  异步响应对象
+ * @param[i]   collectionPath  Redfish 集合路径，用作 Members 的
+ *             Redfish 路径
+ * @param[i]   interfaces  用于约束 GetSubTree 搜索的接口列表
+ * @param[in]  subtree     用于约束搜索的 D-Bus 基础路径。
+ * @param[in]  jsonKeyName 用于存放集合成员的
+ *            键名。
+ * @return void */
 inline void getCollectionToKey(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const boost::urls::url& collectionPath,

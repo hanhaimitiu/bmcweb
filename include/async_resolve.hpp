@@ -57,6 +57,8 @@ class Resolver
   public:
     // unused io param used to keep interface identical to
     // boost::asio::tcp:::resolver
+    // 未使用的 io 参数，用于保持接口与
+    // boost::asio::tcp:::resolver 一致
     explicit Resolver(boost::asio::io_context& /*io*/) {}
 
     ~Resolver() = default;
@@ -71,6 +73,9 @@ class Resolver
     template <typename ResolveHandler>
     // This function is kept using snake case so that it is interoperable with
     // boost::asio::ip::tcp::resolver
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    // 此函数保留 snake case 命名，以便与
+    // boost::asio::ip::tcp::resolver 互操作
     // NOLINTNEXTLINE(readability-identifier-naming)
     void async_resolve(std::string_view host, std::string_view port,
                        ResolveHandler&& handler)
@@ -109,6 +114,7 @@ class Resolver
                                      hostName, flagNum);
                 }
                 // Extract the IP address from the response
+                // 从响应中提取 IP 地址
                 for (const std::tuple<int32_t, int32_t, std::vector<uint8_t>>&
                          resolveList : resp)
                 {
@@ -127,6 +133,7 @@ class Resolver
                 }
 
                 // All the resolved data is filled in the endpointList
+                // 所有解析结果都填入 endpointList
                 handler(ecRet, results_type::create(endpointList.begin(),
                                                     endpointList.end(), host,
                                                     std::to_string(portNum)));

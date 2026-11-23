@@ -59,6 +59,7 @@ enum class ExpandType : uint8_t
 };
 
 // A simple implementation of Trie to help |recursiveSelect|.
+// 一个简单的 Trie 实现，用于辅助 |recursiveSelect|。
 class SelectTrieNode
 {
   public:
@@ -76,6 +77,8 @@ class SelectTrieNode
 
     // Creates a new node if the key doesn't exist, returns the reference to the
     // newly created node; otherwise, return the reference to the existing node
+    // 若 key 不存在则创建新节点并返回该新节点的引用；
+    // 否则返回已有节点的引用
     SelectTrieNode* emplace(std::string_view jsonKey)
     {
         auto [it, _] = children.emplace(jsonKey, SelectTrieNode{});
@@ -109,10 +112,14 @@ class SelectTrieNode
 
 // Validates the property in the $select parameter. Every character is among
 // [a-zA-Z0-9#@_.] (taken from Redfish spec, section 9.6 Properties)
+// 校验 $select 参数中的属性。每个字符都必须属于
+// [a-zA-Z0-9#@_.]（取自 Redfish 规范 9.6 Properties 节）
 inline bool isSelectedPropertyAllowed(std::string_view property)
 {
     // These a magic number, but with it it's less likely that this code
     // introduces CVE; e.g., too large properties crash the service.
+    // 这些是魔数，但有了它，这段代码引入 CVE 的可能性更小；
+    // 例如，过大的属性会导致服务崩溃。
     constexpr int maxPropertyLength = 60;
     if (property.empty() || property.size() > maxPropertyLength)
     {
@@ -134,6 +141,7 @@ struct SelectTrie
     SelectTrie() = default;
 
     // Inserts a $select value; returns false if the nestedProperty is illegal.
+    // 插入一个 $select 值；若 nestedProperty 非法则返回 false。
     bool insertNode(std::string_view nestedProperty)
     {
         if (nestedProperty.empty())
@@ -165,28 +173,38 @@ struct SelectTrie
 };
 
 // The struct stores the parsed query parameters of the default Redfish route.
+// 该结构体存储默认 Redfish 路由解析后的查询参数。
 struct Query
 {
     // Only
+    // Only（$only 查询参数）
     bool isOnly = false;
 
     // Expand
+    // Expand（$expand 查询参数）
     uint8_t expandLevel = 0;
     ExpandType expandType = ExpandType::None;
 
     // Skip
+    // Skip（$skip 查询参数）
     std::optional<size_t> skip = std::nullopt;
 
     // Top
+    // Top（$top 查询参数）
     static constexpr size_t maxTop = 1000; // Max entries a response contain
     std::optional<size_t> top = std::nullopt;
 
     // Filter
+    // Filter（$filter 查询参数）
     std::optional<filter_ast::LogicalAnd> filter = std::nullopt;
 
     // Select
     // Unclear how to make this use structured initialization without this.
     // Might be a tidy bug?  Ignore for now
+    // NOLINTNEXTLINE(readability-redundant-member-init)
+    // Select（$select 查询参数）
+    // 不清楚如果不这样做，该如何使其使用结构化初始化。
+    // 可能是 tidy 的 bug？暂时忽略
     // NOLINTNEXTLINE(readability-redundant-member-init)
     SelectTrie selectTrie{};
 };
@@ -194,6 +212,9 @@ struct Query
 // The struct defines how resource handlers in redfish-core/lib/ can handle
 // query parameters themselves, so that the default Redfish route will delegate
 // the processing.
+// 该结构体定义 redfish-core/lib/ 中的资源处理器如何自行
+// 处理查询参数，以便默认的 Redfish 路由将处理工作
+// 委托出去。
 struct QueryCapabilities
 {
     bool canDelegateOnly = false;
@@ -208,16 +229,23 @@ struct QueryCapabilities
 // function will take care of it.
 // Returns a delegated query object which can be used by individual resource
 // handlers so that handlers don't need to query again.
+// 根据给定的 |queryCapabilities| 委托查询参数
+// 本函数不检查查询参数冲突，因为解析函数会
+// 负责处理。
+// 返回一个委托后的 query 对象，供各资源处理器使用，
+// 这样处理器无需再次查询。
 inline Query delegate(const QueryCapabilities& queryCapabilities, Query& query)
 {
     Query delegated{};
     // delegate only
+    // 委托 only（$only）
     if (query.isOnly && queryCapabilities.canDelegateOnly)
     {
         delegated.isOnly = true;
         query.isOnly = false;
     }
     // delegate expand as much as we can
+    // 尽可能多地委托 expand（$expand）
     if (query.expandType != ExpandType::None)
     {
         delegated.expandType = query.expandType;
@@ -234,6 +262,7 @@ inline Query delegate(const QueryCapabilities& queryCapabilities, Query& query)
     }
 
     // delegate top
+    // 委托 top（$top）
     if (query.top && queryCapabilities.canDelegateTop)
     {
         delegated.top = query.top;
@@ -241,6 +270,7 @@ inline Query delegate(const QueryCapabilities& queryCapabilities, Query& query)
     }
 
     // delegate skip
+    // 委托 skip（$skip）
     if (query.skip && queryCapabilities.canDelegateSkip)
     {
         delegated.skip = query.skip;
@@ -248,6 +278,7 @@ inline Query delegate(const QueryCapabilities& queryCapabilities, Query& query)
     }
 
     // delegate select
+    // 委托 select（$select）
     if (!query.selectTrie.root.empty() && queryCapabilities.canDelegateSelect)
     {
         delegated.selectTrie = std::move(query.selectTrie);
@@ -312,11 +343,13 @@ inline QueryError getNumericParam(std::string_view value, size_t& param)
         std::from_chars(value.begin(), value.end(), param);
 
     // If the number wasn't representable in the type, it's out of range
+    // 若数字无法用该类型表示，则说明超出范围
     if (r.ec == std::errc::result_out_of_range)
     {
         return QueryError::OutOfRange;
     }
     // All other errors are value format
+    // 其余所有错误均为值格式错误
     if (r.ec != std::errc())
     {
         return QueryError::ValueFormat;
@@ -338,6 +371,7 @@ inline QueryError getTopParam(std::string_view value, Query& query)
     }
 
     // Range check for sanity.
+    // 做范围检查以确保合理性。
     if (query.top > Query::maxTop)
     {
         return QueryError::OutOfRange;
@@ -353,6 +387,13 @@ inline QueryError getTopParam(std::string_view value, Query& query)
 // 1. https://datatracker.ietf.org/doc/html/rfc3986#section-3.3
 // 2.
 // https://docs.oasis-open.org/odata/odata/v4.01/os/abnf/odata-abnf-construction-rules.txt
+// 解析并校验 $select 参数。
+// 根据 OData URL 约定和 Redfish 规范，$select 的值应为
+// 以逗号分隔的 Resource Path
+// 参考：
+// 1. https://datatracker.ietf.org/doc/html/rfc3986#section-3.3
+// 2.
+// https://docs.oasis-open.org/odata/odata/v4.01/os/abnf/odata-abnf-construction-rules.txt
 inline bool getSelectParam(std::string_view value, Query& query)
 {
     std::vector<std::string> properties;
@@ -363,6 +404,8 @@ inline bool getSelectParam(std::string_view value, Query& query)
     }
     // These a magic number, but with it it's less likely that this code
     // introduces CVE; e.g., too large properties crash the service.
+    // 这些是魔数，但有了它，这段代码引入 CVE 的可能性更小；
+    // 例如，过大的属性会导致服务崩溃。
     constexpr int maxNumProperties = 10;
     if (properties.size() > maxNumProperties)
     {
@@ -379,6 +422,7 @@ inline bool getSelectParam(std::string_view value, Query& query)
 }
 
 // Parses and validates the $filter parameter.
+// 解析并校验 $filter 参数。
 inline bool getFilterParam(std::string_view value, Query& query)
 {
     query.filter = parseFilter(value);
@@ -459,17 +503,23 @@ inline std::optional<Query> parseParameters(boost::urls::params_view urlParams,
         else
         {
             // Intentionally ignore other errors Redfish spec, 7.3.1
+            // 有意忽略其他错误，见 Redfish 规范 7.3.1
             if (it.key.starts_with("$"))
             {
                 // Services shall return... The HTTP 501 Not Implemented
                 // status code for any unsupported query parameters that
                 // start with $ .
+                // 服务应返回……对于任何以 $ 开头的
+                // 不受支持的查询参数，返回 HTTP 501 Not Implemented
+                // 状态码。
                 messages::queryParameterValueFormatError(res, it.value, it.key);
                 res.result(boost::beast::http::status::not_implemented);
                 return std::nullopt;
             }
             // "Shall ignore unknown or unsupported query parameters that do
             // not begin with $ ."
+            // "对于不以 $ 开头的未知或不受支持的查询参数，
+            // 应予以忽略。"
         }
     }
 
@@ -545,6 +595,8 @@ inline bool processOnly(crow::App& app, crow::Response& res,
     }
     // TODO(Ed) copy request headers?
     // newReq.session = req.session;
+    // TODO(Ed) 是否要复制请求头？
+    // newReq.session = req.session;
     std::error_code ec;
     auto newReq = std::make_shared<crow::Request>(
         crow::Request::Body{boost::beast::http::verb::get, *url, 11}, ec);
@@ -590,12 +642,19 @@ inline void findNavigationReferencesInObjectRecursive(
 // tree that need to be expanded.  The current json pointer location p is passed
 // in to reference the current node that's being expanded, so it can be combined
 // with the keys from the jsonResponse object
+// 遍历 json 对象，查找可能需要解析的 Redfish NavigationReference
+// 条目。
+// 它递归遍历 jsonResponse 对象，在每一层查找链接，
+// 并返回一个列表（out），其中包含树中需要展开的位置。
+// 传入当前的 json pointer 位置 p 用于引用正在展开的当前节点，
+// 以便与 jsonResponse 对象中的 key 组合。
 inline void findNavigationReferencesRecursive(
     ExpandType eType, nlohmann::json& jsonResponse,
     const nlohmann::json::json_pointer& jsonPtr, int depth, int skipDepth,
     bool inLinks, std::vector<ExpandNode>& out)
 {
     // If no expand is needed, return early
+    // 如果不需要展开，则提前返回
     if (eType == ExpandType::None)
     {
         return;
@@ -625,6 +684,7 @@ inline void findNavigationReferencesInArrayRecursive(
 {
     size_t index = 0;
     // For arrays, walk every element in the array
+    // 对于数组，遍历其中的每个元素
     for (auto& element : array)
     {
         nlohmann::json::json_pointer newPtr = jsonPtr / index;
@@ -641,6 +701,7 @@ inline void findNavigationReferencesInObjectRecursive(
     bool inLinks, std::vector<ExpandNode>& out)
 {
     // Navigation References only ever have a single element
+    // Navigation Reference 永远只有一个元素
     if (obj.size() == 1)
     {
         if (obj.begin()->first == "@odata.id")
@@ -668,6 +729,11 @@ inline void findNavigationReferencesInObjectRecursive(
         // "@odata.id" then that means we have entered a new level / expanded
         // resource.  We need to stop traversing if we're already at the desired
         // depth
+        // Redfish 规范要求所有资源都包含资源标识符。
+        // 如果对象有多个元素且其中一个是 "@odata.id"，
+        // 则说明我们已进入一个新层级 / 展开的资源。
+        // 如果我们已经到达目标深度，
+        // 就需要停止遍历。
         if (obj.size() > 1)
         {
             if (depth == 0)
@@ -687,16 +753,20 @@ inline void findNavigationReferencesInObjectRecursive(
     }
 
     // Loop the object and look for links
+    // 遍历对象并查找链接
     for (auto& element : obj)
     {
         bool localInLinks = inLinks;
         if (!localInLinks)
         {
             // Check if this is a links node
+            // 检查这是否是一个 links 节点
             localInLinks = element.first == "Links";
         }
         // Only traverse the parts of the tree the user asked for
         // Per section 7.3 of the redfish specification
+        // 只遍历用户请求的那部分树
+        // 依据 Redfish 规范 7.3 节
         if (localInLinks && eType == ExpandType::NotLinks)
         {
             continue;
@@ -720,12 +790,20 @@ inline void findNavigationReferencesInObjectRecursive(
 // Isn't a concern until https://gerrit.openbmc.org/c/openbmc/bmcweb/+/60556
 // lands.  May want to avoid forwarding query params when request is uptree from
 // a top level collection.
+// TODO：当启用聚合且我们收到部分展开的响应时，
+// 如果原始 URI 位于顶层集合的上层树中，
+// 可能需要额外处理。
+// 在 https://gerrit.openbmc.org/c/openbmc/bmcweb/+/60556
+// 合入之前这不是问题。
+// 当请求来自顶层集合的上层时，
+// 可能要避免转发查询参数。
 inline std::vector<ExpandNode> findNavigationReferences(
     ExpandType eType, int depth, int skipDepth, nlohmann::json& jsonResponse)
 {
     std::vector<ExpandNode> ret;
     const nlohmann::json::json_pointer root = nlohmann::json::json_pointer("");
     // SkipDepth +1 since we are skipping the root by default.
+    // SkipDepth 加 1，因为我们默认跳过根节点。
     findNavigationReferencesRecursive(eType, jsonResponse, root, depth,
                                       skipDepth + 1, false, ret);
     return ret;
@@ -736,9 +814,15 @@ inline std::vector<ExpandNode> findNavigationReferences(
 // This function shall handle $select when it is added.
 // There is no need to handle parameters that's not compatible with $expand,
 // e.g., $only, since this function will only be called in side $expand handlers
+// 为子查询格式化查询参数字符串。
+// 失败时返回 std::nullopt。
+// 添加 $select 时应由本函数处理。
+// 无需处理与 $expand 不兼容的参数，例如 $only，
+// 因为本函数只会在 $expand 处理器内部被调用。
 inline std::optional<std::string> formatQueryForExpand(const Query& query)
 {
     // query.expandLevel<=1: no need to do subqueries
+    // query.expandLevel<=1：无需执行子查询
     if (query.expandLevel <= 1)
     {
         return "";
@@ -773,6 +857,10 @@ class MultiAsyncResp : public std::enable_shared_from_this<MultiAsyncResp>
     // allows callers to attach sub-responses within the json tree that need
     // to be executed and filled into their appropriate locations.  This
     // class manages the final "merge" of the json resources.
+    // 该对象接受单个 asyncResp 对象作为"最终"响应，
+    // 然后允许调用者在 json 树中挂载需要执行的子响应，
+    // 并填充到各自的位置。本类负责管理 json 资源
+    // 最终的"合并"。
     MultiAsyncResp(crow::App& appIn,
                    std::shared_ptr<bmcweb::AsyncResp> finalResIn) :
         app(&appIn), finalRes(std::move(finalResIn))
@@ -807,6 +895,8 @@ class MultiAsyncResp : public std::enable_shared_from_this<MultiAsyncResp>
 
     // Handles the very first level of Expand, and starts a chain of sub-queries
     // for deeper levels.
+    // 处理 Expand 的第一层，并为更深的层级启动
+    // 一串子查询。
     void startQuery(const Query& query, const Query& delegated,
                     const crow::Request& req)
     {
@@ -842,6 +932,7 @@ class MultiAsyncResp : public std::enable_shared_from_this<MultiAsyncResp>
                 return;
             }
             // Share the session from the original request
+            // 共享原始请求中的 session
             newReq->session = req.session;
 
             auto asyncResp = std::make_shared<bmcweb::AsyncResp>();
@@ -906,6 +997,7 @@ inline void processTopAndSkip(const Query& query, crow::Response& res)
     if (!query.skip && !query.top)
     {
         // No work to do.
+        // 无需做任何处理。
         return;
     }
     nlohmann::json::object_t* obj =
@@ -913,6 +1005,7 @@ inline void processTopAndSkip(const Query& query, crow::Response& res)
     if (obj == nullptr)
     {
         // Shouldn't be possible.  All responses should be objects.
+        // 这不应该发生。所有响应都应是对象。
         messages::internalError(res);
         return;
     }
@@ -926,6 +1019,11 @@ inline void processTopAndSkip(const Query& query, crow::Response& res)
         // QueryNotSupportedOnResource message from the Base Message Registry
         // for any supported query parameters that apply only to resource
         // collections but are used on singular resources.
+        // 来自 Redfish 规范 7.3.1
+        // ……对于仅适用于资源集合、但被用于单个资源的
+        // 受支持查询参数，应返回 HTTP 400 Bad Request 状态码，
+        // 并附带来自 Base Message Registry 的
+        // QueryNotSupportedOnResource 消息。
         messages::queryNotSupportedOnResource(res);
         return;
     }
@@ -942,6 +1040,8 @@ inline void processTopAndSkip(const Query& query, crow::Response& res)
     {
         // Per section 7.3.1 of the Redfish specification, $skip is run before
         // $top Can only skip as many values as we have
+        // 依据 Redfish 规范 7.3.1 节，$skip 在 $top 之前执行。
+        // 只能跳过实际拥有的值的数量。
         size_t skip = std::min(arr->size(), *query.skip);
         arr->erase(arr->begin(), arr->begin() + static_cast<ssize_t>(skip));
     }
@@ -954,6 +1054,8 @@ inline void processTopAndSkip(const Query& query, crow::Response& res)
 
 // Given a JSON subtree |currRoot|, this function erases leaves whose keys are
 // not in the |currNode| Trie node.
+// 给定 JSON 子树 |currRoot|，本函数删除 key 不在
+// |currNode| Trie 节点中的叶子节点。
 inline void recursiveSelect(nlohmann::json& currRoot,
                             const SelectTrieNode& currNode)
 {
@@ -971,6 +1073,9 @@ inline void recursiveSelect(nlohmann::json& currRoot,
             // Per the Redfish spec section 7.3.3, the service shall select
             // certain properties as if $select was omitted. This applies to
             // every TrieNode that contains leaves and the root.
+            // 根据 Redfish 规范 7.3.3 节，服务应像未使用 $select 那样
+            // 选择某些属性。这适用于每个包含叶子的 TrieNode
+            // 以及根节点。
             constexpr std::array<std::string_view, 5> reservedProperties = {
                 "@odata.id", "@odata.type", "@odata.context", "@odata.etag",
                 "error"};
@@ -999,6 +1104,7 @@ inline void recursiveSelect(nlohmann::json& currRoot,
     {
         BMCWEB_LOG_DEBUG("Current JSON is an array");
         // Array index is omitted, so reuse the same Trie node
+        // 数组索引被省略，因此复用同一个 Trie 节点
         for (nlohmann::json& nextRoot : *array)
         {
             recursiveSelect(nextRoot, currNode);
@@ -1012,6 +1118,12 @@ inline void recursiveSelect(nlohmann::json& currRoot,
 // created for clarification.
 // 2. respect the full odata spec; e.g., deduplication, namespace, star (*),
 // etc.
+// 由于存在歧义和/或复杂性，当前 $select 的实现仍有
+// 以下 TODO。
+// 1. 与 $expand 组合；已创建 https://github.com/DMTF/Redfish/issues/5058
+//    以澄清该问题。
+// 2. 遵循完整的 odata 规范；例如去重、命名空间、星号 (*)
+//    等。
 inline void processSelect(crow::Response& intermediateResponse,
                           const SelectTrieNode& trieRoot)
 {
@@ -1033,6 +1145,8 @@ inline void processAllParams(
     BMCWEB_LOG_DEBUG("Processing query params");
     // If the request failed, there's no reason to even try to run query
     // params.
+    // 如果请求失败，就没有必要尝试运行查询
+    // 参数。
     if (intermediateResponse.resultInt() < 200 ||
         intermediateResponse.resultInt() >= 400)
     {
@@ -1069,6 +1183,8 @@ inline void processAllParams(
 
     // According to Redfish Spec Section 7.3.1, $select is the last parameter to
     // to process
+    // 根据 Redfish 规范 7.3.1 节，$select 是最后一个
+    // 要处理的参数。
     if (!query.selectTrie.root.empty())
     {
         processSelect(intermediateResponse, query.selectTrie.root);

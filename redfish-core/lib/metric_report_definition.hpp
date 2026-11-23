@@ -736,6 +736,8 @@ inline bool handleParamError(crow::Response& res, const char* errorMessage,
         {
             // Getting here means most possibly that toRedfishProperty has
             // incomplete implementation. Return internal error for now.
+            // 走到这里很可能意味着 toRedfishProperty 的实现不完整。
+            // 暂时返回内部错误。
             BMCWEB_LOG_ERROR("{} has no corresponding Redfish property", key);
             messages::internalError(res);
             return false;
@@ -1195,6 +1197,7 @@ inline void setReportMetrics(
         telemetry::service, telemetry::getDbusReportPath(id),
         telemetry::reportInterface,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, id = std::string(id), redfishMetrics = std::move(metrics)](
             boost::system::error_code ec,
             const dbus::utility::DBusPropertiesMap& properties) mutable {
@@ -1277,6 +1280,7 @@ inline void setReportMetrics(
                 retrieveUriToDbusMap(
                     chassis, sensorType,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp, updateMetricsReq](
                         const boost::beast::http::status status,
                         const std::map<std::string, std::string>& uriToDbus) {
@@ -1495,11 +1499,14 @@ inline void handleMetricReportDelete(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, id](const boost::system::error_code& ec) {
             /*
              * boost::system::errc and std::errc are missing value
              * for EBADR error that is defined in Linux.
              */
+            /* boost::system::errc 和 std::errc 中缺少 Linux 定义的
+             * EBADR 错误对应的值。 */
             if (ec.value() == EBADR)
             {
                 messages::resourceNotFound(asyncResp->res,

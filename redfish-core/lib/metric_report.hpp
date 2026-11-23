@@ -39,6 +39,7 @@ inline void requestRoutesMetricReportCollection(App& app)
         .privileges(redfish::privileges::getMetricReportCollection)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp) {
                 if (!redfish::setUpRedfishRoute(app, req, asyncResp))
@@ -68,6 +69,7 @@ inline void requestRoutesMetricReport(App& app)
         .privileges(redfish::privileges::getMetricReport)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& id) {
@@ -79,6 +81,7 @@ inline void requestRoutesMetricReport(App& app)
                 dbus::utility::async_method_call(
                     asyncResp,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [asyncResp, id,
                      reportPath](const boost::system::error_code& ec) {
                         if (ec.value() == EBADR ||
@@ -100,6 +103,7 @@ inline void requestRoutesMetricReport(App& app)
                             *crow::connections::systemBus, telemetry::service,
                             reportPath, telemetry::reportInterface, "Readings",
                             // ast-grep-ignore: long-lambda
+                            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                             [asyncResp,
                              id](const boost::system::error_code& ec2,
                                  const telemetry::TimestampReadings& ret) {

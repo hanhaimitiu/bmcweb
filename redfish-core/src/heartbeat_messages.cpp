@@ -8,6 +8,14 @@
  * should be first pushed to the relevant registry in the DMTF
  * github organization.
  ***************************************************************/
+/*                 请先阅读此警告
+ * 这是一个自动生成的头文件，包含
+ * Redfish DMTF 定义的消息定义。
+ * 不要在运行 parse_registries.py 脚本之外
+ * 修改此注册表。此文件中包含的定义
+ * 归 DMTF 所有。对这些文件的任何修改
+ * 都应先提交到 DMTF github 组织中的
+ * 相应注册表。 */
 #include "heartbeat_messages.hpp"
 
 #include "registries.hpp"
@@ -22,6 +30,9 @@
 
 // Clang can't seem to decide whether this header needs to be included or not,
 // and is inconsistent.  Include it for now
+// NOLINTNEXTLINE(misc-include-cleaner)
+// Clang 似乎无法确定是否需要包含这个头文件，
+// 而且表现不一致。暂时先包含它
 // NOLINTNEXTLINE(misc-include-cleaner)
 #include <cstdint>
 // NOLINTNEXTLINE(misc-include-cleaner)
@@ -56,6 +67,10 @@ static nlohmann::json::object_t getLog(
  * See header file for more information
  * @endinternal
  */
+/* @internal
+ * @brief 将 RedfishServiceFunctional（Redfish 服务功能正常）消息格式化为 JSON
+ * 更多信息请参见头文件
+ * @endinternal */
 nlohmann::json::object_t redfishServiceFunctional()
 {
     return getLog(

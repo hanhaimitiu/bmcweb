@@ -11,6 +11,7 @@ namespace
 {
 
 // Makes an array of n elements
+// 生成包含 n 个元素的数组
 std::string makeWideArray(int n)
 {
     n -= 1; // The array itself counts as one element
@@ -42,6 +43,7 @@ std::string makeDeepArray(int n)
     return os;
 }
 // Makes an object of n elements deep
+// 生成嵌套 n 层的对象
 std::string makeDeepObject(int n)
 {
     std::string os;
@@ -79,10 +81,14 @@ TEST(HttpParsing, isJsonContentType)
 
     // The Redfish specification DSP0266 shows no space between the ; and
     // charset.
+    // Redfish 规范 DSP0266 中 ; 和 charset 之间
+    // 没有空格。
     EXPECT_TRUE(isJsonContentType("application/json;charset=utf-8"));
     EXPECT_TRUE(isJsonContentType("application/json;charset=ascii"));
 
     // Sites like mozilla show the space included [1]
+    //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
+    // 像 mozilla 这样的网站则包含该空格 [1]
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
     EXPECT_TRUE(isJsonContentType("application/json; charset=utf-8"));
 
@@ -124,6 +130,8 @@ TEST(HttpParsing, parseStringAsJsonMaxValues)
 
     // Keys and values are each counted separately,
     // so 5000/2 = 2500 dict elements
+    // 键和值分别单独计数，
+    // 因此 5000/2 = 2500 个 dict 元素
     EXPECT_TRUE(parseStringAsJson(makeWideObject(2499)))
         << "2499 keys objects should parse";
     EXPECT_FALSE(parseStringAsJson(makeWideObject(2500)))

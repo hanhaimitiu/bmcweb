@@ -53,6 +53,8 @@ inline void handleSystemCollectionMembers(
 
     // consider an empty result as single-host, since single-host systems
     // do not populate the ManagedHost dbus interface
+    // 将空结果视为单主机（single-host），因为单主机系统
+    // 不会填充 ManagedHost dbus 接口
     if (objects.empty())
     {
         asyncResp->res.jsonValue["Members@odata.count"] = 1;
@@ -105,6 +107,10 @@ inline void handleSystemCollectionMembers(
  *
  * @return None
  */
+/* @brief 基于 ManagedHost dbus 接口，从对清单的 GetSubTreePaths 搜索中
+ * 填充系统集合的 members
+ * @param[i] asyncResp  异步响应对象
+ * @return 无 */
 inline void getSystemCollectionMembers(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -200,6 +206,12 @@ inline void afterGetComputerSystemSubTreePaths(
  *
  * @return None
  */
+/* @brief 基于 ManagedHost 接口，获取与所请求系统关联的
+ * 索引
+ * @param[i] asyncResp  异步响应对象
+ * @param[i] systemName 请求的系统
+ * @param[i] callback   找到索引后调用的回调函数
+ * @return 无 */
 inline void getComputerSystemIndex(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& systemName,
@@ -217,6 +229,7 @@ inline void getComputerSystemIndex(
     else
     {
         // on single-host, fallback to index 0
+        // 单主机情况下回退到索引 0
         BMCWEB_LOG_DEBUG(
             "Single-host detected, fallback to computerSystemIndex 0");
         callback(0);
@@ -332,6 +345,15 @@ inline void getValidSystemsPath(
  *
  * @return true if match found, else false
  */
+/* @brief 将 computerSystemIndex 与对象路径中包含的索引进行匹配
+ *        例如 /xyz/openbmc/project/control/host1/policy/TPMEnable 中的 1
+ * @param[i] asyncResp           用于生成响应的共享指针
+ * @param[i] computerSystemIndex 要匹配的索引
+ * @param[i] subtree             Mapper 响应对象
+ * @param[o] objectPath          匹配到的对象路径缓冲区
+ * @param[o] service             匹配到的对象路径所属服务的
+ *                               缓冲区（路径）
+ * @return 匹配成功返回 true，否则返回 false */
 inline bool indexMatchingSubTreeMapObjectPath(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex,

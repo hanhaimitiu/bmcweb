@@ -74,17 +74,24 @@ namespace redfish
 
 // Match signals added on software path
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+// 在 software 路径上添加 Match 信号
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 static std::unique_ptr<sdbusplus::match> fwUpdateMatcher;
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 static std::unique_ptr<sdbusplus::match> fwUpdateErrorMatcher;
 // Only allow one update at a time
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+// 同一时间只允许一次更新
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 static bool fwUpdateInProgress = false;
 // Timer for software available
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+// 用于软件可用的定时器
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 static std::unique_ptr<boost::asio::steady_timer> fwAvailableTimer;
 
 /* @brief String that indicates the Software Update D-Bus interface */
+/* @brief 表示 Software Update D-Bus 接口的字符串 */
 constexpr const char* updateInterface = "xyz.openbmc_project.Software.Update";
 
 struct MemoryFileDescriptor
@@ -200,6 +207,10 @@ inline bool handleCreateTask(const boost::system::error_code& ec2,
             // update (probably cycle the
             // system) if this expires then
             // task will be canceled
+            // 固件已暂存（staged），设置一个较长的定时器，
+            // 给他们时间完成更新
+            // （可能会重启系统）；如果定时器到期，
+            // 任务将被取消
             taskData->extendTimer(std::chrono::hours(5));
             return !task::completed;
         }
@@ -237,12 +248,16 @@ inline bool handleCreateTask(const boost::system::error_code& ec2,
 
         // if we're getting status updates it's
         // still alive, update timer
+        // 如果我们持续收到状态更新，说明任务
+        // 还存活，更新定时器
         taskData->extendTimer(std::chrono::minutes(5));
     }
 
     // as firmware update often results in a
     // reboot, the task  may never "complete"
     // unless it is an error
+    // 由于固件更新通常会导致重启，任务可能永远不会
+    // "完成"，除非出现错误
 
     return !task::completed;
 }
@@ -263,6 +278,8 @@ inline void createTask(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
 
 // Note that asyncResp can be either a valid pointer or nullptr. If nullptr
 // then no asyncResp updates will occur
+// 注意：asyncResp 可以是有效指针或 nullptr。如果是 nullptr，
+// 则不会进行任何 asyncResp 更新
 inline void softwareInterfaceAdded(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     sdbusplus::message_t& m, task::Payload&& payload)
@@ -281,6 +298,7 @@ inline void softwareInterfaceAdded(
         if (interface.first == "xyz.openbmc_project.Software.Activation")
         {
             // Retrieve service and activate
+            // 检索服务并进行激活（activate）
             constexpr std::array<std::string_view, 1> interfaces = {
                 "xyz.openbmc_project.Software.Activation"};
             dbus::utility::getDbusObject(
@@ -302,6 +320,7 @@ inline void softwareInterfaceAdded(
                         return;
                     }
                     // Ensure we only got one service back
+                    // 确保只得到一个服务
                     if (objInfo.size() != 1)
                     {
                         BMCWEB_LOG_ERROR("Invalid Object Size {}",
@@ -316,6 +335,9 @@ inline void softwareInterfaceAdded(
                     // cancel timer only when
                     // xyz.openbmc_project.Software.Activation interface
                     // is added
+                    // 仅在添加了
+                    // xyz.openbmc_project.Software.Activation 接口时
+                    // 才取消定时器
                     fwAvailableTimer = nullptr;
 
                     activateImage(objPath.str, objInfo[0].first);
@@ -339,6 +361,7 @@ inline void afterAvailableTimerAsyncWait(
     if (ec == boost::asio::error::operation_aborted)
     {
         // expected, we were canceled before the timer completed.
+        // 符合预期，我们在定时器完成之前被取消了。
         return;
     }
     BMCWEB_LOG_ERROR("Timed out waiting for firmware object being created");
@@ -405,11 +428,14 @@ inline void handleUpdateErrorType(
     else
     {
         // Unrelated error types. Ignored
+        // 无关的错误类型，忽略
         BMCWEB_LOG_INFO("Non-Software-related Error type={}. Ignored", type);
         return;
     }
     // NOLINTEND(bugprone-branch-clone)
     // Clear the timer
+    // NOLINTEND(bugprone-branch-clone)
+    // 清除定时器
     fwAvailableTimer = nullptr;
 }
 
@@ -438,6 +464,7 @@ inline void afterUpdateErrorMatcher(
                 if (type == nullptr)
                 {
                     // if this was our message, timeout will cover it
+                    // 如果这是我们的消息，超时机制会处理它
                     return;
                 }
                 handleUpdateErrorType(asyncResp, url, *type);
@@ -448,12 +475,15 @@ inline void afterUpdateErrorMatcher(
 
 // Note that asyncResp can be either a valid pointer or nullptr. If nullptr
 // then no asyncResp updates will occur
+// 注意：asyncResp 可以是有效指针或 nullptr。如果是 nullptr，
+// 则不会进行任何 asyncResp 更新
 inline void monitorForSoftwareAvailable(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const crow::Request& req, const std::string& url,
     int timeoutTimeSeconds = 50)
 {
     // Only allow one FW update at a time
+    // 同一时间只允许一次固件（FW）更新
     if (fwUpdateInProgress)
     {
         if (asyncResp)
@@ -512,6 +542,7 @@ inline std::optional<boost::urls::url> parseSimpleUpdateUrl(
             return std::nullopt;
         }
         // OpenBMC currently only supports HTTPS
+        // OpenBMC 目前只支持 HTTPS
         if (*transferProtocol == "HTTPS")
         {
             imageURI = "https://" + imageURI;
@@ -550,6 +581,7 @@ inline std::optional<boost::urls::url> parseSimpleUpdateUrl(
     else if (url->scheme() == "https")
     {
         // Empty paths default to "/"
+        // 空路径默认为 "/"
         if (url->encoded_path().empty())
         {
             url->set_encoded_path("/");
@@ -597,6 +629,10 @@ inline void handleUpdateServiceSimpleUpdateAction(
     // embedded within it.
     // 1) TransferProtocol:TFTP ImageURI:1.1.1.1/myfile.bin
     // 2) ImageURI:tftp://1.1.1.1/myfile.bin
+    // 用户可以同时传入 TransferProtocol 和 ImageURI 参数，
+    // 也可以只传入内嵌了传输协议的 ImageURI。
+    // 1) TransferProtocol:TFTP ImageURI:1.1.1.1/myfile.bin
+    // 2) ImageURI:tftp://1.1.1.1/myfile.bin
 
     if (!json_util::readJsonAction(              //
             req, asyncResp->res,                 //
@@ -636,6 +672,7 @@ inline void uploadImageFile(crow::Response& res, std::string_view body)
     std::ofstream out(filepath, std::ofstream::out | std::ofstream::binary |
                                     std::ofstream::trunc);
     // set the permission of the file to 640
+    // 将文件权限设置为 640
     std::filesystem::perms permission =
         std::filesystem::perms::owner_read | std::filesystem::perms::group_read;
     std::filesystem::permissions(filepath, permission);
@@ -649,6 +686,7 @@ inline void uploadImageFile(crow::Response& res, std::string_view body)
 }
 
 // Convert the Request Apply Time to the D-Bus value
+// 将请求中的 Apply Time 转换为 D-Bus 值
 inline bool convertApplyTime(crow::Response& res, const std::string& applyTime,
                              std::string& applyTimeNewVal)
 {
@@ -1094,6 +1132,7 @@ inline void updateMultipartContext(
         setApplyTime(asyncResp, *multipart->params.applyTime);
 
         // Setup callback for when new software detected
+        // 设置检测到新软件时的回调
         monitorForSoftwareAvailable(asyncResp, req,
                                     "/redfish/v1/UpdateService");
 
@@ -1110,6 +1149,9 @@ inline void doHTTPUpdate(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         // HTTP push only supports BMC updates (with ApplyTime as immediate) for
         // backwards compatibility. Specific component updates will be handled
         // through Multipart form HTTP push.
+        // 为向后兼容，HTTP push 只支持 BMC 更新（ApplyTime 为
+        // immediate）。特定组件的更新将通过 Multipart 表单
+        // HTTP push 处理。
         std::vector<std::string> targets;
         targets.emplace_back(BMCWEB_REDFISH_MANAGER_URI_NAME);
 
@@ -1121,6 +1163,7 @@ inline void doHTTPUpdate(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     else
     {
         // Setup callback for when new software detected
+        // 设置检测到新软件时的回调
         monitorForSoftwareAvailable(asyncResp, req,
                                     "/redfish/v1/UpdateService");
 
@@ -1141,6 +1184,7 @@ inline void handleUpdateServicePost(
     BMCWEB_LOG_DEBUG("doPost: contentType={}", contentType);
 
     // Make sure that content type is application/octet-stream
+    // 确保 content type 为 application/octet-stream
     if (contentType.empty())
     {
         messages::headerMissing(asyncResp->res, "Content-Type");
@@ -1189,16 +1233,19 @@ inline void handleUpdateServiceGet(
         "/redfish/v1/UpdateService/update-multipart";
 
     // UpdateService cannot be disabled
+    // UpdateService 不能被禁用
     asyncResp->res.jsonValue["ServiceEnabled"] = true;
     asyncResp->res.jsonValue["FirmwareInventory"]["@odata.id"] =
         "/redfish/v1/UpdateService/FirmwareInventory";
     // Get the MaxImageSizeBytes
+    // 获取 MaxImageSizeBytes
     asyncResp->res.jsonValue["MaxImageSizeBytes"] =
         BMCWEB_HTTP_BODY_LIMIT * 1024 * 1024;
 
     if constexpr (BMCWEB_REDFISH_ALLOW_SIMPLE_UPDATE)
     {
         // Update Actions object.
+        // 更新 Actions 对象。
         nlohmann::json& updateSvcSimpleUpdate =
             asyncResp->res.jsonValue["Actions"]["#UpdateService.SimpleUpdate"];
         updateSvcSimpleUpdate["target"] =
@@ -1248,6 +1295,7 @@ inline void addRelatedItem(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
 }
 
 /* Fill related item links (i.e. bmc, bios) in for inventory */
+/* 为 inventory 填充 RelatedItem 链接（如 bmc、bios） */
 inline void getRelatedItems(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                             const std::string& purpose)
 {
@@ -1309,6 +1357,9 @@ inline void getSoftwareVersionCallback(
     // swInvPurpose is of format:
     // xyz.openbmc_project.Software.Version.VersionPurpose.ABC
     // Translate this to "ABC image"
+    // swInvPurpose 的格式为：
+    // xyz.openbmc_project.Software.Version.VersionPurpose.ABC
+    // 将其转换为 "ABC image"
     size_t endDesc = swInvPurpose->rfind('.');
     if (endDesc == std::string::npos)
     {
@@ -1350,6 +1401,7 @@ inline void handleUpdateServiceFirmwareInventoryGetCallback(
         return;
     }
     // Ensure we find our input swId, otherwise return an error
+    // 确保找到了输入的 swId，否则返回错误
     bool found = false;
     for (const std::pair<
              std::string,

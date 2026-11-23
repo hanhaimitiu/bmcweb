@@ -70,6 +70,10 @@ const static std::array<std::pair<std::string_view, std::string_view>, 2>
  *
  * @return None.
  */
+/* @brief 根据 CPU PresenceState 更新 "ProcessorSummary" "Count"。
+ * @param[in] asyncResp 用于完成异步调用的共享指针。
+ * @param[in] cpuPresenceState CPU 是否存在。
+ * @return 无。 */
 inline void modifyCpuPresenceState(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp, bool isCpuPresent)
 {
@@ -84,6 +88,7 @@ inline void modifyCpuPresenceState(
         if (procCountPtr != nullptr)
         {
             // shouldn't be possible to be nullptr
+            // 不应该是 nullptr。
             *procCountPtr += 1;
         }
     }
@@ -97,6 +102,7 @@ inline void getProcessorProperties(
     BMCWEB_LOG_DEBUG("Got {} Cpu properties.", properties.size());
 
     // TODO: Get Model
+    // TODO：获取型号（Model）
 
     const uint16_t* coreCount = nullptr;
 
@@ -135,6 +141,11 @@ inline void getProcessorProperties(
  *
  * @return None.
  */
+/* @brief 获取 ProcessorSummary（处理器摘要）字段
+ * @param[in] asyncResp 用于完成异步调用的共享指针
+ * @param[in] service 提供 CPU 信息的 dbus 服务
+ * @param[in] path CPU 的 dbus 路径
+ * @return 无。 */
 inline void getProcessorSummary(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& service, const std::string& path)
@@ -150,6 +161,7 @@ inline void getProcessorSummary(
     };
 
     // Get the Presence of CPU
+    // 获取 CPU 的在位状态（Presence）
     dbus::utility::getProperty<bool>(*crow::connections::systemBus, service,
                                      path, "xyz.openbmc_project.Inventory.Item",
                                      "Present", std::move(getCpuPresenceState));
@@ -157,6 +169,7 @@ inline void getProcessorSummary(
     dbus::utility::getAllProperties(
         service, path, "xyz.openbmc_project.Inventory.Item.Cpu",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, service,
          path](const boost::system::error_code& ec2,
                const dbus::utility::DBusPropertiesMap& properties) {
@@ -178,6 +191,10 @@ inline void getProcessorSummary(
  *
  * @return None.
  */
+/* @brief 处理 processMemoryProperties（内存属性）字段
+ * @param[in] asyncResp 用于完成异步调用的共享指针
+ * @param[in] DBUS 内存的属性
+ * @return 无。 */
 inline void processMemoryProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const dbus::utility::DBusPropertiesMap& properties)
@@ -229,6 +246,11 @@ inline void processMemoryProperties(
  *
  * @return None.
  */
+/* @brief 获取 getMemorySummary（内存摘要）字段
+ * @param[in] asyncResp 用于完成异步调用的共享指针
+ * @param[in] service 提供内存信息的 dbus 服务
+ * @param[in] path 内存的 dbus 路径
+ * @return 无。 */
 inline void getMemorySummary(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& service, const std::string& path)
@@ -236,6 +258,7 @@ inline void getMemorySummary(
     dbus::utility::getAllProperties(
         service, path, "xyz.openbmc_project.Inventory.Item.Dimm",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, service,
          path](const boost::system::error_code& ec2,
                const dbus::utility::DBusPropertiesMap& properties) {
@@ -296,6 +319,8 @@ inline void afterGetInventory(
     {
         // doesn't have to include this
         // interface
+        // 不必包含此
+        // 接口
         return;
     }
     BMCWEB_LOG_DEBUG("Got {} properties for system", propertiesList.size());
@@ -320,6 +345,7 @@ inline void afterGetInventory(
     }
 
     // Grab the bios version
+    // 获取 BIOS 版本
     sw_util::populateSoftwareInformation(asyncResp, sw_util::biosPurpose,
                                          "BiosVersion", false);
 }
@@ -332,6 +358,8 @@ inline void afterGetAssetTag(
     {
         // doesn't have to include this
         // interface
+        // 不必包含此
+        // 接口
         return;
     }
 
@@ -350,6 +378,7 @@ inline void afterSystemGetSubTree(
         return;
     }
     // Iterate over all retrieved ObjectPaths.
+    // 遍历所有获取到的 ObjectPath（对象路径）。
     for (const std::pair<
              std::string,
              std::vector<std::pair<std::string, std::vector<std::string>>>>&
@@ -366,6 +395,8 @@ inline void afterSystemGetSubTree(
 
         // This is not system, so check if it's cpu, dimm, UUID or
         // BiosVer
+        // 这不是系统对象，因此检查它是 CPU、DIMM、UUID 还是
+        // BiosVer（BIOS 版本）
         for (const auto& connection : connectionNames)
         {
             for (const auto& interfaceName : connection.second)
@@ -427,6 +458,9 @@ inline void afterSystemGetSubTree(
  *
  * @return None.
  */
+/* @brief 通过 dbus 检索计算机系统属性
+ * @param[in] asyncResp 用于完成异步调用的共享指针
+ * @return 无。 */
 inline void getComputerSystem(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -451,6 +485,10 @@ inline void getComputerSystem(
  *
  * @return None.
  */
+/* @brief 通过 dbus 检索主机状态属性
+ * @param[in] asyncResp     用于完成异步调用的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getHostState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                          const uint64_t computerSystemIndex)
 {
@@ -461,6 +499,7 @@ inline void getHostState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         systems_utils::getHostStateServiceName(computerSystemIndex), path,
         "xyz.openbmc_project.State.Host", "CurrentHostState",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& hostState) {
             if (ec)
@@ -469,6 +508,8 @@ inline void getHostState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                 {
                     // Service not available, no error, just don't return
                     // host state info
+                    // 服务不可用，并非错误，只是不返回
+                    // 主机状态信息
                     BMCWEB_LOG_DEBUG("Service not available {}", ec);
                     return;
                 }
@@ -479,6 +520,7 @@ inline void getHostState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
 
             BMCWEB_LOG_DEBUG("Host state: {}", hostState);
             // Verify Host State
+            // 校验主机状态
             if (hostState == "xyz.openbmc_project.State.Host.HostState.Running")
             {
                 asyncResp->res.jsonValue["PowerState"] =
@@ -538,6 +580,10 @@ inline void getHostState(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @return Returns the boot source in Redfish terms. If translation
  * cannot be done, returns computer_system::BootSource::Invalid.
  */
+/* @brief 将启动源（boot source）的 DBUS 属性值转换为 Redfish 值。
+ * @param[in] dbusSource    DBUS 术语下的启动源。
+ * @return 返回 Redfish 术语下的启动源；如果无法
+ * 转换，则返回 computer_system::BootSource::Invalid。 */
 inline computer_system::BootSource dbusToRfBootSource(
     const std::string& dbusSource)
 {
@@ -574,6 +620,10 @@ inline computer_system::BootSource dbusToRfBootSource(
  * @return Returns the boot type in Redfish terms. If translation
  * cannot be done, returns computer_system::BootSourceOverrideMode::Invalid.
  */
+/* @brief 将启动类型（boot type）的 DBUS 属性值转换为 Redfish 值。
+ * @param[in] dbusType    DBUS 术语下的启动类型。
+ * @return 返回 Redfish 术语下的启动类型；如果无法
+ * 转换，则返回 computer_system::BootSourceOverrideMode::Invalid。 */
 inline computer_system::BootSourceOverrideMode dbusToRfBootType(
     const std::string& dbusType)
 {
@@ -596,6 +646,10 @@ inline computer_system::BootSourceOverrideMode dbusToRfBootType(
  * @return Returns the boot mode in Redfish terms. If translation
  * cannot be done, returns computer_system::BootSource::Invalid.
  */
+/* @brief 将启动模式（boot mode）的 DBUS 属性值转换为 Redfish 值。
+ * @param[in] dbusMode    DBUS 术语下的启动模式。
+ * @return 返回 Redfish 术语下的启动模式；如果无法
+ * 转换，则返回 computer_system::BootSource::Invalid。 */
 inline computer_system::BootSource dbusToRfBootMode(const std::string& dbusMode)
 {
     if (dbusMode == "xyz.openbmc_project.Control.Boot.Mode.Modes.Regular")
@@ -621,11 +675,17 @@ inline computer_system::BootSource dbusToRfBootMode(const std::string& dbusMode)
  * @return Returns the boot progress in Redfish terms. If translation
  *         cannot be done, returns computer_system::BootProgressTypes::Invalid.
  */
+/* @brief 将启动进度（boot progress）的 DBUS 属性值转换为 Redfish 值。
+ * @param[in] dbusBootProgress    DBUS 术语下的启动进度。
+ * @return 返回 Redfish 术语下的启动进度；如果无法
+ *         转换，则返回 computer_system::BootProgressTypes::Invalid。 */
 inline computer_system::BootProgressTypes dbusToRfBootProgress(
     const std::string& dbusBootProgress)
 {
     // Now convert the D-Bus BootProgress to the appropriate Redfish
     // enum
+    // 现在将 D-Bus 的 BootProgress 转换为相应的 Redfish
+    // 枚举
     if (dbusBootProgress == "xyz.openbmc_project.State.Boot.Progress."
                             "ProgressStages.Unspecified")
     {
@@ -700,6 +760,11 @@ inline computer_system::BootProgressTypes dbusToRfBootProgress(
  *
  * @return Integer error code.
  */
+/* @brief 将启动源从 Redfish 转换为 DBus 的启动路径。
+ * @param[in] rfSource    Redfish 中的启动源。
+ * @param[out] bootSource DBus 的启动源
+ * @param[out] bootMode   DBus 的启动模式
+ * @return 整数错误码。 */
 inline int assignBootParameters(const std::string& rfSource,
                                 std::string& bootSource, std::string& bootMode)
 {
@@ -754,6 +819,10 @@ inline int assignBootParameters(const std::string& rfSource,
  *
  * @return None.
  */
+/* @brief 检索系统的启动进度
+ * @param[in] asyncResp  用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getBootProgress(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                             const uint64_t computerSystemIndex)
 {
@@ -763,12 +832,15 @@ inline void getBootProgress(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         systems_utils::getHostStateServiceName(computerSystemIndex), path,
         "xyz.openbmc_project.State.Boot.Progress", "BootProgress",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code ec,
                     const std::string& bootProgressStr) {
             if (ec)
             {
                 // BootProgress is an optional object so just do nothing if
                 // not found
+                // BootProgress 是可选对象，如果
+                // 未找到则不做任何处理
                 return;
             }
 
@@ -792,6 +864,10 @@ inline void getBootProgress(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  *
  * @return None.
  */
+/* @brief 检索系统启动进度的最后更新时间（Last Update）
+ * @param[in] asyncResp  用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getBootProgressLastStateTime(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -802,6 +878,7 @@ inline void getBootProgressLastStateTime(
         systems_utils::getHostStateServiceName(computerSystemIndex), path,
         "xyz.openbmc_project.State.Boot.Progress", "BootProgressLastUpdate",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const uint64_t lastStateTime) {
             if (ec)
@@ -815,8 +892,14 @@ inline void getBootProgressLastStateTime(
             // since 1 Jan 1970 00::00::00 UTC."
             // https://github.com/openbmc/phosphor-dbus-interfaces/blob/master/
             // yaml/xyz/openbmc_project/State/Boot/Progress.interface.yaml#L11
+            // BootProgressLastUpdate 是 BootProgress 属性最后一次
+            // 被更新的时间。该时间为 Epoch 时间，即自
+            // 1970 年 1 月 1 日 00:00:00 UTC 以来的微秒数。"
+            // https://github.com/openbmc/phosphor-dbus-interfaces/blob/master/
+            // yaml/xyz/openbmc_project/State/Boot/Progress.interface.yaml#L11
 
             // Convert to ISO 8601 standard
+            // 转换为 ISO 8601 标准格式
             asyncResp->res.jsonValue["BootProgress"]["LastStateTime"] =
                 redfish::time_utils::getDateTimeUintUs(lastStateTime);
         });
@@ -830,6 +913,10 @@ inline void getBootProgressLastStateTime(
  *
  * @return None.
  */
+/* @brief 通过 DBUS 检索启动覆盖类型并填充响应
+ * @param[in] asyncResp         用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getBootOverrideType(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -842,11 +929,13 @@ inline void getBootOverrideType(
         "xyz.openbmc_project.Settings", path,
         "xyz.openbmc_project.Control.Boot.Type", "BootType",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& bootType) {
             if (ec)
             {
                 // not an error, don't have to have the interface
+                // 这不是错误，不一定非要提供该接口
                 return;
             }
 
@@ -875,6 +964,10 @@ inline void getBootOverrideType(
  *
  * @return None.
  */
+/* @brief 通过 DBUS 检索启动覆盖模式并填充响应
+ * @param[in] asyncResp         用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getBootOverrideMode(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -886,6 +979,7 @@ inline void getBootOverrideMode(
         "xyz.openbmc_project.Settings", path,
         "xyz.openbmc_project.Control.Boot.Mode", "BootMode",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& bootModeStr) {
             if (ec)
@@ -932,6 +1026,10 @@ inline void getBootOverrideMode(
  *
  * @return None.
  */
+/* @brief 通过 DBUS 检索启动覆盖源
+ * @param[in] asyncResp         用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getBootOverrideSource(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -944,12 +1042,15 @@ inline void getBootOverrideSource(
         "xyz.openbmc_project.Settings", path,
         "xyz.openbmc_project.Control.Boot.Source", "BootSource",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, computerSystemIndex](const boost::system::error_code& ec,
                                          const std::string& bootSourceStr) {
             if (ec)
             {
                 // Service not available, no error, just don't return
                 // Boot Override Source information
+                // 服务不可用，并非错误，只是不返回
+                // 启动覆盖源（Boot Override Source）信息
                 if (ec.value() != EBADR &&
                     ec.value() != boost::asio::error::host_unreachable)
                 {
@@ -970,6 +1071,8 @@ inline void getBootOverrideSource(
 
             // Get BootMode as BootSourceOverrideTarget is constructed
             // from both BootSource and BootMode
+            // 获取 BootMode，因为 BootSourceOverrideTarget 是由
+            // BootSource 和 BootMode 共同构造的
             getBootOverrideMode(asyncResp, computerSystemIndex);
         });
 }
@@ -985,6 +1088,12 @@ inline void getBootOverrideSource(
  *
  * @return None.
  */
+/* @brief 本函数抽象了从一个整体的启动覆盖使能状态中获取
+ * "BootSourceOverrideEnabled" 属性的全部逻辑
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] bootOverrideEnable
+ * @return 无。 */
 
 inline void processBootOverrideEnable(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -1004,10 +1113,13 @@ inline void processBootOverrideEnable(
 
     // If boot source override is enabled, we need to check 'one_time'
     // property to set a correct value for the "BootSourceOverrideEnabled"
+    // 如果启用了启动源覆盖，我们需要检查 'one_time'
+    // 属性，以便为 "BootSourceOverrideEnabled" 设置正确的值
     dbus::utility::getProperty<bool>(
         "xyz.openbmc_project.Settings", path,
         "xyz.openbmc_project.Object.Enable", "Enabled",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec, bool oneTimeSetting) {
             if (ec)
             {
@@ -1037,6 +1149,10 @@ inline void processBootOverrideEnable(
  *
  * @return None.
  */
+/* @brief 通过 DBUS 检索启动覆盖使能状态
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getBootOverrideEnable(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -1049,12 +1165,15 @@ inline void getBootOverrideEnable(
         "xyz.openbmc_project.Settings", path,
         "xyz.openbmc_project.Object.Enable", "Enabled",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, computerSystemIndex](const boost::system::error_code& ec,
                                          const bool bootOverrideEnable) {
             if (ec)
             {
                 // Service not available, no error, just don't return
                 // Boot Override Enable information
+                // 服务不可用，并非错误，只是不返回
+                // 启动覆盖使能（Boot Override Enable）信息
                 if (ec.value() != EBADR &&
                     ec.value() != boost::asio::error::host_unreachable)
                 {
@@ -1077,6 +1196,10 @@ inline void getBootOverrideEnable(
  *
  * @return None.
  */
+/* @brief 检索启动源覆盖属性
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getBootProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -1100,6 +1223,13 @@ inline void getBootProperties(
  *
  * @return None.
  */
+/* @brief 检索最后一次复位时间（Last Reset Time）
+ * 在 Redfish 中 "Reset"（复位）是一个含义宽泛的术语，包含上电和
+ * 断电。尽管这是 "system"（系统）Redfish 对象，但这里查看的是 chassis
+ * （机箱）D-Bus 接口中的 LastStateChangeTime，因为它保存了最后一次
+ * 电源操作的时间。
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @return 无。 */
 inline void getLastResetTime(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -1111,6 +1241,7 @@ inline void getLastResetTime(
         systems_utils::getChassisStateServiceName(computerSystemIndex), path,
         "xyz.openbmc_project.State.Chassis", "LastStateChangeTime",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     uint64_t lastResetTime) {
             if (ec)
@@ -1121,9 +1252,12 @@ inline void getLastResetTime(
 
             // LastStateChangeTime is epoch time, in milliseconds
             // https://github.com/openbmc/phosphor-dbus-interfaces/blob/33e8e1dd64da53a66e888d33dc82001305cd0bf9/xyz/openbmc_project/State/Chassis.interface.yaml#L19
+            // LastStateChangeTime 是 Epoch 时间，单位为毫秒
+            // https://github.com/openbmc/phosphor-dbus-interfaces/blob/33e8e1dd64da53a66e888d33dc82001305cd0bf9/xyz/openbmc_project/State/Chassis.interface.yaml#L19
             uint64_t lastResetTimeStamp = lastResetTime / 1000;
 
             // Convert to ISO 8601 standard
+            // 转换为 ISO 8601 标准格式
             asyncResp->res.jsonValue["LastResetTime"] =
                 redfish::time_utils::getDateTimeUint(lastResetTimeStamp);
         });
@@ -1142,6 +1276,13 @@ inline void getLastResetTime(
  *
  * @return None.
  */
+/* @brief 检索允许/剩余的自动启动重试次数。
+ * 允许的总自动重启重试次数 "RetryAttempts" 及其对应的属性
+ * "AttemptsLeft"（用于记录剩余的自动重试次数）由 phosphor-state-manager
+ * 通过 dbus 托管。
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getAutomaticRebootAttempts(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -1162,6 +1303,8 @@ inline void getAutomaticRebootAttempts(
                 {
                     // Service not available, no error, just don't return
                     // RebootAttempts information
+                    // 服务不可用，并非错误，只是不返回
+                    // RebootAttempts（重启尝试次数）信息
                     BMCWEB_LOG_ERROR("D-Bus responses error: {}", ec);
                     messages::internalError(asyncResp->res);
                 }
@@ -1204,6 +1347,10 @@ inline void getAutomaticRebootAttempts(
  *
  * @return None.
  */
+/* @brief 检索自动重试属性。在 D-Bus 中称为 AutoReboot。
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getAutomaticRetryPolicy(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -1218,12 +1365,15 @@ inline void getAutomaticRetryPolicy(
         "xyz.openbmc_project.Settings", path,
         "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, computerSystemIndex](const boost::system::error_code& ec,
                                          bool autoRebootEnabled) {
             if (ec)
             {
                 // Service not available, no error, just don't return
                 // AutoReboot information
+                // 服务不可用，并非错误，只是不返回
+                // AutoReboot 信息
                 if (ec.value() != EBADR &&
                     ec.value() != boost::asio::error::host_unreachable)
                 {
@@ -1249,6 +1399,9 @@ inline void getAutomaticRetryPolicy(
             // "AutomaticRetryConfig" can be 3 values, Disabled, RetryAlways,
             // and RetryAttempts. OpenBMC only supports Disabled and
             // RetryAttempts.
+            // "AutomaticRetryConfig" 可以有 3 个值：Disabled、RetryAlways
+            // 和 RetryAttempts。OpenBMC 只支持 Disabled 和
+            // RetryAttempts。
             nlohmann::json::array_t allowed;
             allowed.emplace_back("Disabled");
             allowed.emplace_back("RetryAttempts");
@@ -1268,6 +1421,11 @@ inline void getAutomaticRetryPolicy(
  *
  *@return None.
  */
+/* @brief 设置 RetryAttempts（重试次数）
+ * @param[in] asyncResp   用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] retryAttempts  请求中的 "AutomaticRetryAttempts"。
+ * @return 无。 */
 
 inline void setAutomaticRetryAttempts(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -1313,6 +1471,9 @@ inline computer_system::PowerRestorePolicyTypes
  *
  * @return None.
  */
+/* @brief 通过 DBUS 检索上电恢复策略。
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @return 无。 */
 inline void getPowerRestorePolicy(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -1327,6 +1488,7 @@ inline void getPowerRestorePolicy(
         "xyz.openbmc_project.Settings", path,
         "xyz.openbmc_project.Control.Power.RestorePolicy", "PowerRestorePolicy",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& policy) {
             if (ec)
@@ -1353,6 +1515,9 @@ inline void getPowerRestorePolicy(
  *
  * @return None.
  */
+/* @brief 通过 DBUS 获取故障停机（Stop Boot On Fault）设置。
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @return 无。 */
 inline void getStopBootOnFault(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -1362,11 +1527,14 @@ inline void getStopBootOnFault(
         "xyz.openbmc_project.Settings", "/xyz/openbmc_project/logging/settings",
         "xyz.openbmc_project.Logging.Settings", "QuiesceOnHwError",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec, bool value) {
             if (ec)
             {
                 // Service not available, no error, just don't return
                 // StopBootOnFault information
+                // 服务不可用，并非错误，只是不返回
+                // StopBootOnFault 信息
                 if (ec.value() != EBADR ||
                     ec.value() != boost::asio::error::host_unreachable)
                 {
@@ -1399,12 +1567,15 @@ inline void getTrustedModuleRequiredToBootCallback(
         BMCWEB_LOG_DEBUG("DBUS response error on TPM.Policy GetSubTree{}", ec);
         // This is an optional D-Bus object so just return if
         // error occurs
+        // 这是一个可选的 D-Bus 对象，出错时直接返回
         return;
     }
     if (subtree.empty())
     {
         // As noted above, this is an optional interface so just return
         // if there is no instance found
+        // 如上所述，这是一个可选接口，如果
+        // 找不到实例则直接返回
         return;
     }
 
@@ -1423,6 +1594,8 @@ inline void getTrustedModuleRequiredToBootCallback(
     {
         // Make sure the Dbus response map has a service and objectPath
         // field
+        // 确保 Dbus 响应映射中包含 service 和 objectPath
+        // 字段
         if (subtree[0].first.empty() || subtree[0].second.size() != 1)
         {
             BMCWEB_LOG_DEBUG("TPM.Policy mapper error!");
@@ -1438,9 +1611,11 @@ inline void getTrustedModuleRequiredToBootCallback(
     BMCWEB_LOG_DEBUG("found tpm path {}", path);
 
     // Valid TPM Enable object found, now reading the current value
+    // 找到有效的 TPM Enable 对象，现在读取当前值
     dbus::utility::getProperty<bool>(
         service, path, "xyz.openbmc_project.Control.TPM.Policy", "TPMEnable",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec2, bool tpmRequired) {
             if (ec2)
             {
@@ -1474,6 +1649,11 @@ inline void getTrustedModuleRequiredToBootCallback(
  *
  * @return None.
  */
+/* @brief 获取 TrustedModuleRequiredToBoot 属性。确定启动主机时
+ * 是否需要 TPM。
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无。 */
 inline void getTrustedModuleRequiredToBoot(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex)
@@ -1523,6 +1703,8 @@ inline void setTrustedModuleRequiredToBootCallback(
     {
         // Make sure the Dbus response map has a service and objectPath
         // field
+        // 确保 Dbus 响应映射中包含 service 和 objectPath
+        // 字段
         if (subtree[0].first.empty() || subtree[0].second.size() != 1)
         {
             BMCWEB_LOG_DEBUG("TPM.Policy mapper error!");
@@ -1542,6 +1724,7 @@ inline void setTrustedModuleRequiredToBootCallback(
     }
 
     // Valid TPM Enable object found, now setting the value
+    // 找到有效的 TPM Enable 对象，现在设置该值
     setDbusProperty(asyncResp, "Boot/TrustedModuleRequiredToBoot", serv, path,
                     "xyz.openbmc_project.Control.TPM.Policy", "TPMEnable",
                     tpmRequired);
@@ -1557,6 +1740,12 @@ inline void setTrustedModuleRequiredToBootCallback(
  *
  * @return None.
  */
+/* @brief 设置 TrustedModuleRequiredToBoot 属性。确定启动主机时
+ * 是否需要 TPM。
+ * @param[in] asyncResp     用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] tpmRequired   要设置给 TPM Required To Boot 属性的值。
+ * @return 无。 */
 inline void setTrustedModuleRequiredToBoot(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex, const bool tpmRequired)
@@ -1578,6 +1767,11 @@ inline void setTrustedModuleRequiredToBoot(
  * @param[in] bootType        The boot type to set.
  * @return Integer error code.
  */
+/* @brief 将启动属性设置到 DBUS 对象。
+ * @param[in] asyncResp       用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] bootType        要设置的启动类型。
+ * @return 整数错误码。 */
 inline void setBootType(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                         const uint64_t computerSystemIndex,
                         const std::optional<std::string>& bootType)
@@ -1590,8 +1784,10 @@ inline void setBootType(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // Source target specified
+    // 已指定源目标（Source target）
     BMCWEB_LOG_DEBUG("Boot type: {}", *bootType);
     // Figure out which DBUS interface and property to use
+    // 确定要使用哪个 DBUS 接口和属性
     if (*bootType == "Legacy")
     {
         bootTypeStr = "xyz.openbmc_project.Control.Boot.Type.Types.Legacy";
@@ -1611,6 +1807,7 @@ inline void setBootType(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // Act on validated parameters
+    // 对经过校验的参数执行操作
     BMCWEB_LOG_DEBUG("DBUS boot type: {}", bootTypeStr);
 
     sdbusplus::object_path path("/xyz/openbmc_project/control/host" +
@@ -1631,6 +1828,11 @@ inline void setBootType(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @param[in] bootType        The boot type to set.
  * @return Integer error code.
  */
+/* @brief 将启动属性设置到 DBUS 对象。
+ * @param[in] asyncResp           用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] bootType        要设置的启动类型。
+ * @return 整数错误码。 */
 inline void setBootEnable(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                           const uint64_t computerSystemIndex,
                           const std::optional<std::string>& bootEnable)
@@ -1640,11 +1842,13 @@ inline void setBootEnable(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         return;
     }
     // Source target specified
+    // 已指定源目标（Source target）
     BMCWEB_LOG_DEBUG("Boot enable: {}", *bootEnable);
 
     bool bootOverrideEnable = false;
     bool bootOverridePersistent = false;
     // Figure out which DBUS interface and property to use
+    // 确定要使用哪个 DBUS 接口和属性
     if (*bootEnable == "Disabled")
     {
         bootOverrideEnable = false;
@@ -1670,6 +1874,7 @@ inline void setBootEnable(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // Act on validated parameters
+    // 对经过校验的参数执行操作
     BMCWEB_LOG_DEBUG("DBUS boot override enable: {}", bootOverrideEnable);
 
     sdbusplus::object_path path("/xyz/openbmc_project/control/host" +
@@ -1687,6 +1892,8 @@ inline void setBootEnable(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
 
     // In case boot override is enabled we need to set correct value for the
     // 'one_time' enable DBus interface
+    // 如果启用了启动覆盖，我们需要为 'one_time' 使能
+    // DBus 接口设置正确的值
     BMCWEB_LOG_DEBUG("DBUS boot override persistent: {}",
                      bootOverridePersistent);
 
@@ -1706,6 +1913,11 @@ inline void setBootEnable(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  *
  * @return Integer error code.
  */
+/* @brief 将启动属性设置到 DBUS 对象。
+ * @param[in] asyncResp       用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] bootSource      要设置的启动源。
+ * @return 整数错误码。 */
 inline void setBootModeOrSource(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex,
@@ -1720,8 +1932,10 @@ inline void setBootModeOrSource(
     }
 
     // Source target specified
+    // 已指定源目标（Source target）
     BMCWEB_LOG_DEBUG("Boot source: {}", *bootSource);
     // Figure out which DBUS interface and property to use
+    // 确定要使用哪个 DBUS 接口和属性
     if (assignBootParameters(*bootSource, bootSourceStr, bootModeStr) != 0)
     {
         BMCWEB_LOG_DEBUG(
@@ -1733,6 +1947,7 @@ inline void setBootModeOrSource(
     }
 
     // Act on validated parameters
+    // 对经过校验的参数执行操作
     BMCWEB_LOG_DEBUG("DBUS boot source: {}", bootSourceStr);
     BMCWEB_LOG_DEBUG("DBUS boot mode: {}", bootModeStr);
 
@@ -1760,6 +1975,13 @@ inline void setBootModeOrSource(
  *
  * @return Integer error code.
  */
+/* @brief 设置启动源覆盖（Boot source override）属性。
+ * @param[in] asyncResp  用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] bootSource 来自传入 RF 请求的启动源。
+ * @param[in] bootType   来自传入 RF 请求的启动类型。
+ * @param[in] bootEnable 来自传入 RF 请求的启动覆盖使能。
+ * @return 整数错误码。 */
 
 inline void setBootProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -1783,6 +2005,10 @@ inline void setBootProperties(
  *
  * @return None.
  */
+/* @brief 设置 AssetTag（资产标签）
+ * @param[in] asyncResp 用于生成响应消息的共享指针。
+ * @param[in] assetTag  请求中的 "AssetTag"。
+ * @return 无。 */
 inline void setAssetTag(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                         const std::string& assetTag)
 {
@@ -1791,6 +2017,7 @@ inline void setAssetTag(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::getSubTree(
         "/xyz/openbmc_project/inventory", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp,
          assetTag](const boost::system::error_code& ec,
                    const dbus::utility::MapperGetSubTreeResponse& subtree) {
@@ -1808,6 +2035,8 @@ inline void setAssetTag(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
             }
             // Assume only 1 system D-Bus object
             // Throw an error if there is more than 1
+            // 假定只有一个系统 D-Bus 对象
+            // 如果多于一个则抛出错误
             if (subtree.size() > 1)
             {
                 BMCWEB_LOG_DEBUG("Found more than 1 system D-Bus object!");
@@ -1846,6 +2075,10 @@ inline void setAssetTag(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  *
  * @return stopBootOnFault value or empty  if incoming value is not valid
  */
+/* @brief 校验指定的 stopBootOnFault 是否有效，并返回与该字符串
+ * 关联的 stopBootOnFault 名称
+ * @param[in] stopBootOnFaultString  表示所需 stopBootOnFault 的字符串
+ * @return stopBootOnFault 值；如果传入值无效则返回空 */
 inline std::optional<bool> validstopBootOnFault(
     const std::string& stopBootOnFaultString)
 {
@@ -1870,6 +2103,10 @@ inline std::optional<bool> validstopBootOnFault(
  *
  * @return None.
  */
+/* @brief 设置 stopBootOnFault
+ * @param[in] asyncResp   用于生成响应消息的共享指针。
+ * @param[in] stopBootOnFault  请求中的 "StopBootOnFault"。
+ * @return 无。 */
 inline void setStopBootOnFault(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& stopBootOnFault)
@@ -1902,6 +2139,11 @@ inline void setStopBootOnFault(
  *
  * @return None.
  */
+/* @brief 设置 automaticRetry（自动重启）
+ * @param[in] asyncResp   用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] automaticRetryConfig  请求中的 "AutomaticRetryConfig"。
+ * @return 无。 */
 inline void setAutomaticRetry(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex, const std::string& automaticRetryConfig)
@@ -1909,6 +2151,7 @@ inline void setAutomaticRetry(
     BMCWEB_LOG_DEBUG("Set Automatic Retry.");
 
     // OpenBMC only supports "Disabled" and "RetryAttempts".
+    // OpenBMC 只支持 "Disabled" 和 "RetryAttempts"。
     bool autoRebootEnabled = false;
 
     if (automaticRetryConfig == "Disabled")
@@ -1963,6 +2206,11 @@ inline std::string dbusPowerRestorePolicyFromRedfish(std::string_view policy)
  *
  * @return None.
  */
+/* @brief 设置上电恢复策略属性。
+ * @param[in] asyncResp   用于生成响应消息的共享指针。
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @param[in] policy  请求中的上电恢复策略属性。
+ * @return 无。 */
 inline void setPowerRestorePolicy(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const uint64_t computerSystemIndex, std::string_view policy)
@@ -1995,6 +2243,9 @@ inline void setPowerRestorePolicy(
  *
  * @return None.
  */
+/* @brief 检索预置（provisioning）状态
+ * @param[in] asyncResp     用于完成异步调用的共享指针。
+ * @return 无。 */
 inline void getProvisioningStatus(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -2003,6 +2254,7 @@ inline void getProvisioningStatus(
         "xyz.openbmc_project.PFR.Manager", "/xyz/openbmc_project/pfr",
         "xyz.openbmc_project.PFR.Attributes",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const dbus::utility::DBusPropertiesMap& propertiesList) {
             nlohmann::json& oemPFR =
@@ -2017,6 +2269,7 @@ inline void getProvisioningStatus(
             {
                 BMCWEB_LOG_DEBUG("DBUS response error {}", ec);
                 // not an error, don't have to have the interface
+                // 这不是错误，不一定非要提供该接口
                 oemPFR["ProvisioningStatus"] = open_bmc_computer_system::
                     FirmwareProvisioningStatus::NotProvisioned;
                 return;
@@ -2070,6 +2323,9 @@ inline void getProvisioningStatus(
  *
  * @return PowerMode enum
  */
+/* @brief 将 PowerMode 字符串转换为枚举值
+ * @param[in]  modeString 要转换的 PowerMode 字符串
+ * @return PowerMode 枚举 */
 inline computer_system::PowerMode translatePowerModeString(
     const std::string& modeString)
 {
@@ -2109,6 +2365,7 @@ inline computer_system::PowerMode translatePowerModeString(
         return PowerMode::OEM;
     }
     // Any other values would be invalid
+    // 任何其他值都是无效的
     BMCWEB_LOG_ERROR("PowerMode value was not valid: {}", modeString);
     return PowerMode::Invalid;
 }
@@ -2177,16 +2434,21 @@ inline void afterGetPowerMode(
  *
  * @return None.
  */
+/* @brief 检索系统电源模式
+ * @param[in] asyncResp  用于生成响应消息的共享指针。
+ * @return 无。 */
 inline void getPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     BMCWEB_LOG_DEBUG("Get power mode.");
 
     // Get Power Mode object path:
+    // 获取 Power Mode 对象路径：
     constexpr std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.Control.Power.Mode"};
     dbus::utility::getSubTree(
         "/", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const dbus::utility::MapperGetSubTreeResponse& subtree) {
             if (ec)
@@ -2195,18 +2457,23 @@ inline void getPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
                     "DBUS response error on Power.Mode GetSubTree {}", ec);
                 // This is an optional D-Bus object so just return if
                 // error occurs
+                // 这是一个可选的 D-Bus 对象，出错时直接返回
                 return;
             }
             if (subtree.empty())
             {
                 // As noted above, this is an optional interface so just return
                 // if there is no instance found
+                // 如上所述，这是一个可选接口，如果
+                // 找不到实例则直接返回
                 return;
             }
             if (subtree.size() > 1)
             {
                 // More then one PowerMode object is not supported and is an
                 // error
+                // 不支持多于一个 PowerMode 对象，这是
+                // 一个错误
                 BMCWEB_LOG_DEBUG(
                     "Found more than 1 system D-Bus Power.Mode objects: {}",
                     subtree.size());
@@ -2229,6 +2496,7 @@ inline void getPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
             }
 
             // Valid Power Mode object found, now read the mode properties
+            // 找到有效的 Power Mode 对象，现在读取模式属性
             dbus::utility::getAllProperties(
                 *crow::connections::systemBus, service, path,
                 "xyz.openbmc_project.Control.Power.Mode",
@@ -2249,6 +2517,11 @@ inline void getPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
  *
  * @return PowerMode value or empty string if mode is not valid
  */
+/* @brief 校验指定的模式是否有效，并返回与该字符串关联的
+ * PowerMode 名称
+ * @param[in] asyncResp   用于生成响应消息的共享指针。
+ * @param[in] modeValue   表示所需 PowerMode 的字符串
+ * @return PowerMode 值；如果模式无效则返回空字符串 */
 inline std::string validatePowerMode(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const nlohmann::json& modeValue)
@@ -2300,6 +2573,10 @@ inline std::string validatePowerMode(
  *
  * @return None.
  */
+/* @brief 设置系统电源模式。
+ * @param[in] asyncResp   用于生成响应消息的共享指针。
+ * @param[in] pmode   请求中的系统电源模式。
+ * @return 无。 */
 inline void setPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                          const std::string& pmode)
 {
@@ -2312,11 +2589,13 @@ inline void setPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // Get Power Mode object path:
+    // 获取 Power Mode 对象路径：
     constexpr std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.Control.Power.Mode"};
     dbus::utility::getSubTree(
         "/", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp,
          powerMode](const boost::system::error_code& ec,
                     const dbus::utility::MapperGetSubTreeResponse& subtree) {
@@ -2325,12 +2604,14 @@ inline void setPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                 BMCWEB_LOG_ERROR(
                     "DBUS response error on Power.Mode GetSubTree {}", ec);
                 // This is an optional D-Bus object, but user attempted to patch
+                // 这是一个可选的 D-Bus 对象，但用户尝试对其进行 patch
                 messages::internalError(asyncResp->res);
                 return;
             }
             if (subtree.empty())
             {
                 // This is an optional D-Bus object, but user attempted to patch
+                // 这是一个可选的 D-Bus 对象，但用户尝试对其进行 patch
                 messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                            "PowerMode");
                 return;
@@ -2339,6 +2620,8 @@ inline void setPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
             {
                 // More then one PowerMode object is not supported and is an
                 // error
+                // 不支持多于一个 PowerMode 对象，这是
+                // 一个错误
                 BMCWEB_LOG_DEBUG(
                     "Found more than 1 system D-Bus Power.Mode objects: {}",
                     subtree.size());
@@ -2363,6 +2646,7 @@ inline void setPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
             BMCWEB_LOG_DEBUG("Setting power mode({}) -> {}", powerMode, path);
 
             // Set the Power Mode property
+            // 设置 Power Mode 属性
             setDbusProperty(asyncResp, "PowerMode", service, path,
                             "xyz.openbmc_project.Control.Power.Mode",
                             "PowerMode", powerMode);
@@ -2378,6 +2662,11 @@ inline void setPowerMode(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * action in Redfish terms. If translation cannot be done, returns
  * WatchdogTimeoutActions::Invalid.
  */
+/* @brief 将看门狗超时动作的 DBUS 属性值转换为 Redfish 值。
+ * @param[in] dbusAction    D-BUS 中的看门狗超时动作。
+ * @return 返回一个 WatchdogTimeoutActions 枚举值，表示 Redfish
+ * 术语下的超时动作。如果无法转换，则返回
+ * WatchdogTimeoutActions::Invalid。 */
 inline computer_system::WatchdogTimeoutActions dbusToRfWatchdogAction(
     const std::string& dbusAction)
 {
@@ -2409,6 +2698,10 @@ inline computer_system::WatchdogTimeoutActions dbusToRfWatchdogAction(
  *@return Returns as a string, the time_out action as expected by DBUS.
  *If translation cannot be done, returns an empty string.
  */
+/* @brief 将超时动作从 Redfish 转换为 DBUS 属性值。
+ * @param[in] rfAction Redfish 中的超时动作。
+ * @return 以字符串形式返回 DBUS 所期望的 time_out 动作。
+ * 如果无法转换，则返回空字符串。 */
 
 inline std::string rfToDbusWDTTimeOutAct(const std::string& rfAction)
 {
@@ -2439,6 +2732,9 @@ inline std::string rfToDbusWDTTimeOutAct(const std::string& rfAction)
  *
  * @return None.
  */
+/* @brief 通过 DBUS 检索主机看门狗定时器属性
+ * @param[in] asyncResp     用于完成异步调用的共享指针。
+ * @return 无。 */
 inline void getHostWatchdogTimer(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
@@ -2447,11 +2743,13 @@ inline void getHostWatchdogTimer(
         "xyz.openbmc_project.Watchdog", "/xyz/openbmc_project/watchdog/host0",
         "xyz.openbmc_project.State.Watchdog",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const dbus::utility::DBusPropertiesMap& properties) {
             if (ec)
             {
                 // watchdog service is stopped
+                // 看门狗服务已停止
                 BMCWEB_LOG_DEBUG("DBUS response error {}", ec);
                 return;
             }
@@ -2462,6 +2760,7 @@ inline void getHostWatchdogTimer(
                 asyncResp->res.jsonValue["HostWatchdogTimer"];
 
             // watchdog service is running/enabled
+            // 看门狗服务正在运行/已使能
             hostWatchdogTimer["Status"]["State"] = resource::State::Enabled;
 
             const bool* enabled = nullptr;
@@ -2506,6 +2805,11 @@ inline void getHostWatchdogTimer(
  *
  * @return None.
  */
+/* @brief 设置主机看门狗定时器（Host WatchDog Timer）属性。
+ * @param[in] asyncResp  用于生成响应消息的共享指针。
+ * @param[in] wdtEnable  来自传入 RF 请求的 WDTimer 使能值（true/false）。
+ * @param[in] wdtTimeOutAction 来自传入 RF 请求的 WDT 超时动作。
+ * @return 无。 */
 inline void setWDTProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::optional<bool> wdtEnable,
@@ -2517,6 +2821,7 @@ inline void setWDTProperties(
     {
         std::string wdtTimeOutActStr = rfToDbusWDTTimeOutAct(*wdtTimeOutAction);
         // check if TimeOut Action is Valid
+        // 检查超时动作（TimeOut Action）是否有效
         if (wdtTimeOutActStr.empty())
         {
             BMCWEB_LOG_DEBUG("Unsupported value for TimeoutAction: {}",
@@ -2552,6 +2857,10 @@ inline void setWDTProperties(
  *
  * @return true if successful
  */
+/* @brief 将 Idle Power Saver（空闲节能）属性解析为 json
+ * @param[in] asyncResp   用于完成异步调用的共享指针。
+ * @param[in] properties  来自 DBus 的 IPS 属性数据。
+ * @return 成功时返回 true */
 inline bool parseIpsProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const dbus::utility::DBusPropertiesMap& properties)
@@ -2616,17 +2925,22 @@ inline bool parseIpsProperties(
  *
  * @return None.
  */
+/* @brief 通过 DBUS 检索空闲节能（idle power saver）属性
+ * @param[in] asyncResp     用于完成异步调用的共享指针。
+ * @return 无。 */
 inline void getIdlePowerSaver(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     BMCWEB_LOG_DEBUG("Get idle power saver parameters");
 
     // Get IdlePowerSaver object path:
+    // 获取 IdlePowerSaver 对象路径：
     constexpr std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.Control.Power.IdlePowerSaver"};
     dbus::utility::getSubTree(
         "/", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec,
                     const dbus::utility::MapperGetSubTreeResponse& subtree) {
             if (ec)
@@ -2641,6 +2955,8 @@ inline void getIdlePowerSaver(
             {
                 // This is an optional interface so just return
                 // if there is no instance found
+                // 这是一个可选接口，如果
+                // 找不到实例则直接返回
                 BMCWEB_LOG_DEBUG("No instances found");
                 return;
             }
@@ -2648,6 +2964,8 @@ inline void getIdlePowerSaver(
             {
                 // More then one PowerIdlePowerSaver object is not supported and
                 // is an error
+                // 不支持多于一个 PowerIdlePowerSaver 对象，
+                // 这是一个错误
                 BMCWEB_LOG_DEBUG(
                     "Found more than 1 system D-Bus Power.IdlePowerSaver objects: {}",
                     subtree.size());
@@ -2670,10 +2988,12 @@ inline void getIdlePowerSaver(
             }
 
             // Valid IdlePowerSaver object found, now read the current values
+            // 找到有效的 IdlePowerSaver 对象，现在读取当前值
             dbus::utility::getAllProperties(
                 *crow::connections::systemBus, service, path,
                 "xyz.openbmc_project.Control.Power.IdlePowerSaver",
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                 [asyncResp](
                     const boost::system::error_code& ec2,
                     const dbus::utility::DBusPropertiesMap& properties) {
@@ -2712,6 +3032,16 @@ inline void getIdlePowerSaver(
  *
  * @return None.
  */
+/* @brief 设置 Idle Power Saver（空闲节能）属性。
+ * @param[in] asyncResp  用于生成响应消息的共享指针。
+ * @param[in] ipsEnable  来自传入 RF 请求的 IPS 使能值（true/false）。
+ * @param[in] ipsEnterUtil 进入空闲状态的利用率阈值。
+ * @param[in] ipsEnterTime 进入空闲状态前利用率必须低于 ipsEnterUtil
+ * 的时长。
+ * @param[in] ipsExitUtil 退出空闲状态时的利用率阈值。
+ * @param[in] ipsExitTime 退出空闲状态前利用率必须高于 ipsExutUtil
+ * 的时长
+ * @return 无。 */
 inline void setIdlePowerSaver(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::optional<bool> ipsEnable,
@@ -2723,11 +3053,13 @@ inline void setIdlePowerSaver(
     BMCWEB_LOG_DEBUG("Set idle power saver properties");
 
     // Get IdlePowerSaver object path:
+    // 获取 IdlePowerSaver 对象路径：
     constexpr std::array<std::string_view, 1> interfaces = {
         "xyz.openbmc_project.Control.Power.IdlePowerSaver"};
     dbus::utility::getSubTree(
         "/", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, ipsEnable, ipsEnterUtil, ipsEnterTime, ipsExitUtil,
          ipsExitTime](const boost::system::error_code& ec,
                       const dbus::utility::MapperGetSubTreeResponse& subtree) {
@@ -2742,6 +3074,7 @@ inline void setIdlePowerSaver(
             if (subtree.empty())
             {
                 // This is an optional D-Bus object, but user attempted to patch
+                // 这是一个可选的 D-Bus 对象，但用户尝试对其进行 patch
                 messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                            "IdlePowerSaver");
                 return;
@@ -2750,6 +3083,8 @@ inline void setIdlePowerSaver(
             {
                 // More then one PowerIdlePowerSaver object is not supported and
                 // is an error
+                // 不支持多于一个 PowerIdlePowerSaver 对象，
+                // 这是一个错误
                 BMCWEB_LOG_DEBUG(
                     "Found more than 1 system D-Bus Power.IdlePowerSaver objects: {}",
                     subtree.size());
@@ -2773,6 +3108,8 @@ inline void setIdlePowerSaver(
 
             // Valid Power IdlePowerSaver object found, now set any values that
             // need to be updated
+            // 找到有效的 Power IdlePowerSaver 对象，现在设置所有
+            // 需要更新的值
 
             if (ipsEnable)
             {
@@ -2792,6 +3129,7 @@ inline void setIdlePowerSaver(
             if (ipsEnterTime)
             {
                 // Convert from seconds into milliseconds for DBus
+                // 将秒转换为毫秒以供 DBus 使用
                 const uint64_t timeMilliseconds = *ipsEnterTime * 1000;
                 setDbusProperty(
                     asyncResp, "IdlePowerSaver/EnterDwellTimeSeconds", service,
@@ -2808,6 +3146,7 @@ inline void setIdlePowerSaver(
             if (ipsExitTime)
             {
                 // Convert from seconds into milliseconds for DBus
+                // 将秒转换为毫秒以供 DBus 使用
                 const uint64_t timeMilliseconds = *ipsExitTime * 1000;
                 setDbusProperty(
                     asyncResp, "IdlePowerSaver/ExitDwellTimeSeconds", service,
@@ -2855,6 +3194,7 @@ inline void handleComputerSystemCollectionGet(
 /**
  * Function transceives data with dbus directly.
  */
+/* 该函数直接与 dbus 收发数据。 */
 inline void doNMI(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     constexpr const char* serviceName = "xyz.openbmc_project.Control.Host.NMI";
@@ -2887,11 +3227,17 @@ inline void doNMI(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
  *
  * @return None
  */
+/* @brief 在获取到 computerSystemIndex 后处理 POST 请求
+ * @param[in] asyncResp           用于完成异步调用的共享指针
+ * @param[in] resetType           请求的复位动作
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无 */
 inline void processComputerSystemResetActionPost(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp, std::string& resetType,
     const uint64_t computerSystemIndex)
 {
     // Get the command and host vs. chassis
+    // 获取命令以及是主机（host）还是机箱（chassis）
     std::string command;
     bool hostCommand = true;
     if ((resetType == "On") || (resetType == "ForceOn"))
@@ -3033,9 +3379,12 @@ inline void afterPortRequest(
         dataJson[protocolName]["ServiceEnabled"] = isProtocolEnabled;
         // need to retrieve port number for
         // obmc-console-ssh service
+        // 需要获取
+        // obmc-console-ssh 服务的端口号
         if (protocolName == "SSH")
         {
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             getPortNumber(socketPath, [asyncResp, protocolName](
                                           const boost::system::error_code& ec1,
                                           int portNumber) {
@@ -3070,6 +3419,11 @@ inline void afterPortRequest(
  *
  * @return None
  */
+/* @brief 在获取到 computerSystemIndex 后处理 GET 请求
+ * @param[in] asyncResp           用于完成异步调用的共享指针
+ * @param[in] systemName          所请求系统的名称
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无 */
 inline void processComputerSystemGet(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& systemName, const uint64_t computerSystemIndex)
@@ -3091,6 +3445,7 @@ inline void processComputerSystemGet(
         boost::urls::format("/redfish/v1/Systems/{}", systemName);
 
     // Currently not supported on multi-host. TBD
+    // 目前多主机（multi-host）不支持。TBD
     if constexpr (!BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         asyncResp->res.jsonValue["Bios"]["@odata.id"] =
@@ -3117,6 +3472,8 @@ inline void processComputerSystemGet(
 
     // The OpenBMC EventLog implementation currently
     // does not support per-system entries.
+    // OpenBMC 的 EventLog 实现目前
+    // 不支持按系统区分的条目。
     if constexpr (BMCWEB_REDFISH_EVENTLOG_LOCATION == "systems" &&
                   !BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
@@ -3134,6 +3491,7 @@ inline void processComputerSystemGet(
     asyncResp->res.jsonValue["Status"]["State"] = resource::State::Enabled;
 
     // Fill in SerialConsole info
+    // 填充 SerialConsole（串口控制台）信息
     asyncResp->res.jsonValue["SerialConsole"]["MaxConcurrentSessions"] = 15;
     asyncResp->res.jsonValue["SerialConsole"]["IPMI"]["ServiceEnabled"] = true;
 
@@ -3147,6 +3505,7 @@ inline void processComputerSystemGet(
     if constexpr (BMCWEB_KVM)
     {
         // Fill in GraphicalConsole info
+        // 填充 GraphicalConsole（图形控制台）信息
         asyncResp->res.jsonValue["GraphicalConsole"]["ServiceEnabled"] = true;
         asyncResp->res.jsonValue["GraphicalConsole"]["MaxConcurrentSessions"] =
             4;
@@ -3172,10 +3531,13 @@ inline void processComputerSystemGet(
     }
 
     // Currently not supported on multi-host.
+    // 目前多主机（multi-host）不支持。
     if constexpr (!BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         getComputerSystem(asyncResp);
         // Todo: chassis matching could be handled by patch
+        // https://gerrit.openbmc.org/c/openbmc/bmcweb/+/60793
+        // Todo：机箱匹配可以通过 patch 来处理
         // https://gerrit.openbmc.org/c/openbmc/bmcweb/+/60793
         getMainChassisId(
             asyncResp, [](const std::string& chassisId,
@@ -3277,6 +3639,11 @@ struct PatchParams
  *
  * @return None
  */
+/* @brief 在获取到 computerSystemIndex 后处理 POST 请求
+ * @param[in] asyncResp           用于完成异步调用的共享指针
+ * @param[in] patchParams         包含我们要 patch 的属性的结构体
+ * @param[in] computerSystemIndex 与所请求系统关联的索引
+ * @return 无 */
 
 inline void processComputerSystemPatch(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -3337,6 +3704,7 @@ inline void processComputerSystemPatch(
             systems_utils::getValidSystemsPath(
                 asyncResp, systemName,
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                 [asyncResp, systemName,
                  locationIndicatorActive{*patchParams.locationIndicatorActive}](
                     const std::optional<std::string>& validSystemsPath) {
@@ -3456,6 +3824,11 @@ inline void handleSystemCollectionResetActionHead(
  * allowableValues. If translation not possible, does nothing to
  * allowableValues.
  */
+/* @brief 将允许的主机状态转换转换为 Redfish 字符串
+ * @param[in]  dbusAllowedHostTran dbus 上允许的主机状态转换
+ * @param[out] allowableValues     转换后的主机状态转换
+ * @return 在 allowableValues 中存入对应的 Redfish 转换值。
+ * 如果无法转换，则不对 allowableValues 做任何操作。 */
 inline void dbusToRfAllowedHostTransitions(
     const std::string& dbusAllowedHostTran,
     nlohmann::json::array_t& allowableValues)
@@ -3494,6 +3867,7 @@ inline void afterGetAllowedHostTransitions(
     nlohmann::json::array_t allowableValues;
 
     // Supported on all systems currently
+    // 目前所有系统都支持
     allowableValues.emplace_back(resource::ResetType::ForceOff);
     allowableValues.emplace_back(resource::ResetType::PowerCycle);
     allowableValues.emplace_back(resource::ResetType::Nmi);
@@ -3505,6 +3879,7 @@ inline void afterGetAllowedHostTransitions(
             (ec.value() == boost::asio::error::basic_errors::host_unreachable))
         {
             // Property not implemented so just return defaults
+            // 该属性未实现，因此只返回默认值
             BMCWEB_LOG_DEBUG("Property not available {}", ec);
             allowableValues.emplace_back(resource::ResetType::On);
             allowableValues.emplace_back(resource::ResetType::ForceOn);
@@ -3590,6 +3965,7 @@ inline void handleSystemCollectionResetActionGet(
     asyncResp->res.jsonValue["Id"] = "ResetActionInfo";
 
     // Look to see if system defines AllowedHostTransitions
+    // 查看系统是否定义了 AllowedHostTransitions
     systems_utils::getComputerSystemIndex(
         asyncResp, systemName,
         std::bind_front(getAllowedHostTransitions, asyncResp));
@@ -3599,6 +3975,8 @@ inline void handleSystemCollectionResetActionGet(
  * SystemResetActionInfo derived class for delivering Computer Systems
  * ResetType AllowableValues using ResetInfo schema.
  */
+/* SystemResetActionInfo 派生类，用于通过 ResetInfo schema 提供
+ * 计算机系统 ResetType 的 AllowableValues。 */
 inline void requestRoutesSystems(App& app)
 {
     BMCWEB_ROUTE(app, "/redfish/v1/Systems/")

@@ -51,6 +51,7 @@ Subscription::Subscription(
     userSub->destinationUrl = url;
     client.emplace(ioc, policy);
     // Subscription constructor
+    // Subscription 构造函数
     policy->invalidResp = retryRespHandler;
 }
 
@@ -60,6 +61,7 @@ Subscription::Subscription(crow::sse_socket::Connection& connIn) :
 {}
 
 // callback for subscription sendData
+// subscription sendData 的回调函数
 void Subscription::resHandler(const std::shared_ptr<Subscription>& /*self*/,
                               const crow::Response& res)
 {
@@ -91,6 +93,7 @@ void Subscription::resHandler(const std::shared_ptr<Subscription>& /*self*/,
 void Subscription::sendHeartbeatEvent()
 {
     // send the heartbeat message
+    // 发送心跳消息
     nlohmann::json eventMessage = messages::redfishServiceFunctional();
     eventMessage["EventTimestamp"] = time_utils::getDateTimeOffsetNow().first;
     eventMessage["OriginOfCondition"] = boost::urls::format(
@@ -110,6 +113,8 @@ void Subscription::sendHeartbeatEvent()
 
     // Note, eventId here is always zero, because this is a a per subscription
     // event and doesn't have an "ID"
+    // 注意，这里的 eventId 始终为零，因为这是针对单个订阅的事件，
+    // 并没有 "ID"。
     uint64_t eventId = 0;
     sendEventToSubscriber(eventId, std::move(strMsg));
 }
@@ -158,9 +163,11 @@ void Subscription::onHbTimeout(const std::weak_ptr<Subscription>& weakSelf,
     }
 
     // Timer expired.
+    // 定时器到期。
     sendHeartbeatEvent();
 
     // reschedule heartbeat timer
+    // 重新调度心跳定时器
     scheduleNextHeartbeatEvent();
 }
 
@@ -262,6 +269,7 @@ void Subscription::filterAndSendReports(uint64_t eventId,
         "/redfish/v1/TelemetryService/MetricReportDefinitions/{}", reportId);
 
     // Empty list means no filter. Send everything.
+    // 空列表表示不过滤，发送所有内容。
     if (!userSub->metricReportDefinitions.empty())
     {
         if (std::ranges::find(userSub->metricReportDefinitions,
@@ -283,6 +291,8 @@ void Subscription::filterAndSendReports(uint64_t eventId,
 
     // Context is set by user during Event subscription and it must be
     // set for MetricReport response.
+    // Context 由用户在 Event 订阅时设置，
+    // 并且必须为 MetricReport 响应设置它。
     if (!userSub->customText.empty())
     {
         msg["Context"] = userSub->customText;
@@ -312,6 +322,8 @@ bool Subscription::matchSseId(const crow::sse_socket::Connection& thisConn)
 
 // Check used to indicate what response codes are valid as part of our retry
 // policy.  2XX is considered acceptable
+// 该检查用于指示哪些响应码在我们的重试策略中有效。
+// 2XX 被认为是可接受的。
 boost::system::error_code Subscription::retryRespHandler(unsigned int respCode)
 {
     BMCWEB_LOG_DEBUG("Checking response code validity for SubscriptionEvent");
@@ -322,6 +334,7 @@ boost::system::error_code Subscription::retryRespHandler(unsigned int respCode)
     }
 
     // Return 0 if the response code is valid
+    // 如果响应码有效则返回 0
     return boost::system::errc::make_error_code(boost::system::errc::success);
 }
 

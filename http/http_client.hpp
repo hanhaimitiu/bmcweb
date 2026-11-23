@@ -59,6 +59,8 @@ namespace crow
 {
 // With Redfish Aggregation it is assumed we will connect to another
 // instance of BMCWeb which can handle 100 simultaneous connections.
+// 在 Redfish Aggregation 场景下，假设我们会连接到另一个
+// BMCWeb 实例，它可以处理 100 个并发连接。
 constexpr size_t maxPoolSize = 20;
 constexpr size_t maxRequestQueueSize = 500;
 constexpr unsigned int httpReadBodyLimit = 131072;
@@ -90,6 +92,7 @@ enum class ConnState
 inline boost::system::error_code defaultRetryHandler(unsigned int respCode)
 {
     // As a default, assume 200X is alright
+    // 默认情况下，假定 200X 响应是正常的
     BMCWEB_LOG_DEBUG("Using default check for response code validity");
     if ((respCode < 200) || (respCode >= 300))
     {
@@ -98,16 +101,20 @@ inline boost::system::error_code defaultRetryHandler(unsigned int respCode)
     }
 
     // Return 0 if the response code is valid
+    // 如果响应码有效则返回 0
     return boost::system::errc::make_error_code(boost::system::errc::success);
 };
 
 // We need to allow retry information to be set before a message has been
 // sent and a connection pool has been created
+// 我们需要允许在消息发送和连接池创建之前
+// 设置重试信息
 struct ConnectionPolicy
 {
     uint32_t maxRetryAttempts = 5;
 
     // the max size of requests in bytes.  0 for unlimited
+    // 请求的最大字节数，0 表示不限制
     boost::optional<uint64_t> requestByteLimit = httpReadBodyLimit;
 
     size_t maxConnections = 1;
@@ -142,6 +149,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
     ensuressl::VerifyCertificate verifyCert;
     uint32_t connId;
     // Data buffers
+    // 数据缓冲区
     http::request<bmcweb::HttpBody> req;
     using parser_type = http::response_parser<bmcweb::HttpBody>;
     std::optional<parser_type> parser;
@@ -149,6 +157,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
     Response res;
 
     // Async callables
+    // 异步可调用对象
     std::function<void(bool, uint32_t, Response&)> callback;
 
     boost::asio::io_context& ioc;
@@ -181,6 +190,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
             return;
         }
         // If we already have an ip address, no need to resolve
+        // 如果已经有 ip 地址，则无需进行解析
         boost::system::error_code ec;
         boost::asio::ip::address addr =
             boost::asio::ip::make_address(host.host_address(), ec);
@@ -229,6 +239,8 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
     {
         // The operation already timed out.  We don't want do continue down
         // this branch
+        // 操作已经超时，我们不希望继续沿
+        // 此分支执行
         if (ec && ec == boost::asio::error::operation_aborted)
         {
             return;
@@ -276,6 +288,8 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
     {
         // The operation already timed out.  We don't want do continue down
         // this branch
+        // 操作已经超时，我们不希望继续沿
+        // 此分支执行
         if (ec && ec == boost::asio::error::operation_aborted)
         {
             return;
@@ -300,9 +314,11 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
         state = ConnState::sendInProgress;
 
         // Set a timeout on the operation
+        // 为该操作设置超时
         timer.expires_after(std::chrono::seconds(30));
         timer.async_wait(std::bind_front(onTimeout, weak_from_this()));
         // Send the HTTP request to the remote host
+        // 向远程主机发送 HTTP 请求
         if (sslConn)
         {
             boost::beast::http::async_write(
@@ -324,6 +340,8 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
     {
         // The operation already timed out.  We don't want do continue down
         // this branch
+        // 操作已经超时，我们不希望继续沿
+        // 此分支执行
         if (ec && ec == boost::asio::error::operation_aborted)
         {
             return;
@@ -355,6 +373,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
         timer.async_wait(std::bind_front(onTimeout, weak_from_this()));
 
         // Receive the HTTP response
+        // 接收 HTTP 响应
         if (sslConn)
         {
             boost::beast::http::async_read(
@@ -377,6 +396,8 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
     {
         // The operation already timed out.  We don't want do continue down
         // this branch
+        // 操作已经超时，我们不希望继续沿
+        // 此分支执行
         if (ec && ec == boost::asio::error::operation_aborted)
         {
             return;
@@ -405,6 +426,9 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
         // Handle the case of stream_truncated.  Some servers close the ssl
         // connection uncleanly, so check to see if we got a full response
         // before we handle this as an error.
+        // 处理 stream_truncated 的情况。有些服务器会非正常关闭 ssl
+        // 连接，因此在将其视为错误之前，先检查
+        // 是否已收到完整的响应。
         if (!parser->is_done())
         {
             state = ConnState::recvFailed;
@@ -414,9 +438,12 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
 
         // Make sure the received response code is valid as defined by
         // the associated retry policy
+        // 确保收到的响应码符合相关 retry policy
+        // 所定义的合法范围
         if (connPolicy->invalidResp(respCode))
         {
             // The listener failed to receive the Sent-Event
+            // listener 未能接收到 Sent-Event
             BMCWEB_LOG_ERROR(
                 "recvMessage() Listener Failed to "
                 "receive Sent-Event. Header Response Code: {} from {}",
@@ -428,14 +455,20 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
 
         // Send is successful
         // Reset the counter just in case this was after retrying
+        // 发送成功
+        // 重置计数器，以防这是在重试之后发生的
         retryCount = 0;
 
         // Keep the connection alive if server supports it
         // Else close the connection
+        // 如果服务器支持，则保持连接存活
+        // 否则关闭连接
         BMCWEB_LOG_DEBUG("recvMessage() keepalive : {}", parser->keep_alive());
 
         // Copy the response into a Response object so that it can be
         // processed by the callback function.
+        // 将响应复制到 Response 对象中，以便
+        // 由 callback 函数处理。
         res.response = parser->release();
         if (callback)
         {
@@ -458,6 +491,8 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
             BMCWEB_LOG_ERROR("async_wait failed: {}", ec.message());
             // If the timer fails, we need to close the socket anyway, same
             // as if it expired.
+            // 如果 timer 失败，无论如何都需要关闭 socket，
+            // 与超时过期的情况相同。
         }
         std::shared_ptr<ConnectionInfo> self = weakSelf.lock();
         if (self == nullptr)
@@ -478,6 +513,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
             if (connPolicy->retryPolicyAction == "TerminateAfterRetries")
             {
                 // TODO: delete subscription
+                // TODO: 删除 subscription
                 state = ConnState::terminated;
             }
             if (connPolicy->retryPolicyAction == "SuspendRetries")
@@ -487,6 +523,8 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
 
             // We want to return a 502 to indicate there was an error with
             // the external server
+            // 我们希望返回 502，以表明
+            // 外部服务器出现了错误
             res.result(boost::beast::http::status::bad_gateway);
             if (callback)
             {
@@ -496,6 +534,8 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
 
             // Reset the retrycount to zero so that client can try
             // connecting again if needed
+            // 将 retrycount 重置为零，以便客户端在需要时
+            // 可以重新尝试连接
             retryCount = 0;
             return;
         }
@@ -523,9 +563,12 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
             BMCWEB_LOG_ERROR("async_wait failed: {}", ec.message());
             // Ignore the error and continue the retry loop to attempt
             // sending the event as per the retry policy
+            // 忽略该错误并继续重试循环，按照 retry policy
+            // 尝试发送事件
         }
 
         // Let's close the connection and restart from resolve.
+        // 关闭连接并从 resolve 重新开始。
         shutdownConn(true);
     }
 
@@ -544,6 +587,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
         conn.close();
 
         // not_connected happens sometimes so don't bother reporting it.
+        // not_connected 有时会发生，因此不必上报。
         if (ec && ec != boost::beast::errc::not_connected)
         {
             BMCWEB_LOG_ERROR("{}, id: {} shutdown failed: {}", host, connId,
@@ -557,6 +601,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
         if (retry)
         {
             // Now let's try to resend the data
+            // 现在尝试重新发送数据
             state = ConnState::retry;
             restartConnection();
         }
@@ -604,6 +649,7 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
         std::string hostname(host.encoded_host_address());
 
         // SNI is only defined for DNS names (RFC 6066)
+        // SNI 只对 DNS 名称有定义（RFC 6066）
         if (host.host_type() == boost::urls::host_type::name)
         {
             if (SSL_set_tlsext_host_name(sslConn->native_handle(),
@@ -626,6 +672,10 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
         // Without this, verify_peer only checks the chain up to a
         // trusted CA but not whether the cert was issued for this host,
         // allowing MITM with any CA-signed certificate.
+        // 校验对端证书与目标主机名是否匹配。
+        // 没有这一步，verify_peer 只会检查证书链是否可追溯到受信任的 CA，
+        // 而不会检查证书是否为该主机签发，
+        // 从而使得用任意 CA 签名的证书都能实施中间人（MITM）攻击。
         if (verifyCert != ensuressl::VerifyCertificate::NoVerify)
         {
             boost::system::error_code ec;
@@ -660,6 +710,12 @@ class ConnectionInfo : public std::enable_shared_from_this<ConnectionInfo>
                 // sslInitFailed and connection state will be transitioned
                 // to next state depending on retry policy set by
                 // subscription.
+                // 如果在准备 SSL 上下文时发生失败，则不要重试，
+                // 例如证书无效、设置 cipher 失败或
+                // 设置主机名失败等……将连接状态设为
+                // sslInitFailed，随后连接状态将根据
+                // 订阅设置的重试策略转换到
+                // 下一个状态。
                 state = ConnState::sslInitFailed;
                 waitAndRetry();
                 return;
@@ -698,6 +754,8 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
 
     // Configure a connections's request, callback, and retry info in
     // preparation to begin sending the request
+    // 配置连接的请求、回调和重试信息，
+    // 为开始发送请求做准备
     void setConnProps(ConnectionInfo& conn)
     {
         if (requestQueue.empty())
@@ -715,12 +773,16 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
                          conn.host, conn.connId);
 
         // We can remove the request from the queue at this point
+        // 此时可以将请求从队列中移除
         requestQueue.pop_front();
     }
 
     // Gets called as part of callback after request is sent
     // Reuses the connection if there are any requests waiting to be sent
     // Otherwise closes the connection if it is not a keep-alive
+    // 在请求发送后作为回调的一部分被调用
+    // 如果有等待发送的请求则复用该连接
+    // 否则，如果不是 keep-alive 连接则将其关闭
     void sendNext(bool keepAlive, uint32_t connId)
     {
         if (connId >= connections.size())
@@ -740,9 +802,13 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
         // Allow the connection's handler to be deleted
         // This is needed because of Redfish Aggregation passing an
         // AsyncResponse shared_ptr to this callback
+        // 允许删除连接的 handler
+        // 这是必需的，因为 Redfish Aggregation 会将一个
+        // AsyncResponse shared_ptr 传递给该回调
         conn->callback = nullptr;
 
         // Reuse the connection to send the next request in the queue
+        // 复用该连接发送队列中的下一个请求
         if (!requestQueue.empty())
         {
             BMCWEB_LOG_DEBUG(
@@ -759,6 +825,8 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
             {
                 // Server is not keep-alive enabled so we need to close the
                 // connection and then start over from resolve
+                // 服务器未启用 keep-alive，因此需要先关闭
+                // 连接，然后从 resolve 重新开始
                 conn->doClose();
                 conn->restartConnection();
             }
@@ -766,6 +834,7 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
         }
 
         // No more messages to send so close the connection if necessary
+        // 没有更多消息要发送，必要时关闭连接
         if (keepAlive)
         {
             conn->state = ConnState::idle;
@@ -773,6 +842,7 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
         else
         {
             // Abort the connection since server is not keep-alive enabled
+            // 中止连接，因为服务器未启用 keep-alive
             conn->state = ConnState::abortConnection;
             conn->doClose();
         }
@@ -784,6 +854,7 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
                   const std::function<void(Response&)>& resHandler)
     {
         // Construct the request to be sent
+        // 构造要发送的请求
         boost::beast::http::request<bmcweb::HttpBody> thisReq(
             verb, destUri.encoded_target(), 11, "", httpHeader);
         thisReq.set(boost::beast::http::field::host,
@@ -794,6 +865,7 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
         auto cb = std::bind_front(&ConnectionPool::afterSendData,
                                   weak_from_this(), resHandler);
         // Reuse an existing connection if one is available
+        // 如果有可用连接则复用现有连接
         for (unsigned int i = 0; i < connections.size(); i++)
         {
             auto conn = connections[i];
@@ -822,6 +894,8 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
 
         // All connections in use so create a new connection or add request
         // to the queue
+        // 所有连接都在使用中，因此创建新连接或将请求
+        // 加入队列
         if (connections.size() < connPolicy->maxConnections)
         {
             BMCWEB_LOG_DEBUG("Adding new connection to pool {}", id);
@@ -840,6 +914,8 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
         {
             // If we can't buffer the request then we should let the
             // callback handle a 429 Too Many Requests dummy response
+            // 如果无法缓存请求，则应让
+            // 回调处理一个 429 Too Many Requests 的伪响应
             BMCWEB_LOG_ERROR("{} request queue full.  Dropping request.", id);
             Response dummyRes;
             dummyRes.result(boost::beast::http::status::too_many_requests);
@@ -848,12 +924,15 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
     }
 
     // Callback to be called once the request has been sent
+    // 请求发送完成后调用的回调
     static void afterSendData(const std::weak_ptr<ConnectionPool>& weakSelf,
                               const std::function<void(Response&)>& resHandler,
                               bool keepAlive, uint32_t connId, Response& res)
     {
         // If requests remain in the queue then we want to reuse this
         // connection to send the next request
+        // 如果队列中还有请求，则复用该
+        // 连接发送下一个请求
         std::shared_ptr<ConnectionPool> self = weakSelf.lock();
         if (!self)
         {
@@ -864,6 +943,8 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
 
         // Allow provided callback to perform additional processing of the
         // request
+        // 允许所提供的回调对
+        // 请求执行额外处理
         resHandler(res);
 
         self->sendNext(keepAlive, connId);
@@ -894,10 +975,12 @@ class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
         BMCWEB_LOG_DEBUG("Initializing connection pool for {}", id);
 
         // Initialize the pool with a single connection
+        // 用单个连接初始化连接池
         addConnection();
     }
 
     // Check whether all connections are terminated
+    // 检查所有连接是否都已终止
     bool areAllConnectionsTerminated()
     {
         if (connections.empty())
@@ -926,10 +1009,13 @@ class HttpClient
         connectionPools;
 
     // reference_wrapper here makes HttpClient movable
+    // 此处使用 reference_wrapper 使 HttpClient 可移动
     std::reference_wrapper<boost::asio::io_context> ioc;
     std::shared_ptr<ConnectionPolicy> connPolicy;
 
     // Used as a dummy callback by sendData() in order to call
+    // sendDataWithCallback()
+    // 被 sendData() 用作伪回调，以便调用
     // sendDataWithCallback()
     static void genericResHandler(const Response& res)
     {
@@ -952,6 +1038,8 @@ class HttpClient
 
     // Send a request to destIP where additional processing of the
     // result is not required
+    // 向 destIP 发送请求，且不需要对结果
+    // 进行额外处理
     void sendData(std::string&& data, const boost::urls::url_view_base& destUri,
                   ensuressl::VerifyCertificate verifyCert,
                   const boost::beast::http::fields& httpHeader,
@@ -964,6 +1052,8 @@ class HttpClient
 
     // Send request to destIP and use the provided callback to
     // handle the response
+    // 向 destIP 发送请求，并使用所提供的回调
+    // 处理响应
     void sendDataWithCallback(std::string&& data,
                               const boost::urls::url_view_base& destUrl,
                               ensuressl::VerifyCertificate verifyCert,
@@ -987,11 +1077,14 @@ class HttpClient
         }
         // Send the data using either the existing connection pool or the
         // newly created connection pool
+        // 使用现有连接池或新建的
+        // 连接池发送数据
         pool.first->second->sendData(std::move(data), destUrl, httpHeader, verb,
                                      resHandler);
     }
 
     // Test whether all connections are terminated (after MaxRetryAttempts)
+    // 测试所有连接是否都已终止（在 MaxRetryAttempts 之后）
     bool isTerminated()
     {
         for (const auto& pool : connectionPools)

@@ -30,10 +30,12 @@ struct OpenSSLGenerator
     }
 
     // all generators require this variable
+    // 所有生成器都需要这个变量
     using result_type = uint8_t;
 
   private:
     // RAND_bytes() returns 1 on success, 0 otherwise. -1 if bad function
+    // RAND_bytes() 成功时返回 1，否则返回 0；函数本身出错时返回 -1
     static constexpr int opensslSuccess = 1;
     bool err = false;
 };

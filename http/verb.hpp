@@ -8,6 +8,8 @@
 #include <optional>
 // boost/beast/http/verb for whatever reason requires this?
 // NOLINTNEXTLINE(misc-include-cleaner)
+// 不知为何 boost/beast/http/verb 需要这个？
+// NOLINTNEXTLINE(misc-include-cleaner)
 #include <ostream>
 #include <string_view>
 
@@ -71,5 +73,6 @@ inline std::string_view httpVerbToString(HttpVerb verb)
     }
 
     // Should never reach here
+    // 永远不应执行到这里
     return "";
 }

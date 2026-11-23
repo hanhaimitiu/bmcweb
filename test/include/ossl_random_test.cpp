@@ -15,6 +15,7 @@ TEST(Bmcweb, GetRandomUUID)
 {
     using bmcweb::getRandomUUID;
     // 78e96a4b-62fe-48d8-ac09-7f75a94671e0
+    // 78e96a4b-62fe-48d8-ac09-7f75a94671e0
     EXPECT_THAT(
         getRandomUUID(),
         MatchesRegex(

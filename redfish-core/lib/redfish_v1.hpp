@@ -51,6 +51,8 @@ inline void redfish404(App& app, const crow::Request& req,
 
     // If we fall to this route, we didn't have a more specific route, so return
     // 404
+    // 如果落到这条路由，说明我们没有更具体的路由，
+    // 因此返回 404。
     if (!redfish::setUpRedfishRoute(app, req, asyncResp))
     {
         return;
@@ -62,6 +64,8 @@ inline void redfish404(App& app, const crow::Request& req,
     // Note, if we hit the wildcard route, we don't know the "type" the user was
     // actually requesting, but giving them a return with an empty string is
     // still better than nothing.
+    // 注意，如果命中通配符路由，我们不知道用户实际请求的 "type"，
+    // 但返回空字符串总比什么都不返回好。
     messages::resourceNotFound(asyncResp->res, "", name);
 }
 
@@ -71,6 +75,8 @@ inline void redfish405(App& app, const crow::Request& req,
 {
     // If we fall to this route, we didn't have a more specific route, so return
     // 405
+    // 如果落到这条路由，说明我们没有更具体的路由，
+    // 因此返回 405。
     if (!redfish::setUpRedfishRoute(app, req, asyncResp))
     {
         return;
@@ -206,6 +212,7 @@ inline void jsonSchemaGetFile(
     const std::string& schema, const std::string& schemaFile)
 {
     // Sanity check the filename
+    // 检查文件名的合法性。
     if (schemaFile.find_first_not_of(
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.") !=
         std::string::npos)
@@ -215,6 +222,8 @@ inline void jsonSchemaGetFile(
     }
     // Schema path should look like /redfish/v1/JsonSchemas/Foo/Foo.x.json
     // Make sure the two paths match.
+    // Schema 路径应形如 /redfish/v1/JsonSchemas/Foo/Foo.x.json。
+    // 确保两条路径匹配。
     if (!schemaFile.starts_with(schema))
     {
         messages::resourceNotFound(asyncResp->res, "JsonSchemaFile", schema);
@@ -263,6 +272,7 @@ inline void requestRoutesRedfish(App& app)
             std::bind_front(jsonSchemaIndexGet, std::ref(app)));
 
     // Note, this route must always be registered last
+    // 注意，这条路由必须始终最后注册。
     BMCWEB_ROUTE(app, "/redfish/<path>")
         .notFound()
         .privileges(redfish::privileges::privilegeSetLogin)(

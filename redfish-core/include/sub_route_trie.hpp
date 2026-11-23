@@ -127,6 +127,7 @@ class SubRouteTrie : public crow::Trie<ContainedType>
 
         std::string_view fragment;
         // Check if the URL contains a fragment (#)
+        // 检查 URL 是否包含片段标识（#）。
         size_t fragmentPos = urlIn.find('#');
         size_t queryPos = urlIn.find('?');
         if (fragmentPos != std::string::npos && queryPos == std::string::npos &&

@@ -27,10 +27,13 @@ inline void sendUnauthorized(std::string_view url,
 {
     // If it's a browser connecting, don't send the HTTP authenticate
     // header, to avoid possible CSRF attacks with basic auth
+    // 如果是浏览器连接，则不要发送 HTTP authenticate
+    // 头，以避免通过 basic auth 发起的 CSRF 攻击
     if (http_helpers::isContentTypeAllowed(
             accept, http_helpers::ContentType::HTML, false /*allowWildcard*/))
     {
         // If we have a webui installed, redirect to that login page
+        // 如果安装了 webui，则重定向到其登录页面
         if (hasWebuiRoute())
         {
             boost::urls::url forward =
@@ -42,6 +45,8 @@ inline void sendUnauthorized(std::string_view url,
         }
         // If we don't have a webui installed, just return an unauthorized
         // body
+        // 如果没有安装 webui，则只返回一个 unauthorized
+        // 响应体
         res.result(boost::beast::http::status::unauthorized);
         res.write(
             "No authentication provided, and no login UI present to forward to.");
@@ -52,11 +57,14 @@ inline void sendUnauthorized(std::string_view url,
 
     // XHR requests from a browser will set the X-Requested-With header when
     // doing their requests, even though they might not be requesting html.
+    // 浏览器发出的 XHR 请求在发起请求时会设置 X-Requested-With 头，
+    // 即使它们请求的并不是 html。
     if (!xRequestedWith.empty())
     {
         return;
     }
     // if basic auth is disabled, don't propose it.
+    // 如果 basic auth 被禁用，则不要提供它。
     if (!persistent_data::SessionStore::getInstance()
              .getAuthMethodsConfig()
              .basic)

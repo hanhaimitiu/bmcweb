@@ -87,6 +87,7 @@ void afterSetProperty(
         return;
     }
     // Only set 204 if another error hasn't already happened.
+    // 仅当尚未发生其他错误时才设置为 204
     if (asyncResp->res.result() == boost::beast::http::status::ok)
     {
         asyncResp->res.result(boost::beast::http::status::no_content);
@@ -134,6 +135,7 @@ void afterSetPropertyAction(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         return;
     }
     // Only set success if another error hasn't already happened.
+    // 仅当尚未发生其他错误时才设置为 success
     if (asyncResp->res.result() == boost::beast::http::status::ok)
     {
         messages::success(asyncResp->res);

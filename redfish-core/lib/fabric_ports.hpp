@@ -122,6 +122,7 @@ inline void afterGetValidFabricPortPath(
             return;
         }
         // Port not found
+        // 未找到端口。
         callback(std::string(), std::string());
         return;
     }
@@ -132,6 +133,7 @@ inline void afterGetValidFabricPortPath(
     if (it == portSubTreePaths.end())
     {
         // Port not found
+        // 未找到端口。
         callback(std::string(), std::string());
         return;
     }
@@ -140,6 +142,7 @@ inline void afterGetValidFabricPortPath(
     dbus::utility::getDbusObject(
         portPath, portInterfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, portPath, callback{std::move(callback)}](
             const boost::system::error_code& ec1,
             const dbus::utility::MapperGetObject& object) {
@@ -180,6 +183,7 @@ inline void handleFabricPortHead(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -194,6 +198,7 @@ inline void handleFabricPortHead(
     getValidFabricPortPath(
         asyncResp, adapterId, portId,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, portId](const std::string& portPath, const std::string&) {
             if (portPath.empty())
             {
@@ -220,6 +225,7 @@ inline void handleFabricPortGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -269,6 +275,7 @@ inline void handleFabricPortCollectionHead(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -352,6 +359,7 @@ inline void handleFabricPortCollectionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -398,6 +406,7 @@ inline void handlePortPatch(App& app, const crow::Request& req,
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;

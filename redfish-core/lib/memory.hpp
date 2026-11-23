@@ -157,6 +157,24 @@ inline memory::MemoryDeviceType translateMemoryTypeToRedfish(
     // LPDDR_SDRAM
     // LPDDR2_SDRAM
     // LPDDR5_SDRAM
+    // 这些是 Other 或 Unknown 之类的值。
+    // 还有以下 D-Bus 值：
+    // DRAM
+    // EDRAM
+    // VRAM
+    // SRAM
+    // RAM
+    // FLASH
+    // EEPROM
+    // FEPROM
+    // EPROM
+    // CDRAM
+    // ThreeDRAM
+    // RDRAM
+    // FBD2
+    // LPDDR_SDRAM
+    // LPDDR2_SDRAM
+    // LPDDR5_SDRAM
     return memory::MemoryDeviceType::Invalid;
 }
 
@@ -578,6 +596,7 @@ inline void assembleDimmProperties(
             translateMemoryTypeToRedfish(*memoryType);
         // Values like "Unknown" or "Other" will return Invalid
         // so just leave off
+        // 像 "Unknown" 或 "Other" 这样的值会返回 Invalid，因此直接省略。
         if (memoryDeviceType != memory::MemoryDeviceType::Invalid)
         {
             asyncResp->res.jsonValue[jsonPtr]["MemoryDeviceType"] =
@@ -773,6 +792,9 @@ inline void afterGetDimmData(
          * object: 1) Dimm is the primary object 2) Additional partitions could
          * exist per Dimm. Only consider the object found if the Dimm is found.
          */
+        /* 注意：多个 D-Bus 对象都可以提供 Memory 对象的详细信息：
+         * 1) Dimm 是主对象；2) 每个 Dimm 可能存在额外的分区。
+         * 只有在找到 Dimm 时才考虑所找到的对象。 */
         for (const auto& [serviceName, interfaceList] : serviceMap)
         {
             for (const auto& interface : interfaceList)
@@ -781,6 +803,7 @@ inline void afterGetDimmData(
                     path.filename() == dimmId)
                 {
                     // Found the single Dimm
+                    // 找到了单个 Dimm。
                     getDimmDataByService(asyncResp, dimmId, serviceName,
                                          objectPath);
                     dimmInterface = true;
@@ -795,6 +818,10 @@ inline void afterGetDimmData(
                      * been checked the LED information will be gathered if the
                      * object was a Dimm
                      */
+                    /* 对象有关联。如果该对象同时也是 Dimm，
+                     * 则该关联可能会提供 LED 状态信息。
+                     * 在检查完该对象的所有接口之后，
+                     * 如果该对象是 Dimm，就会收集 LED 信息。 */
                     associationInterface = true;
                 }
                 else if (
@@ -806,12 +833,16 @@ inline void afterGetDimmData(
                     // device, i.e.
                     // /xyz/openbmc_project/Inventory/Item/Dimm1/Partition1
                     // /xyz/openbmc_project/Inventory/Item/Dimm1/Partition2
+                    // 分区是独立的，因为每个设备可能有多个分区，例如：
+                    // /xyz/openbmc_project/Inventory/Item/Dimm1/Partition1
+                    // /xyz/openbmc_project/Inventory/Item/Dimm1/Partition2
                     getDimmPartitionData(asyncResp, serviceName, objectPath);
                 }
             }
         }
 
         /* If a Dimm has an Association check if it has a LED */
+        /* 如果某个 Dimm 有关联，则检查它是否有 LED。 */
         if (associationInterface && dimmInterface)
         {
             getLocationIndicatorActive(asyncResp, objectPath);
@@ -821,10 +852,12 @@ inline void afterGetDimmData(
     if (!found)
     {
         // Dimm object not found
+        // 未找到 Dimm 对象。
         messages::resourceNotFound(asyncResp->res, "Memory", dimmId);
         return;
     }
     // Set @odata only if object is found
+    // 仅在找到对象时设置 @odata。
     asyncResp->res.jsonValue["@odata.type"] = "#Memory.v1_23_0.Memory";
     asyncResp->res.jsonValue["@odata.id"] =
         boost::urls::format("/redfish/v1/Systems/{}/Memory/{}",
@@ -866,6 +899,7 @@ inline void afterGetValidDimmPath(
         if (ec.value() == EBADR)
         {
             /* Need to report error for PATCH */
+            /* PATCH 需要报告错误。 */
             BMCWEB_LOG_WARNING("Dimm not found in inventory");
             messages::resourceNotFound(asyncResp->res, "Memory", dimmId);
         }
@@ -880,6 +914,7 @@ inline void afterGetValidDimmPath(
     for (const auto& objectPath : subtree)
     {
         // Ignore any objects which don't end with our desired dimm name
+        // 忽略任何不以我们所需的 dimm 名称结尾的对象。
         sdbusplus::object_path path(objectPath);
         if (path.filename() == dimmId)
         {
@@ -889,6 +924,7 @@ inline void afterGetValidDimmPath(
     }
 
     // Object not found
+    // 未找到对象。
     messages::resourceNotFound(asyncResp->res, "Memory", dimmId);
 }
 
@@ -923,6 +959,7 @@ inline void handleMemoryPatch(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -965,6 +1002,7 @@ inline void handleMemoryGet(App& app, const crow::Request& req,
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -992,6 +1030,7 @@ inline void handleMemoryCollectionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -1023,6 +1062,7 @@ inline void requestRoutesMemory(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app, "/redfish/v1/Systems/<str>/Memory/")
         .privileges(redfish::privileges::getMemoryCollection)
         .methods(boost::beast::http::verb::get)(

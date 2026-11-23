@@ -99,6 +99,7 @@ constexpr std::array<char, 256> getDecodeTable(bool urlSafe)
     if (urlSafe)
     {
         // Urlsafe decode tables replace the last two characters with - and _
+        // URL 安全解码表用 - 和 _ 替换最后两个字符
         decodeTable['+'] = nop;
         decodeTable['/'] = nop;
         decodeTable['-'] = 62;
@@ -115,6 +116,7 @@ class Base64Encoder
     uint8_t overflowCount = 0;
 
     // Takes 3 ascii chars, and encodes them as 4 base64 chars
+    // 接收 3 个 ascii 字符，并将它们编码为 4 个 base64 字符
     static void encodeTriple(char first, char second, char third,
                              std::string& output)
     {
@@ -139,9 +141,13 @@ class Base64Encoder
     // Accepts a partial string to encode, and writes the encoded characters to
     // the output stream. requires subsequently calling finalize to complete
     // stream.
+    // 接收部分字符串进行编码，并将编码后的字符写入
+    // 输出流。之后需要调用 finalize 来完成
+    // 整个流。
     void encode(std::string_view data, std::string& output)
     {
         // Encode the last round of overflow chars first
+        // 先编码最后一轮溢出的字符
         if (overflowCount == 2)
         {
             if (!data.empty())
@@ -184,6 +190,8 @@ class Base64Encoder
 
     // Completes a base64 output, by writing any MOD(3) characters to the
     // output, as well as any required trailing =
+    // 通过将所有 MOD(3) 剩余字符以及所需的末尾 =
+    // 写入输出，完成 base64 输出
     void finalize(std::string& output)
     {
         if (overflowCount == 0)
@@ -212,10 +220,14 @@ class Base64Encoder
 
     // Returns the required output buffer in characters for an input of size
     // inputSize
+    // 对于大小为 inputSize 的输入，返回所需的
+    // 输出缓冲区字符数
     static size_t constexpr encodedSize(size_t inputSize)
     {
         // Base64 encodes 3 character blocks as 4 character blocks
         // With a possibility of 2 trailing = characters
+        // Base64 将 3 个字符的块编码为 4 个字符的块
+        // 末尾可能有 2 个 = 填充字符
         return (inputSize + 2) / 3 * 4;
     }
 };
@@ -223,6 +235,7 @@ class Base64Encoder
 inline std::string base64encode(std::string_view data)
 {
     // Encodes a 3 character stream into a 4 character stream
+    // 将 3 字符流编码为 4 字符流
     std::string out;
     Base64Encoder base64;
     out.reserve(Base64Encoder::encodedSize(data.size()));
@@ -249,6 +262,7 @@ inline bool base64Decode(std::string_view input, std::string& output)
     size_t inputLength = input.size();
 
     // allocate space for output string
+    // 为输出字符串分配空间
     output.clear();
     output.reserve(((inputLength + 2) / 3) * 4);
 
@@ -257,6 +271,7 @@ inline bool base64Decode(std::string_view input, std::string& output)
     auto getCodeValue = [](char c) {
         auto code = static_cast<unsigned char>(c);
         // Ensure we cannot index outside the bounds of the decoding array
+        // 确保不会越界索引解码数组
         static_assert(
             std::numeric_limits<decltype(code)>::max() < decodingData.size());
         return decodingData[code];
@@ -265,6 +280,9 @@ inline bool base64Decode(std::string_view input, std::string& output)
     // for each 4-bytes sequence from the input, extract 4 6-bits sequences by
     // dropping first two bits
     // and regenerate into 3 8-bits sequences
+    // 对于输入中的每个 4 字节序列，去掉前两位，
+    // 提取出 4 个 6 位的序列，
+    // 再重新组合成 3 个 8 位的序列
 
     for (size_t i = 0; i < inputLength; i++)
     {
@@ -276,17 +294,20 @@ inline bool base64Decode(std::string_view input, std::string& output)
         if (base64code0 == nop)
         {
             // non base64 character
+            // 非 base64 字符
             return false;
         }
         if (!(++i < inputLength))
         {
             // we need at least two input bytes for first byte output
+            // 输出第一个字节至少需要两个输入字节
             return false;
         }
         base64code1 = getCodeValue(input[i]);
         if (base64code1 == nop)
         {
             // non base64 character
+            // 非 base64 字符
             return false;
         }
         output +=
@@ -298,12 +319,14 @@ inline bool base64Decode(std::string_view input, std::string& output)
             if (c == '=')
             {
                 // padding , end of input
+                // 填充符，输入结束
                 return (base64code1 & 0x0f) == 0;
             }
             base64code2 = getCodeValue(input[i]);
             if (base64code2 == nop)
             {
                 // non base64 character
+                // 非 base64 字符
                 return false;
             }
             output += static_cast<char>(
@@ -316,12 +339,14 @@ inline bool base64Decode(std::string_view input, std::string& output)
             if (c == '=')
             {
                 // padding , end of input
+                // 填充符，输入结束
                 return (base64code2 & 0x03) == 0;
             }
             char base64code3 = getCodeValue(input[i]);
             if (base64code3 == nop)
             {
                 // non base64 character
+                // 非 base64 字符
                 return false;
             }
             output +=
@@ -340,6 +365,8 @@ inline void appendUrlPieces(boost::urls::url& url, AV&&... args)
 {
     // Unclear the correct fix here.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+    // 此处尚不清楚正确的修复方式。
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
     for (const std::string_view arg : {args...})
     {
         url.segments().push_back(arg);
@@ -351,6 +378,8 @@ namespace details
 
 // std::reference_wrapper<std::string> - extracts segment to variable
 //                    std::string_view - checks if segment is equal to variable
+// std::reference_wrapper<std::string> - 将片段提取到变量中
+//                    std::string_view - 检查片段是否与变量相等
 using UrlSegment = std::variant<std::reference_wrapper<std::string>,
                                 std::string_view, OrMorePaths>;
 
@@ -412,6 +441,7 @@ inline bool readUrlSegments(const boost::urls::url_view_base& url,
     auto fragEnd = fragmentParts.end();
 
     // Url fragments start with a /, so we need to skip the first empty string
+    // URL 片段以 / 开头，因此需要跳过第一个空字符串
     if (fragIt != fragEnd)
     {
         if (fragIt->empty())
@@ -422,6 +452,8 @@ inline bool readUrlSegments(const boost::urls::url_view_base& url,
 
     // There will be an empty segment at the end if the URI ends with a "/"
     // e.g. /redfish/v1/Chassis/
+    // 如果 URI 以 "/" 结尾，末尾会有一个空片段
+    // 例如 /redfish/v1/Chassis/
     if ((it != end) && urlSegments.back().empty())
     {
         end--;
@@ -533,6 +565,8 @@ inline void setPortDefaults(boost::urls::url& url)
 
     // If the user hasn't explicitly stated a port, pick one explicitly for them
     // based on the protocol defaults
+    // 如果用户没有显式指定端口，则根据协议默认值
+    // 为其显式选择一个
     if (url.scheme() == "http")
     {
         url.set_port_number(80);

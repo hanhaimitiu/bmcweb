@@ -32,6 +32,8 @@ namespace chassis_utils
  * @brief Finds the chassis path matching chassisId from a GetSubTreePaths
  * response and invokes callback with the result.
  */
+/* @brief 从 GetSubTreePaths 的响应中查找与 chassisId 匹配的机箱路径，
+ * 并用结果调用回调函数。 */
 template <typename Callback>
 void afterGetValidChassisPath(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -71,6 +73,9 @@ void afterGetValidChassisPath(
  * @param asyncResp   Pointer to object holding response data
  * @param callback  Callback for next step to get valid chassis path
  */
+/* @brief 获取有效的机箱路径
+ * @param asyncResp   指向保存响应数据的对象的指针
+ * @param callback  用于下一步获取有效机箱路径的回调函数 */
 template <typename Callback>
 void getValidChassisPath(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                          const std::string& chassisId, Callback&& callback)
@@ -78,6 +83,7 @@ void getValidChassisPath(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     BMCWEB_LOG_DEBUG("checkChassisId enter");
 
     // Get the Chassis Collection
+    // 获取机箱集合（Chassis Collection）
     dbus::utility::getSubTreePaths(
         "/xyz/openbmc_project/inventory", 0, chassisInterfaces,
         [callback = std::forward<Callback>(callback), asyncResp,
@@ -94,6 +100,8 @@ void getValidChassisPath(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @brief Retrieves valid chassis paths from managed objects response
  * @param managedObj  The getManagedObjects response
  */
+/* @brief 从 managed objects 响应中获取有效的机箱路径
+ * @param managedObj  getManagedObjects 的响应 */
 inline std::vector<sdbusplus::object_path> getChassisFromManagedObj(
     const dbus::utility::ManagedObjectType& managedObj)
 {

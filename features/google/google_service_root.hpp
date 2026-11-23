@@ -61,6 +61,7 @@ inline void handleRootOfTrustCollectionGet(
 }
 
 // Helper struct to identify a resolved D-Bus object interface
+// 用于标识已解析的 D-Bus 对象接口的辅助结构体
 struct ResolvedEntity
 {
     std::string id;
@@ -103,6 +104,7 @@ inline void hothGetSubtreeCallback(
     }
 
     // Couldn't find an object with that name.  return an error
+    // 找不到具有该名称的对象，返回错误
     redfish::messages::resourceNotFound(asyncResp->res, "RootOfTrust", rotId);
 }
 
@@ -135,6 +137,7 @@ inline void populateRootOfTrustEntity(
     asyncResp->res.jsonValue["Status"]["State"] = "Enabled";
     asyncResp->res.jsonValue["Id"] = resolvedEntity.id;
     // Need to fix this later to a stabler property.
+    // 后续需要将其改为更稳定的属性。
     asyncResp->res.jsonValue["Name"] = resolvedEntity.id;
     asyncResp->res.jsonValue["Description"] = "Google Root Of Trust";
     asyncResp->res.jsonValue["Actions"]["#RootOfTrust.SendCommand"]["target"] =

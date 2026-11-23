@@ -74,15 +74,27 @@ enum class SearchType
 // properties should end in URI so this list should not need to be maintained as
 // the spec is updated.  NOTE: These have been pre-sorted in order to be
 // compatible with binary search
+// clang-format off
+// 以下是 Redfish Resource and Schema Guide 2022.2 版本中
+// Type 为 "string (URI)"、且名称不以大小写不敏感的
+// "uri" 结尾的所有属性。该 schema 版本对应
+// Redfish Specification 1.16.0。今后新的 URI
+// 属性都应以 URI 结尾，因此随着规范更新，此列表
+// 无需再维护。注意：这些属性已预先排序，以便
+// 使用二分查找
 constexpr std::array nonUriProperties{
     "@Redfish.ActionInfo",
     // "@odata.context", // We can't fix /redfish/v1/$metadata URIs
+    // "@odata.context", // 我们无法修复 /redfish/v1/$metadata 的 URI
     "@odata.id",
     // "Destination", // Only used by EventService and won't be a Redfish URI
     // "HostName", // Isn't actually a Redfish URI
+    // "Destination", // 仅供 EventService 使用，不会是 Redfish URI
+    // "HostName", // 实际上并不是 Redfish URI
     "Image",
     "MetricProperty",
     // "OriginOfCondition", // Is URI when in request, but is object in response
+    // "OriginOfCondition", // 在请求中是 URI，但在响应中是对象
     "TaskMonitor",
     "target", // normal string, but target URI for POST to invoke an action
 };
@@ -90,6 +102,8 @@ constexpr std::array nonUriProperties{
 
 // Search the top collection array to determine if the passed URI is of a
 // desired type
+// 搜索顶层集合数组，判断传入的 URI 是否属于
+// 所需的类型
 inline bool searchCollectionsArray(std::string_view uri,
                                    const SearchType searchType)
 {
@@ -110,6 +124,8 @@ inline bool searchCollectionsArray(std::string_view uri,
 
     // The passed URI must begin with "/redfish/v1", but we have to strip it
     // from the URI since topCollections does not include it in its URIs.
+    // 传入的 URI 必须以 "/redfish/v1" 开头，但必须将其从
+    // URI 中去掉，因为 topCollections 的 URI 中不包含它。
     if (segments.size() < 2)
     {
         return false;
@@ -126,6 +142,7 @@ inline bool searchCollectionsArray(std::string_view uri,
     segments.erase(segments.begin());
 
     // Exclude the trailing "/" if it exists such as in "/redfish/v1/".
+    // 去掉末尾的 "/"（如果存在），例如 "/redfish/v1/"。
     if (!segments.empty() && segments.back().empty())
     {
         segments.pop_back();
@@ -133,6 +150,8 @@ inline bool searchCollectionsArray(std::string_view uri,
 
     // If no segments then the passed URI was either "/redfish/v1" or
     // "/redfish/v1/".
+    // 如果没有任何段，则传入的 URI 是 "/redfish/v1" 或
+    // "/redfish/v1/"。
     if (segments.empty())
     {
         return (searchType == SearchType::ContainsSubordinate) ||
@@ -144,6 +163,8 @@ inline bool searchCollectionsArray(std::string_view uri,
     {
         // parsedUrl is alphabetically after the last entry in the array so it
         // can't be a top collection or up tree from a top collection
+        // parsedUrl 按字母顺序排在数组最后一项之后，因此它
+        // 不可能是顶层集合，也不可能是顶层集合的上级路径
         return false;
     }
 
@@ -155,12 +176,15 @@ inline bool searchCollectionsArray(std::string_view uri,
         collectionSegments.end();
 
     // Each segment in the passed URI should match the found collection
+    // 传入 URI 中的每一段都应与找到的集合匹配
     for (const auto& segment : segments)
     {
         if (itCollection == endCollection)
         {
             // Leftover segments means the target is for an aggregation
             // supported resource
+            // 有剩余段意味着目标是受聚合支持的
+            // 资源
             return searchType == SearchType::Resource;
         }
 
@@ -172,6 +196,7 @@ inline bool searchCollectionsArray(std::string_view uri,
     }
 
     // No remaining segments means the passed URI was a top level collection
+    // 没有剩余段意味着传入的 URI 是一个顶层集合
     if (searchType == SearchType::Collection)
     {
         return itCollection == endCollection;
@@ -182,12 +207,16 @@ inline bool searchCollectionsArray(std::string_view uri,
     }
 
     // Return this check instead of "true" in case other SearchTypes get added
+    // 返回此检查结果而不是 "true"，以防将来添加其他 SearchType
     return searchType == SearchType::CollOrCon;
 }
 
 // Determines if the passed property contains a URI.  Those property names
 // either end with a case-insensitive version of "uri" or are specifically
 // defined in the above array.
+// 判断传入的属性是否包含 URI。这些属性名要么以
+// 大小写不敏感的 "uri" 结尾，要么在上面数组中
+// 专门定义。
 inline bool isPropertyUri(std::string_view propertyName)
 {
     if (propertyName.ends_with("uri") || propertyName.ends_with("Uri") ||
@@ -202,12 +231,16 @@ inline void addPrefixToStringItem(std::string& strValue,
                                   std::string_view prefix)
 {
     // Make sure the value is a properly formatted URI
+    // 确保该值是格式正确的 URI
     auto parsed = boost::urls::parse_relative_ref(strValue);
     if (!parsed)
     {
         // Note that DMTF URIs such as
         // https://redfish.dmtf.org/registries/Base.1.15.0.json will fail this
         // check and that's okay
+        // 注意，DMTF 的 URI（例如
+        // https://redfish.dmtf.org/registries/Base.1.15.0.json）无法通过此
+        // 检查，这是可以接受的
         BMCWEB_LOG_DEBUG("Couldn't parse URI from resource {}", strValue);
         return;
     }
@@ -218,6 +251,10 @@ inline void addPrefixToStringItem(std::string& strValue,
     // version mismatches between aggregator and satellite BMCs.  For now
     // assume that the aggregator has all the schemas and versions that the
     // aggregated server has.
+    // 由于聚合器与 satellite BMC 之间可能存在版本不匹配等问题，
+    // 我们不需要聚合 JsonSchemas。目前
+    // 假设聚合器拥有被聚合服务器所拥有的
+    // 所有 schema 和版本。
     if (crow::utility::readUrlSegments(thisUrl, "redfish", "v1", "JsonSchemas",
                                        crow::utility::OrMorePaths()))
     {
@@ -227,6 +264,8 @@ inline void addPrefixToStringItem(std::string& strValue,
 
     // The first two segments should be "/redfish/v1".  We need to check that
     // before we can search topCollections
+    // 前两段应为 "/redfish/v1"。在搜索 topCollections
+    // 之前需要先检查这一点
     if (!crow::utility::readUrlSegments(thisUrl, "redfish", "v1",
                                         crow::utility::OrMorePaths()))
     {
@@ -235,6 +274,8 @@ inline void addPrefixToStringItem(std::string& strValue,
 
     // Check array adding a segment each time until collection is identified
     // Add prefix to segment after the collection
+    // 遍历数组，每次添加一段，直到识别出集合
+    // 在集合之后的那一段上添加前缀
     const boost::urls::segments_view urlSegments = thisUrl.segments();
     bool addedPrefix = false;
     boost::urls::url url("/");
@@ -242,6 +283,7 @@ inline void addPrefixToStringItem(std::string& strValue,
     const boost::urls::segments_view::const_iterator end = urlSegments.end();
 
     // Skip past the leading "/redfish/v1"
+    // 跳过开头的 "/redfish/v1"
     it++;
     it++;
     for (; it != end; it++)
@@ -249,6 +291,9 @@ inline void addPrefixToStringItem(std::string& strValue,
         // Trailing "/" will result in an empty segment.  In that case we need
         // to return so we don't apply a prefix to top level collections such
         // as "/redfish/v1/Chassis/"
+        // 末尾的 "/" 会产生一个空段。此时需要
+        // 返回，以免给 "/redfish/v1/Chassis/" 这样的
+        // 顶层集合加上前缀
         if ((*it).empty())
         {
             return;
@@ -269,6 +314,7 @@ inline void addPrefixToStringItem(std::string& strValue,
     }
 
     // Finish constructing the URL here (if needed) to avoid additional checks
+    // 在此处完成 URL 的构造（如需要），以避免额外检查
     for (; it != end; it++)
     {
         url.segments().push_back(*it);
@@ -289,6 +335,9 @@ inline void addPrefixToItem(nlohmann::json& item, std::string_view prefix)
         // Values for properties like "InvalidURI" and "ResourceMissingAtURI"
         // from within the Base Registry are objects instead of strings and will
         // fall into this check
+        // Base Registry 中 "InvalidURI" 和 "ResourceMissingAtURI"
+        // 等属性的值是对象而非字符串，会落入
+        // 此检查分支
         BMCWEB_LOG_DEBUG("Field was not a string");
         return;
     }
@@ -323,13 +372,16 @@ inline void addAggregatedHeaders(crow::Response& asyncResp,
                             resp.getHeaderValue("Retry-After"));
     }
     // TODO: we need special handling for Link Header Value
+    // TODO: 需要对 Link Header 的值做特殊处理
 }
 
 // Fix HTTP headers which appear in responses from Task resources among others
+// 修复 Task 资源等响应中出现的 HTTP 头
 inline void addPrefixToHeadersInResp(nlohmann::json& json,
                                      std::string_view prefix)
 {
     // The passed in "HttpHeaders" should be an array of headers
+    // 传入的 "HttpHeaders" 应为头部组成的数组
     nlohmann::json::array_t* array = json.get_ptr<nlohmann::json::array_t*>();
     if (array == nullptr)
     {
@@ -340,6 +392,7 @@ inline void addPrefixToHeadersInResp(nlohmann::json& json,
     for (nlohmann::json& item : *array)
     {
         // Each header is a single string with the form "<Field>: <Value>"
+        // 每个头部是形如 "<Field>: <Value>" 的单个字符串
         std::string* strHeader = item.get_ptr<std::string*>();
         if (strHeader == nullptr)
         {
@@ -359,6 +412,8 @@ inline void addPrefixToHeadersInResp(nlohmann::json& json,
 
 // Search the json for all URIs and add the supplied prefix if the URI is for
 // an aggregated resource.
+// 在 json 中搜索所有 URI，若该 URI 指向被聚合的
+// 资源，则加上给定的前缀。
 inline void addPrefixes(nlohmann::json& json, std::string_view prefix)
 {
     nlohmann::json::object_t* object =
@@ -375,6 +430,8 @@ inline void addPrefixes(nlohmann::json& json, std::string_view prefix)
 
             // "HttpHeaders" contains HTTP headers.  Among those we need to
             // attempt to fix the "Location" header
+            // "HttpHeaders" 包含 HTTP 头。其中我们需要
+            // 尝试修复 "Location" 头
             if (item.first == "HttpHeaders")
             {
                 addPrefixToHeadersInResp(item.second, prefix);
@@ -382,6 +439,7 @@ inline void addPrefixes(nlohmann::json& json, std::string_view prefix)
             }
 
             // Recursively parse the rest of the json
+            // 递归解析 json 的其余部分
             addPrefixes(item.second, prefix);
         }
         return;
@@ -400,6 +458,8 @@ inline boost::system::error_code aggregationRetryHandler(unsigned int respCode)
 {
     // Allow all response codes because we want to surface any satellite
     // issue to the client
+    // 允许所有响应码，因为我们希望将 satellite 的任何
+    // 问题都呈现给客户端
     BMCWEB_LOG_DEBUG("Received {} response from satellite", respCode);
     return boost::system::errc::make_error_code(boost::system::errc::success);
 }
@@ -428,6 +488,8 @@ class RedfishAggregator
 
     // Dummy callback used by the Constructor so that it can report the number
     // of satellite configs when the class is first created
+    // 构造函数使用的占位回调，以便在类首次创建时
+    // 报告 satellite 配置的数量
     static void constructorCallback(
         const std::unordered_map<std::string, boost::urls::url>& satelliteInfo)
     {
@@ -437,6 +499,8 @@ class RedfishAggregator
 
     // Search D-Bus objects for satellite config objects and add their
     // information if valid
+    // 在 D-Bus 对象中搜索 satellite 配置对象，若有效则
+    // 添加其信息
     static void findSatelliteConfigs(
         const dbus::utility::ManagedObjectType& objects,
         std::unordered_map<std::string, boost::urls::url>& satelliteInfo)
@@ -468,6 +532,8 @@ class RedfishAggregator
 
     // Parse the properties of a satellite config object and add the
     // configuration if the properties are valid
+    // 解析 satellite 配置对象的属性，若属性有效则
+    // 添加该配置
     static void addSatelliteConfig(
         const dbus::utility::DBusPropertiesMap& properties,
         std::unordered_map<std::string, boost::urls::url>& satelliteInfo)
@@ -518,6 +584,8 @@ class RedfishAggregator
 
                 // For now assume authentication not required to communicate
                 // with the satellite BMC
+                // 目前假设与 satellite BMC 通信
+                // 不需要认证
                 if (*propVal != "None")
                 {
                     BMCWEB_LOG_ERROR(
@@ -547,6 +615,7 @@ class RedfishAggregator
         } // Finished reading properties
 
         // Make sure all required config information was made available
+        // 确保所有必需的配置信息都已提供
         if (url.host().empty())
         {
             BMCWEB_LOG_ERROR("Satellite config {} missing Host", prefix);
@@ -611,6 +680,7 @@ class RedfishAggregator
 
         std::error_code ec;
         // Create a filtered copy of the request
+        // 创建请求的过滤副本
         auto localReq =
             std::make_shared<crow::Request>(createNewRequest(thisReq));
         if (ec)
@@ -637,6 +707,13 @@ class RedfishAggregator
                 // that might return less than the complete collection by
                 // default, but hopefully those are rare/nonexistent in top
                 // collections.  bmcweb doesn't implement any of these.
+                // only 和 $skip 参数不能传递给 satellite，
+                // 因为对这两个过滤器应用两次会得到不同结果。
+                // 移除它们会使其只在聚合器中
+                // 处理。注意，对于默认可能返回不完整集合的
+                // 集合，这仍然不起作用，但希望顶层集合中
+                // 这种情况很少或不存在。bmcweb 未实现
+                // 其中任何一项。
                 if (param.key == "only" || param.key == "$skip")
                 {
                     BMCWEB_LOG_DEBUG(
@@ -647,10 +724,12 @@ class RedfishAggregator
                     continue;
                 }
                 // Pass all other parameters
+                // 传递所有其他参数
                 paramsIt++;
             }
         }
         // Filter headers to only allow Host and Content-Type
+        // 过滤头部，只允许 Host 和 Content-Type
         localReq->target(urlNew.buffer());
         getSatelliteConfigs(
             std::bind_front(aggregateAndHandle, aggType, localReq, asyncResp));
@@ -663,6 +742,7 @@ class RedfishAggregator
         std::string_view memberName)
     {
         // Determine if the resource ID begins with a known prefix
+        // 判断资源 ID 是否以已知前缀开头
         for (const auto& satellite : satelliteInfo)
         {
             std::string targetPrefix = satellite.first;
@@ -673,6 +753,8 @@ class RedfishAggregator
 
                 // Remove the known prefix from the request's URI and
                 // then forward to the associated satellite BMC
+                // 从请求的 URI 中去掉已知前缀，
+                // 然后转发给相应的 satellite BMC
                 getInstance().forwardRequest(req, asyncResp, satellite.first,
                                              satelliteInfo);
                 return;
@@ -680,12 +762,15 @@ class RedfishAggregator
         }
 
         // We didn't recognize the prefix and need to return a 404
+        // 无法识别该前缀，需要返回 404
         std::string nameStr = req.url().segments().back();
         messages::resourceNotFound(asyncResp->res, "", nameStr);
     }
 
     // Intended to handle an incoming request based on if Redfish Aggregation
     // is enabled.  Forwards request to satellite BMC if it exists.
+    // 用于根据 Redfish 聚合功能是否启用来处理传入请求。
+    // 若存在 satellite BMC，则将请求转发给它。
     static void aggregateAndHandle(
         AggregationType aggType,
         const std::shared_ptr<crow::Request>& sharedReq,
@@ -699,11 +784,16 @@ class RedfishAggregator
 
         // No satellite configs means we don't need to keep attempting to
         // aggregate
+        // 没有 satellite 配置意味着无需继续尝试
+        // 聚合
         if (satelliteInfo.empty())
         {
             // For collections or resources that can contain a subordinate
             // top level collection we'll also handle the request locally so we
             // don't need to write an error code
+            // 对于可能包含下级顶层集合的集合或资源，我们也会
+            // 在本地处理该请求，因此无需
+            // 写入错误码
             if (aggType == AggregationType::Resource)
             {
                 std::string nameStr = sharedReq->url().segments().back();
@@ -718,11 +808,15 @@ class RedfishAggregator
 
         // We previously determined the request is for a collection.  No need to
         // check again
+        // 此前已确定该请求针对的是集合，无需
+        // 再次检查
         if (aggType == AggregationType::Collection)
         {
             BMCWEB_LOG_DEBUG("Aggregating a collection");
             // We need to use a specific response handler and send the
             // request to all known satellites
+            // 我们需要使用特定的响应处理器，并将请求
+            // 发送给所有已知的 satellite
             getInstance().forwardCollectionRequests(thisReq, asyncResp,
                                                     satelliteInfo);
             return;
@@ -730,12 +824,16 @@ class RedfishAggregator
 
         // We previously determined the request may contain a subordinate
         // collection.  No need to check again
+        // 此前已确定该请求可能包含下级集合，无需
+        // 再次检查
         if (aggType == AggregationType::ContainsSubordinate)
         {
             BMCWEB_LOG_DEBUG(
                 "Aggregating what may have a subordinate collection");
             // We need to use a specific response handler and send the
             // request to all known satellites
+            // 我们需要使用特定的响应处理器，并将请求
+            // 发送给所有已知的 satellite
             getInstance().forwardContainsSubordinateRequests(thisReq, asyncResp,
                                                              satelliteInfo);
             return;
@@ -747,6 +845,7 @@ class RedfishAggregator
         boost::urls::segments_view::const_iterator end = urlSegments.end();
 
         // Skip past the leading "/redfish/v1"
+        // 跳过开头的 "/redfish/v1"
         it++;
         it++;
         for (; it != end; it++)
@@ -756,6 +855,8 @@ class RedfishAggregator
             {
                 // We've matched a resource collection so this current segment
                 // must contain an aggregation prefix
+                // 我们已匹配到一个资源集合，因此当前这一段
+                // 必定包含聚合前缀
                 findSatellite(thisReq, asyncResp, satelliteInfo, *it);
                 return;
             }
@@ -765,11 +866,15 @@ class RedfishAggregator
 
         // We shouldn't reach this point since we should've hit one of the
         // previous exits
+        // 我们不应执行到这里，因为此前应该已经
+        // 从某个出口返回了
         messages::internalError(asyncResp->res);
     }
 
     // Attempt to forward a request to the satellite BMC associated with the
     // prefix.
+    // 尝试将请求转发给与该前缀关联的
+    // satellite BMC。
     void forwardRequest(
         const crow::Request& thisReq,
         const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -781,17 +886,21 @@ class RedfishAggregator
         {
             // Realistically this shouldn't get called since we perform an
             // earlier check to make sure the prefix exists
+            // 实际上不应调用到这里，因为我们之前已检查
+            // 以确保前缀存在
             BMCWEB_LOG_ERROR("Unrecognized satellite prefix \"{}\"", prefix);
             return;
         }
 
         // We need to strip the prefix from the request's path
+        // 我们需要从请求路径中去掉前缀
         boost::urls::url targetURI(thisReq.target());
         std::string path = thisReq.url().path();
         size_t pos = path.find(prefix + "_");
         if (pos == std::string::npos)
         {
             // If this fails then something went wrong
+            // 如果失败，则说明出了问题
             BMCWEB_LOG_ERROR("Error removing prefix \"{}_\" from request URI",
                              prefix);
             messages::internalError(asyncResp->res);
@@ -811,6 +920,7 @@ class RedfishAggregator
         }
 
         // Prepare request headers
+        // 准备请求头
         boost::beast::http::fields requestFields =
             prepareAggregationHeaders(thisReq.fields(), prefix);
 
@@ -820,6 +930,7 @@ class RedfishAggregator
     }
 
     // Forward a request for a collection URI to each known satellite BMC
+    // 将集合 URI 的请求转发给每个已知的 satellite BMC
     void forwardCollectionRequests(
         const crow::Request& thisReq,
         const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -839,6 +950,7 @@ class RedfishAggregator
             std::string data = thisReq.body();
 
             // Prepare request headers
+            // 准备请求头
             boost::beast::http::fields requestFields =
                 prepareAggregationHeaders(thisReq.fields(), sat.first);
 
@@ -850,6 +962,8 @@ class RedfishAggregator
 
     // Forward request for a URI that is uptree of a top level collection to
     // each known satellite BMC
+    // 将针对顶层集合上级路径 URI 的请求转发给
+    // 每个已知的 satellite BMC
     void forwardContainsSubordinateRequests(
         const crow::Request& thisReq,
         const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -864,12 +978,17 @@ class RedfishAggregator
             // is not already supported by the aggregating BMC
             // TODO: Improve the processing so that we don't have to strip query
             // params in this specific case
+            // 如果聚合 BMC 尚不支持某个被展开的资源，
+            // 则会忽略响应中的该资源
+            // TODO: 改进处理逻辑，以便在此特定情况下
+            // 无需去掉查询参数
             boost::urls::url url(sat.second);
             url.set_path(thisReq.url().path());
 
             std::string data = thisReq.body();
 
             // Prepare request headers
+            // 准备请求头
             boost::beast::http::fields requestFields =
                 prepareAggregationHeaders(thisReq.fields(), sat.first);
 
@@ -899,9 +1018,11 @@ class RedfishAggregator
     }
 
     // Aggregation sources with their URLs and optional credentials
+    // 聚合源及其 URL 和可选凭据
     std::unordered_map<std::string, AggregationSource> aggregationSources;
 
     // Helper function to prepare headers for aggregated satellite BMC requests
+    // 为发往 satellite BMC 的聚合请求准备头部的辅助函数
     boost::beast::http::fields prepareAggregationHeaders(
         const boost::beast::http::fields& originalFields,
         const std::string& prefix) const
@@ -909,14 +1030,17 @@ class RedfishAggregator
         boost::beast::http::fields fields = originalFields;
 
         // POST AggregationService can only parse JSON
+        // POST AggregationService 只能解析 JSON
         fields.set(boost::beast::http::field::accept, "application/json");
 
         // Add authentication if credentials exist for this prefix
+        // 如果该前缀存在凭据，则添加认证信息
         auto it = aggregationSources.find(prefix);
         if (it != aggregationSources.end())
         {
             const auto& source = it->second;
             // Only add auth header if both username and password are provided
+            // 仅在同时提供用户名和密码时才添加认证头
             if (!source.username.empty() && !source.password.empty())
             {
                 std::string authHeader = crow::utility::createBasicAuthHeader(
@@ -930,6 +1054,8 @@ class RedfishAggregator
 
     // Polls D-Bus to get all available satellite config information
     // Expects a handler which interacts with the returned configs
+    // 轮询 D-Bus 以获取所有可用的 satellite 配置信息
+    // 需要一个与返回的配置进行交互的处理器
     void getSatelliteConfigs(
         std::function<
             void(const std::unordered_map<std::string, boost::urls::url>&)>
@@ -938,6 +1064,7 @@ class RedfishAggregator
         BMCWEB_LOG_DEBUG("Gathering satellite configs");
 
         // Extract just the URLs from aggregationSources for the handler
+        // 从 aggregationSources 中仅为处理器提取 URL
         std::unordered_map<std::string, boost::urls::url> satelliteInfo;
         for (const auto& [prefix, source] : aggregationSources)
         {
@@ -961,6 +1088,9 @@ class RedfishAggregator
                     // Maps a chosen alias representing a satellite BMC to a url
                     // containing the information required to create a http
                     // connection to the satellite
+                    // 将表示某个 satellite BMC 的选定别名映射到一个 url，
+                    // 该 url 包含创建到该 satellite 的 http
+                    // 连接所需的信息
                     findSatelliteConfigs(objects, satelliteInfo);
 
                     if (!satelliteInfo.empty())
@@ -981,6 +1111,8 @@ class RedfishAggregator
 
     // Processes the response returned by a satellite BMC and loads its
     // contents into asyncResp
+    // 处理 satellite BMC 返回的响应，并将其内容
+    // 加载到 asyncResp 中
     static void processResponse(
         std::string_view prefix,
         const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -988,6 +1120,8 @@ class RedfishAggregator
     {
         // 429 and 502 mean we didn't actually send the request so don't
         // overwrite the response headers in that case
+        // 429 和 502 表示请求实际上并未发出，因此这种情况下
+        // 不要覆盖响应头
         if ((resp.result() == boost::beast::http::status::too_many_requests) ||
             (resp.result() == boost::beast::http::status::bad_gateway))
         {
@@ -998,6 +1132,9 @@ class RedfishAggregator
         // We want to attempt prefix fixing regardless of response code
         // The resp will not have a json component
         // We need to create a json from resp's stringResponse
+        // 无论响应码如何，我们都要尝试修复前缀
+        // resp 不包含 json 部分
+        // 需要从 resp 的 stringResponse 创建 json
         if (isJsonContentType(resp.getHeaderValue("Content-Type")))
         {
             std::optional<nlohmann::json> jsonVal =
@@ -1023,6 +1160,7 @@ class RedfishAggregator
         else
         {
             // We allow any Content-Type that is not "application/json" now
+            // 现在允许任何非 "application/json" 的 Content-Type
             asyncResp->res.result(resp.result());
             asyncResp->res.copyBody(resp);
         }
@@ -1031,6 +1169,8 @@ class RedfishAggregator
 
     // Processes the collection response returned by a satellite BMC and merges
     // its "@odata.id" values
+    // 处理 satellite BMC 返回的集合响应，并合并其
+    // "@odata.id" 值
     static void processCollectionResponse(
         const std::string& prefix,
         const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -1038,6 +1178,8 @@ class RedfishAggregator
     {
         // 429 and 502 mean we didn't actually send the request so don't
         // overwrite the response headers in that case
+        // 429 和 502 表示请求实际上并未发出，因此这种情况下
+        // 不要覆盖响应头
         if ((resp.result() == boost::beast::http::status::too_many_requests) ||
             (resp.result() == boost::beast::http::status::bad_gateway))
         {
@@ -1050,6 +1192,7 @@ class RedfishAggregator
                 "Collection resource does not exist in satellite BMC \"{}\"",
                 prefix);
             // Return the error if we haven't had any successes
+            // 如果没有任何成功，则返回错误
             if (asyncResp->res.resultInt() != 200)
             {
                 asyncResp->res.result(resp.result());
@@ -1060,6 +1203,8 @@ class RedfishAggregator
 
         // The resp will not have a json component
         // We need to create a json from resp's stringResponse
+        // resp 不包含 json 部分
+        // 需要从 resp 的 stringResponse 创建 json
         if (isJsonContentType(resp.getHeaderValue("Content-Type")))
         {
             std::optional<nlohmann::json> jsonVal =
@@ -1069,6 +1214,7 @@ class RedfishAggregator
                 BMCWEB_LOG_ERROR("Error parsing satellite response as JSON");
 
                 // Notify the user if doing so won't overwrite a valid response
+                // 如果这样做不会覆盖有效响应，则通知用户
                 if (asyncResp->res.resultInt() != 200)
                 {
                     messages::operationFailed(asyncResp->res);
@@ -1080,6 +1226,8 @@ class RedfishAggregator
 
             // Now we need to add the prefix to the URIs contained in the
             // response.
+            // 现在需要给响应中包含的 URI
+            // 加上前缀。
             addPrefixes(*jsonVal, prefix);
 
             BMCWEB_LOG_DEBUG("Added prefix to parsed satellite response");
@@ -1088,10 +1236,16 @@ class RedfishAggregator
             // and has not already been added from processing the response from
             // a different satellite then we need to completely overwrite
             // asyncResp
+            // 如果聚合 bmc 上不存在该资源集合，
+            // 且尚未通过处理来自其他 satellite 的响应
+            // 将其加入，则需要完全覆盖
+            // asyncResp
             if (asyncResp->res.resultInt() != 200)
             {
                 // We only want to aggregate collections that contain a
                 // "Members" array
+                // 我们只想聚合包含
+                // "Members" 数组的集合
                 nlohmann::json::iterator membersIt = jsonVal->find("Members");
                 if (membersIt == jsonVal->end() || !membersIt->is_array())
                 {
@@ -1112,6 +1266,8 @@ class RedfishAggregator
             {
                 // We only want to aggregate collections that contain a
                 // "Members" array
+                // 我们只想聚合包含
+                // "Members" 数组的集合
                 nlohmann::json::iterator membersIt =
                     asyncResp->res.jsonValue.find("Members");
                 if (membersIt == asyncResp->res.jsonValue.end() ||
@@ -1133,6 +1289,13 @@ class RedfishAggregator
                 // This is presumably not a concern when there is only a single
                 // satellite since the aggregating bmc should have completed
                 // before the response is received from the satellite.
+                // TODO: 多个卫星 BMC 与聚合 BMC 同时尝试写入
+                // 更新此数组时，可能存在竞态条件。
+                // 可能需要在本函数末尾将调用级联到
+                // 下一个卫星 BMC。
+                // 当只有一个卫星时这应该不成问题，
+                // 因为在收到卫星的响应之前，聚合 BMC
+                // 应该已经完成了处理。
 
                 nlohmann::json::array_t& members =
                     collection_util::getJsonArray(asyncResp->res.jsonValue,
@@ -1163,6 +1326,10 @@ class RedfishAggregator
             // Notify the user only if we did not receive any valid responses
             // and if the resource collection does not already exist on the
             // aggregating BMC
+            // 我们收到的响应不是 JSON。
+            // 仅当未收到任何有效响应，且聚合 BMC 上
+            // 尚不存在该资源集合时，
+            // 才向用户通知。
             if (asyncResp->res.resultInt() != 200)
             {
                 messages::operationFailed(asyncResp->res);
@@ -1173,6 +1340,9 @@ class RedfishAggregator
     // Processes the response returned by a satellite BMC and merges any
     // properties whose "@odata.id" value is the URI or either a top level
     // collection or is uptree from a top level collection
+    // 处理卫星 BMC 返回的响应，并合并那些
+    // "@odata.id" 值是顶层集合的 URI，或位于顶层集合上层
+    // 路径的属性。
     static void processContainsSubordinateResponse(
         const std::string& prefix,
         const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -1180,6 +1350,8 @@ class RedfishAggregator
     {
         // 429 and 502 mean we didn't actually send the request so don't
         // overwrite the response headers in that case
+        // 429 和 502 表示请求实际上并未发出，
+        // 因此这种情况下不要覆盖响应头。
         if ((resp.result() == boost::beast::http::status::too_many_requests) ||
             (resp.result() == boost::beast::http::status::bad_gateway))
         {
@@ -1192,6 +1364,7 @@ class RedfishAggregator
                 "Resource uptree from Collection does not exist in satellite BMC \"{}\"",
                 prefix);
             // Return the error if we haven't had any successes
+            // 如果此前一次都没有成功，则返回错误。
             if (asyncResp->res.resultInt() != 200)
             {
                 asyncResp->res.result(resp.result());
@@ -1202,6 +1375,8 @@ class RedfishAggregator
 
         // The resp will not have a json component
         // We need to create a json from resp's stringResponse
+        // resp 中不会有 JSON 部分，
+        // 我们需要从 resp 的 stringResponse 创建 JSON。
         if (isJsonContentType(resp.getHeaderValue("Content-Type")))
         {
             bool addedLinks = false;
@@ -1212,6 +1387,7 @@ class RedfishAggregator
                 BMCWEB_LOG_ERROR("Error parsing satellite response as JSON");
 
                 // Notify the user if doing so won't overwrite a valid response
+                // 如果这样做不会覆盖有效响应，则通知用户。
                 if (asyncResp->res.resultInt() != 200)
                 {
                     messages::operationFailed(asyncResp->res);
@@ -1225,6 +1401,11 @@ class RedfishAggregator
             // Valid properties will be of the form <property>.@odata.id and
             // @odata.id is a <URI>.  In other words, the json should contain
             // multiple properties such that
+            // {"<property>":{"@odata.id": "<URI>"}}
+            // 解析响应，并添加 AsyncResp 中缺失的属性。
+            // 有效属性的形式为 <property>.@odata.id，且
+            // @odata.id 是一个 <URI>。换句话说，JSON 应包含
+            // 多个属性，形如
             // {"<property>":{"@odata.id": "<URI>"}}
             nlohmann::json::object_t* object =
                 jsonVal->get_ptr<nlohmann::json::object_t*>();
@@ -1257,6 +1438,7 @@ class RedfishAggregator
                 if (!asyncResp->res.jsonValue.contains(prop.first))
                 {
                     // Only add the property if it did not already exist
+                    // 仅当该属性尚不存在时才添加。
                     BMCWEB_LOG_DEBUG("Adding link for {} from BMC {}",
                                      *strValue, prefix);
                     asyncResp->res.jsonValue[prop.first]["@odata.id"] =
@@ -1269,11 +1451,18 @@ class RedfishAggregator
             // then we need to make sure the response contains the bare minimum
             // amount of additional information that we'd expect to have been
             // populated.
+            // 如果我们向先前不成功（非 200）的响应添加了链接，
+            // 那么需要确保该响应包含最少量的、
+            // 我们本应期望已被填充的
+            // 附加信息。
             if (addedLinks && (asyncResp->res.resultInt() != 200))
             {
                 // This resource didn't locally exist or an error
                 // occurred while generating the response.  Remove any
                 // error messages and update the error code.
+                // 该资源在本地不存在，或生成响应时
+                // 发生了错误。移除所有错误信息，
+                // 并更新错误码。
                 asyncResp->res.jsonValue.erase(
                     asyncResp->res.jsonValue.find("error"));
                 asyncResp->res.result(resp.result());
@@ -1307,6 +1496,9 @@ class RedfishAggregator
             // We received as response that was not a json
             // Notify the user only if we did not receive any valid responses,
             // and if the resource does not already exist on the aggregating BMC
+            // 我们收到的响应不是 JSON。
+            // 仅当未收到任何有效响应，且聚合 BMC 上
+            // 尚不存在该资源时，才通知用户。
             if (asyncResp->res.resultInt() != 200)
             {
                 messages::operationFailed(asyncResp->res);
@@ -1317,6 +1509,9 @@ class RedfishAggregator
     // Entry point to Redfish Aggregation
     // Returns Result stating whether or not we still need to locally handle the
     // request
+    // Redfish 聚合的入口。
+    // 返回 Result，说明我们是否仍需要在本地处理该
+    // 请求。
     Result beginAggregation(const crow::Request& thisReq,
                             const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
     {
@@ -1328,6 +1523,10 @@ class RedfishAggregator
         // as version mismatches between aggregator and satellite BMCs.  For
         // now assume that the aggregator has all the schemas and versions that
         // the aggregated server has.
+        // 我们不需要聚合 JsonSchemas，因为可能存在聚合 BMC 与
+        // 卫星 BMC 之间版本不匹配等问题。
+        // 目前假设聚合器拥有被聚合服务器所具备的
+        // 所有 schema 和版本。
         if (crow::utility::readUrlSegments(url, "redfish", "v1", "JsonSchemas",
                                            crow::utility::OrMorePaths()))
         {
@@ -1336,6 +1535,8 @@ class RedfishAggregator
 
         // The first two segments should be "/redfish/v1".  We need to check
         // that before we can search topCollections
+        // 前两个路径段应为 "/redfish/v1"。在搜索 topCollections 之前
+        // 需要先检查这一点。
         if (!crow::utility::readUrlSegments(url, "redfish", "v1",
                                             crow::utility::OrMorePaths()))
         {
@@ -1346,12 +1547,17 @@ class RedfishAggregator
         // such as:
         // /redfish/v1/Chassis
         // /redfish/v1/UpdateService/FirmwareInventory
+        // 解析 URI，查看它是否以已知的顶层集合开头，
+        // 例如：
+        // /redfish/v1/Chassis
+        // /redfish/v1/UpdateService/FirmwareInventory
         const boost::urls::segments_view urlSegments = url.segments();
         boost::urls::url currentUrl("/");
         boost::urls::segments_view::const_iterator it = urlSegments.begin();
         boost::urls::segments_view::const_iterator end = urlSegments.end();
 
         // Skip past the leading "/redfish/v1"
+        // 跳过开头的 "/redfish/v1"。
         it++;
         it++;
         for (; it != end; it++)
@@ -1362,6 +1568,8 @@ class RedfishAggregator
             {
                 // We've matched a resource collection so this current segment
                 // might contain an aggregation prefix
+                // 我们已经匹配到一个资源集合，因此当前路径段
+                // 可能包含聚合前缀。
                 if (segmentHasPrefix(collectionItem))
                 {
                     BMCWEB_LOG_DEBUG("Need to forward a request");
@@ -1369,6 +1577,9 @@ class RedfishAggregator
                     // Extract the prefix from the request's URI, retrieve the
                     // associated satellite config information, and then forward
                     // the request to that satellite.
+                    // 从请求的 URI 中提取前缀，获取对应的
+                    // 卫星配置信息，然后将请求转发
+                    // 给该卫星。
                     startAggregation(AggregationType::Resource, thisReq,
                                      asyncResp);
                     return Result::NoLocalHandle;
@@ -1376,6 +1587,8 @@ class RedfishAggregator
 
                 // Handle collection URI with a trailing backslash
                 // e.g. /redfish/v1/Chassis/
+                // 处理以反斜杠结尾的集合 URI，
+                // 例如 /redfish/v1/Chassis/。
                 it++;
                 if ((it == end) && collectionItem.empty())
                 {
@@ -1386,6 +1599,9 @@ class RedfishAggregator
                 // We didn't recognize the prefix or it's a collection with a
                 // trailing "/".  In both cases we still want to locally handle
                 // the request
+                // 我们无法识别该前缀，或这是一个以 "/" 结尾的集合。
+                // 这两种情况下，我们仍然希望在本地
+                // 处理该请求。
                 return Result::LocalHandle;
             }
 
@@ -1394,6 +1610,8 @@ class RedfishAggregator
 
         // If we made it here then currentUrl could contain a top level
         // collection URI without a trailing "/", e.g. /redfish/v1/Chassis
+        // 如果执行到这里，currentUrl 可能包含不带结尾 "/" 的
+        // 顶层集合 URI，例如 /redfish/v1/Chassis。
         if (std::ranges::binary_search(topCollections,
                                        std::string_view(currentUrl.buffer())))
         {
@@ -1403,6 +1621,8 @@ class RedfishAggregator
 
         // If nothing else then the request could be for a resource which has a
         // top level collection as a subordinate
+        // 如果都不是，则该请求可能是针对某个以顶层集合为
+        // 下级（subordinate）的资源。
         if (searchCollectionsArray(url.path(), SearchType::ContainsSubordinate))
         {
             startAggregation(AggregationType::ContainsSubordinate, thisReq,
@@ -1416,17 +1636,23 @@ class RedfishAggregator
 
     // Check if the given URL segment matches with any satellite prefix
     // Assumes the given segment starts with <prefix>_
+    // 检查给定的 URL 路径段是否匹配某个卫星前缀。
+    // 假设该路径段以 <prefix>_ 开头。
     bool segmentHasPrefix(const std::string& urlSegment) const
     {
         // TODO: handle this better
         // For now 5B247A_ won't be in the aggregationSources map so
         // check explicitly for now
+        // TODO: 需要更好地处理这种情况。
+        // 目前 5B247A_ 不在 aggregationSources 映射中，
+        // 所以先做显式检查。
         if (urlSegment.starts_with("5B247A_"))
         {
             return true;
         }
 
         // Find the first underscore
+        // 查找第一个下划线。
         std::size_t underscorePos = urlSegment.find('_');
         if (underscorePos == std::string::npos)
         {
@@ -1434,9 +1660,11 @@ class RedfishAggregator
         }
 
         // Extract the prefix
+        // 提取前缀。
         std::string prefix = urlSegment.substr(0, underscorePos);
 
         // Check if this prefix exists
+        // 检查该前缀是否存在。
         return aggregationSources.contains(prefix);
     }
 };

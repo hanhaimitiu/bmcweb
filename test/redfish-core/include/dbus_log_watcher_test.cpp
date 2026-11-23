@@ -24,6 +24,8 @@ TEST(DBusLogWatcher, EventLogObjectFromDBusSuccess)
 
         // use 'Message' for MessageId as per the design
         // https://github.com/openbmc/docs/blob/d886ce89fe66c128b3ab492e530ad48fa0c1b4eb/designs/event-logging.md?plain=1#L448
+        // 按照设计，MessageId 使用 'Message'
+        // https://github.com/openbmc/docs/blob/d886ce89fe66c128b3ab492e530ad48fa0c1b4eb/designs/event-logging.md?plain=1#L448
         {"Message", DbusVariantType("OpenBMC.0.1.PowerButtonPressed")},
         {"Resolution", DbusVariantType("")},
         {"Resolved", DbusVariantType(true)},
@@ -48,12 +50,14 @@ TEST(DBusLogWatcher, EventLogObjectFromDBusSuccess)
     EXPECT_EQ(event.messageId, "OpenBMC.0.1.PowerButtonPressed");
 
     // dbus event subscriptions currently do not support message args
+    // dbus 事件订阅目前不支持 message args
     EXPECT_TRUE(event.messageArgs.empty());
 }
 
 TEST(DBusLogWatcher, EventLogObjectFromDBusFailMissingProperty)
 {
     // missing 'Resolved'
+    // 缺少 'Resolved'
     const DBusPropertiesMap propMapWrong = {
         {"AdditionalData",
          DbusVariantType(std::vector<std::string>{"KEY=VALUE"})},

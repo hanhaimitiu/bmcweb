@@ -36,10 +36,12 @@ namespace redfish
 namespace sw_util
 {
 /* @brief String that indicates a bios software instance */
+/* @brief 表示 BIOS 软件实例的字符串 */
 constexpr const char* biosPurpose =
     "xyz.openbmc_project.Software.Version.VersionPurpose.Host";
 
 /* @brief String that indicates a BMC software instance */
+/* @brief 表示 BMC 软件实例的字符串 */
 constexpr const char* bmcPurpose =
     "xyz.openbmc_project.Software.Version.VersionPurpose.BMC";
 
@@ -94,6 +96,11 @@ inline void afterGetProperties(
         // the call to mapper and here. Just leave
         // these properties off if resource not
         // found.
+        // 曾遇到在代码更新期间，代码更新应用在调用 mapper
+        // 与此处之间删除 D-Bus 对象的情况。
+        // 若找不到资源，
+        // 就直接略过
+        // 这些属性。
         if (ec.value() != EBADR)
         {
             BMCWEB_LOG_ERROR("error_code = {}", ec);
@@ -102,6 +109,11 @@ inline void afterGetProperties(
         return;
     }
     // example propertiesList
+    // a{sv} 2 "Version" s
+    // "IBM-witherspoon-OP9-v2.0.10-2.22" "Purpose"
+    // s
+    // "xyz.openbmc_project.Software.Version.VersionPurpose.Host"
+    // 示例 propertiesList：
     // a{sv} 2 "Version" s
     // "IBM-witherspoon-OP9-v2.0.10-2.22" "Purpose"
     // s
@@ -127,6 +139,7 @@ inline void afterGetProperties(
     if (swInvPurpose == nullptr || *swInvPurpose != swVersionPurpose)
     {
         // Not purpose we're looking for
+        // 不是我们要找的 purpose（用途）
         return;
     }
 
@@ -141,6 +154,9 @@ inline void afterGetProperties(
         // Firmware images are at
         // /redfish/v1/UpdateService/FirmwareInventory/<Id>
         // e.g. .../FirmwareInventory/82d3ec86
+        // 固件镜像位于
+        // /redfish/v1/UpdateService/FirmwareInventory/<Id>
+        // 例如 .../FirmwareInventory/82d3ec86
         nlohmann::json::object_t member;
         member["@odata.id"] = boost::urls::format(
             "/redfish/v1/UpdateService/FirmwareInventory/{}", swId);
@@ -154,6 +170,7 @@ inline void afterGetProperties(
             runningMember["@odata.id"] = boost::urls::format(
                 "/redfish/v1/UpdateService/FirmwareInventory/{}", swId);
             // Create the link to the running image
+            // 创建指向正在运行的镜像的链接
             asyncResp->res.jsonValue["Links"]["ActiveSoftwareImage"] =
                 std::move(runningMember);
         }
@@ -209,6 +226,10 @@ inline void afterGetSubtree(
         // /xyz/openbmc_project/software/functional
         // to determine if this is
         // a running image
+        // 通过查看
+        // /xyz/openbmc_project/software/functional 中的 Id
+        // 来判断这是否是
+        // 一个正在运行的镜像
         if (std::ranges::find(functionalSwIds, swId) != functionalSwIds.end())
         {
             runningImage = true;
@@ -216,6 +237,8 @@ inline void afterGetSubtree(
 
         // Now grab its version
         // info
+        // 接下来获取它的版本
+        // 信息
         dbus::utility::getAllProperties(
             *crow::connections::systemBus, obj.second[0].first, obj.first,
             "xyz.openbmc_project.Software.Version",
@@ -242,6 +265,7 @@ inline void afterAssociatedEndpoints(
     {
         BMCWEB_LOG_DEBUG("error_code = {}", ec);
         // No functional software for this swVersionPurpose, so just
+        // 该 swVersionPurpose 没有可用的功能性软件，因此直接
         return;
     }
 
@@ -249,6 +273,8 @@ inline void afterAssociatedEndpoints(
     {
         // Could keep going and try to populate SoftwareImages
         // but something is seriously wrong, so just fail
+        // 本可以继续尝试填充 SoftwareImages，
+        // 但出现了严重错误，因此直接失败返回。
         BMCWEB_LOG_ERROR("Zero functional software in system");
         messages::internalError(asyncResp->res);
         return;
@@ -256,6 +282,9 @@ inline void afterAssociatedEndpoints(
 
     std::vector<std::string> functionalSwIds;
     // example functionalSw:
+    // v as 2 "/xyz/openbmc_project/software/ace821ef"
+    //        "/xyz/openbmc_project/software/230fb078"
+    // 示例 functionalSw：
     // v as 2 "/xyz/openbmc_project/software/ace821ef"
     //        "/xyz/openbmc_project/software/230fb078"
     for (const auto& sw : functionalSw)
@@ -297,6 +326,15 @@ inline void afterAssociatedEndpoints(
  *
  * @return void
  */
+/* @brief 填充正在运行的软件版本及镜像链接
+ * @param[i,o] asyncResp             异步响应对象
+ * @param[i]   swVersionPurpose  指示要查找的目标
+ * @param[i]   activeVersionPropName  asyncResp->res.jsonValue 中用于写入
+ * 正在运行的软件版本的索引
+ * @param[i]   populateLinkToImages  用指向正在运行的软件镜像的链接填充
+ * asyncResp->res 的 "Links" 中的 "ActiveSoftwareImage"，
+ * "SoftwareImages" 中用指向其所有软件镜像的链接填充
+ * @return void */
 inline void populateSoftwareInformation(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& swVersionPurpose,
@@ -310,6 +348,7 @@ inline void populateSoftwareInformation(
         return;
     }
     // Used later to determine running (known on Redfish as active) Sw images
+    // 后续用于判断哪些 Sw 镜像正在运行（Redfish 中称为 active）
     dbus::utility::getAssociationEndPoints(
         swPath.value().str,
         [asyncResp, swVersionPurpose, activeVersionPropName,
@@ -331,6 +370,10 @@ inline void populateSoftwareInformation(
  *
  * @return The corresponding Redfish state
  */
+/* @brief 将输入的 swState 转换为 Redfish 状态
+ * 本函数返回对应的 Redfish 状态。
+ * @param[i]   swState  OpenBMC 软件状态
+ * @return 对应的 Redfish 状态 */
 inline resource::State getRedfishSwState(const std::string& swState)
 {
     if (swState == "xyz.openbmc_project.Software.Activation.Activations.Active")
@@ -360,6 +403,10 @@ inline resource::State getRedfishSwState(const std::string& swState)
  *
  * @return The corresponding Redfish health state
  */
+/* @brief 将输入的 swState 转换为 Redfish 健康状态
+ * 本函数返回对应的 Redfish 健康状态。
+ * @param[i]   swState  OpenBMC 软件状态
+ * @return 对应的 Redfish 健康状态 */
 inline resource::Health getRedfishSwHealth(const std::string& swState)
 {
     if ((swState ==
@@ -382,6 +429,7 @@ inline void afterGetSwMinimumVersion(
     if (ec)
     {
         // not all software has this interface and it is not critical
+        // 并非所有软件都有该接口，且此接口并非关键
         return;
     }
 
@@ -403,6 +451,13 @@ inline void afterGetSwMinimumVersion(
  *
  * @return void
  */
+/* @brief 将输入 swId 的 LowestSupportedVersion 写入 json 响应
+ * 本函数将输入软件 id 从 D-Bus 获取的 MinimumVersion
+ * 写入 ["LowestSupportedVersion"]。
+ * @param[i,o] asyncResp    异步响应对象
+ * @param[i] swId 要获取最低版本的软件 ID
+ * @param[i]   dbusSvc  实现该软件对象的 dbus 服务
+ * @return void */
 inline void getSwMinimumVersion(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::shared_ptr<std::string>& swId, const std::string& dbusSvc)
@@ -425,6 +480,7 @@ inline void afterGetSwStatus(
     if (ec)
     {
         // not all swtypes are updateable, this is ok
+        // 并非所有 swtype 都可更新，这是正常的
         asyncResp->res.jsonValue["Status"]["State"] = resource::State::Enabled;
         return;
     }
@@ -466,6 +522,13 @@ inline void afterGetSwStatus(
  *
  * @return void
  */
+/* @brief 将输入 swId 的状态写入 json 响应
+ * 本函数将输入软件 id 对应的 Redfish 状态写入 json 响应的
+ * ["Status"]["State"] 中。
+ * @param[i,o] asyncResp    异步响应对象
+ * @param[i]   swId     要获取状态的软件 ID
+ * @param[i]   dbusSvc  实现该软件对象的 dbus 服务
+ * @return void */
 inline void getSwStatus(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                         const std::shared_ptr<std::string>& swId,
                         const std::string& dbusSvc)
@@ -489,6 +552,8 @@ inline void handleUpdateableEndpoints(
         BMCWEB_LOG_DEBUG(" error_code = {} error msg =  {}", ec, ec.message());
         // System can exist with no updateable software,
         // so don't throw error here.
+        // 系统中可以没有可更新的软件，
+        // 因此此处不要抛出错误。
         return;
     }
     sdbusplus::object_path reqSwObjPath("/xyz/openbmc_project/software");
@@ -511,6 +576,8 @@ inline void handleUpdateableObject(
         BMCWEB_LOG_DEBUG(" error_code = {} error msg =  {}", ec, ec.message());
         // System can exist with no updateable software,
         // so don't throw error here.
+        // 系统中可以没有可更新的软件，
+        // 因此此处不要抛出错误。
         return;
     }
     if (objectInfo.empty())
@@ -518,6 +585,8 @@ inline void handleUpdateableObject(
         BMCWEB_LOG_DEBUG("No updateable software found");
         // System can exist with no updateable software,
         // so don't throw error here.
+        // 系统中可以没有可更新的软件，
+        // 因此此处不要抛出错误。
         return;
     }
     asyncResp->res.jsonValue["Updateable"] = true;
@@ -533,6 +602,12 @@ inline void handleUpdateableObject(
  * @param[i,o] asyncResp  Async response object
  * @param[i]   swId       The software ID
  */
+/* @brief 将输入 swId 的可编程状态更新到 json 响应中
+ * 本函数检查软件清单组件是否可编程，
+ * 并填充 "Updatable"
+ * 属性。
+ * @param[i,o] asyncResp  异步响应对象
+ * @param[i]   swId       软件 ID */
 inline void getSwUpdatableStatus(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::shared_ptr<std::string>& swId)

@@ -67,6 +67,7 @@ class ConnectionImpl : public Connection
         errorHandler(std::move(errorHandlerIn)), session(sessionIn)
     {
         /* Turn on the timeouts on websocket stream to server role */
+        /* 为 websocket 流开启 server 角色的超时设置 */
         ws.set_option(boost::beast::websocket::stream_base::timeout::suggested(
             boost::beast::role_type::server));
         BMCWEB_LOG_DEBUG("Creating new connection {}", logPtr(this));
@@ -88,6 +89,7 @@ class ConnectionImpl : public Connection
                     if (session != nullptr)
                     {
                         // use protocol for csrf checking
+                        // 使用 protocol 进行 csrf 检查
                         if (session->cookieAuth &&
                             !bmcweb::constantTimeStringCompare(
                                 protocolHeader, session->csrfToken))
@@ -116,10 +118,12 @@ class ConnectionImpl : public Connection
             }));
 
         // Make a pointer to keep the req alive while we accept it.
+        // 创建一个指针，在 accept 期间保持 req 存活。
         using Body = boost::beast::http::request<bmcweb::HttpBody>;
         std::unique_ptr<Body> mobile = std::make_unique<Body>(req.req);
         Body* ptr = mobile.get();
         // Perform the websocket upgrade
+        // 执行 websocket 升级
         ws.async_accept(*ptr,
                         std::bind_front(&self_t::acceptDone, this,
                                         shared_from_this(), std::move(mobile)));
@@ -157,6 +161,8 @@ class ConnectionImpl : public Connection
 
                            // Call the done handler regardless of whether we
                            // errored, but before we close things out
+                           // 无论是否出错都要调用 done handler，
+                           // 但要在收尾关闭之前调用
                            onDone();
 
                            if (ec)
@@ -224,6 +230,9 @@ class ConnectionImpl : public Connection
         // If we're not actively reading, we need to take ownership of
         // ourselves for a small portion of time, do that, and clear when we
         // resume.
+        // 如果当前没有在主动读取，我们需要在短时间内
+        // 持有自身的所有权，因此在此接管，并在恢复读取时
+        // 清除。
         selfOwned = shared_from_this();
     }
 
@@ -233,6 +242,7 @@ class ConnectionImpl : public Connection
         doRead();
 
         // No longer need to keep ourselves alive now that read is active.
+        // 读取已经启动，不再需要保持自身存活。
         selfOwned.reset();
     }
 
@@ -288,6 +298,8 @@ class ConnectionImpl : public Connection
             {
                 // Do nothing here.  doRead handler will call the
                 // closeHandler.
+                // 此处不做任何操作。doRead 的 handler 会调用
+                // closeHandler。
                 close("Write error");
             }
             else if (ec == boost::asio::error::operation_aborted)
@@ -307,6 +319,8 @@ class ConnectionImpl : public Connection
     {
         // If we're already doing a write, ignore the request, it will be picked
         // up when the current write is complete
+        // 如果当前正在进行写操作，则忽略该请求，待当前
+        // 写操作完成后再处理
         if (doingWrite)
         {
             return;
@@ -315,6 +329,7 @@ class ConnectionImpl : public Connection
         if (outBuffer.size() == 0)
         {
             // Done for now
+            // 当前处理完毕
             return;
         }
         doingWrite = true;
@@ -344,6 +359,8 @@ class ConnectionImpl : public Connection
         {
             // Note, because of the interactions with the read buffers,
             // this message handler overrides the normal message handler
+            // 注意，由于与读取缓冲区存在交互，
+            // 此 message handler 会覆盖普通的 message handler
             messageExHandler(*this, inString, MessageType::Binary,
                              std::bind_front(&self_t::afterHandleMessage, this,
                                              shared_from_this(), bytesRead));

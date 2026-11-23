@@ -7,6 +7,8 @@
 
 // Forward declare sd_journal from systemd/sd-journal.h so that the header
 // symbols don't leak
+// 前向声明 systemd/sd-journal.h 中的 sd_journal，以免头文件
+// 符号泄漏
 struct sd_journal;
 
 namespace redfish
@@ -22,6 +24,7 @@ class JournalReadState
     static std::optional<JournalReadState> openFile(const std::string& path);
 
     // Non copyable.  Movable
+    // 不可拷贝（non copyable），可移动（movable）
     JournalReadState(const JournalReadState&) = delete;
     JournalReadState(JournalReadState&& other) noexcept : journal(other.journal)
     {

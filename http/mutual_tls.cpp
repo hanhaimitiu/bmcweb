@@ -34,6 +34,8 @@ bool isUPNMatch(std::string_view upn, std::string_view hostname)
 {
     // UPN format: <username>@<domain> (e.g. user@domain.com)
     // https://learn.microsoft.com/en-us/windows/win32/ad/naming-properties#userprincipalname
+    // UPN 格式：<username>@<domain>（例如 user@domain.com）
+    // https://learn.microsoft.com/en-us/windows/win32/ad/naming-properties#userprincipalname
     size_t upnDomainPos = upn.find('@');
     if (upnDomainPos == std::string_view::npos)
     {
@@ -52,6 +54,11 @@ bool isUPNMatch(std::string_view upn, std::string_view hostname)
     // "comparisons on name lookup for DNS queries should be case
     // insensitive".
     // https://datatracker.ietf.org/doc/html/rfc4343
+    // 如果 domain 与 hostname 是完全相同的名称，则不论长度检查
+    // 结果如何都允许。
+    // "DNS 查询的名称查找比较应当不区分
+    // 大小写"。
+    // https://datatracker.ietf.org/doc/html/rfc4343
     if (bmcweb::asciiIEquals(upnDomain, hostname))
     {
         return true;
@@ -60,6 +67,9 @@ bool isUPNMatch(std::string_view upn, std::string_view hostname)
     // Otherwise match the UPN domain against the trailing hostname segments one
     // '.'-delimited segment at a time
     // require at least one separator so a bare single-label name cannot match.
+    // 否则将 UPN 的 domain 与 hostname 末尾的段逐段匹配，
+    // 每次匹配一个以 '.' 分隔的段
+    // 要求至少有一个分隔符，这样单个裸标签名称就无法匹配。
     bool hasSegment = false;
     while (!upnDomain.empty())
     {
@@ -115,6 +125,8 @@ std::string getUPNFromCert(OpenSSLX509& peerCert, std::string_view hostname)
 
         // OpenSSL uses unions.  Nothing we can do about it.
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
+        // OpenSSL 使用了 union，我们对此无能为力。
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
         const OTHERNAME& otherName = *g.d.otherName;
 
         int nid = OBJ_obj2nid(otherName.type_id);
@@ -158,6 +170,7 @@ static std::string getUsernameFromCert(OpenSSLX509& x509)
         case persistent_data::MTLSCommonNameParseMode::Whole:
         {
             // Not yet supported
+            // 尚不支持
             return "";
         }
         case persistent_data::MTLSCommonNameParseMode::UserPrincipalName:

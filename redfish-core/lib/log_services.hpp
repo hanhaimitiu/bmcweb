@@ -104,6 +104,7 @@ inline void handleSystemsLogServiceCollectionGet(
     if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
     {
         // Option currently returns no systems.  TBD
+        // 该选项目前不返回任何系统。TBD（待定）
         messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                    systemName);
         return;
@@ -117,6 +118,8 @@ inline void handleSystemsLogServiceCollectionGet(
 
     // Collections don't include the static data added by SubRoute
     // because it has a duplicate entry for members
+    // 集合不包含 SubRoute 添加的静态数据，
+    // 因为其 members 存在重复条目。
     asyncResp->res.jsonValue["@odata.type"] =
         "#LogServiceCollection.LogServiceCollection";
     asyncResp->res.jsonValue["@odata.id"] = boost::urls::format(
@@ -170,6 +173,7 @@ inline void handleSystemsLogServiceCollectionGet(
     dbus::utility::getSubTreePaths(
         "/", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreePathsResponse& subtreePath) {
@@ -218,6 +222,8 @@ inline void handleManagersLogServicesCollectionGet(
 
     // Collections don't include the static data added by SubRoute
     // because it has a duplicate entry for members
+    // 集合不包含 SubRoute 添加的静态数据，
+    // 因为其 members 存在重复条目。
     asyncResp->res.jsonValue["@odata.type"] =
         "#LogServiceCollection.LogServiceCollection";
     asyncResp->res.jsonValue["@odata.id"] = boost::urls::format(
@@ -255,6 +261,7 @@ inline void handleManagersLogServicesCollectionGet(
         dbus::utility::getSubTreePaths(
             "/xyz/openbmc_project/dump", 0, interfaces,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [asyncResp](const boost::system::error_code& ec,
                         const dbus::utility::MapperGetSubTreePathsResponse&
                             subTreePaths) {
@@ -266,6 +273,8 @@ inline void handleManagersLogServicesCollectionGet(
                     // Assume that getting an error simply means there are no
                     // dump LogServices. Return without adding any error
                     // response.
+                    // 假设获取时出错仅表示没有 dump LogServices。
+                    // 直接返回，不添加任何错误响应。
                     return;
                 }
 
@@ -347,10 +356,12 @@ inline void requestRoutesCrashdumpService(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app, "/redfish/v1/Systems/<str>/LogServices/Crashdump/")
         .privileges(redfish::privileges::getLogService)
         .methods(boost::beast::http::verb::get)
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         ([&app](const crow::Request& req,
                 const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                 const std::string& systemName) {
@@ -361,6 +372,7 @@ inline void requestRoutesCrashdumpService(App& app)
             if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
             {
                 // Option currently returns no systems.  TBD
+                // 该选项目前不返回任何系统。TBD（待定）
                 messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                            systemName);
                 return;
@@ -374,6 +386,7 @@ inline void requestRoutesCrashdumpService(App& app)
 
             // Copy over the static data to include the entries added by
             // SubRoute
+            // 复制静态数据，以包含由 SubRoute 添加的条目。
             asyncResp->res.jsonValue["@odata.id"] = boost::urls::format(
                 "/redfish/v1/Systems/{}/LogServices/Crashdump",
                 BMCWEB_REDFISH_SYSTEM_URI_NAME);
@@ -419,6 +432,7 @@ inline void requestRoutesCrashdumpClear(App& app)
                         postLogServiceSubOverComputerSystemLogServiceCollection)
         .methods(boost::beast::http::verb::post)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& systemName) {
@@ -429,6 +443,7 @@ inline void requestRoutesCrashdumpClear(App& app)
                 if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
                 {
                     // Option currently returns no systems.  TBD
+                    // 该选项目前不返回任何系统。TBD（待定）
                     messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                                systemName);
                     return;
@@ -461,6 +476,7 @@ inline void logCrashdumpEntry(
 {
     auto getStoredLogCallback =
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, logID,
          &logEntryJson](const boost::system::error_code& ec,
                         const dbus::utility::DBusPropertiesMap& params) {
@@ -510,6 +526,8 @@ inline void logCrashdumpEntry(
             // If logEntryJson references an array of LogEntry resources
             // ('Members' list), then push this as a new entry, otherwise set it
             // directly
+            // 如果 logEntryJson 引用的是 LogEntry 资源数组（'Members' 列表），
+            // 则将其作为新条目追加；否则直接设置。
             if (logEntryJson.is_array())
             {
                 logEntryJson.push_back(logEntry);
@@ -531,11 +549,13 @@ inline void requestRoutesCrashdumpEntryCollection(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app,
                  "/redfish/v1/Systems/<str>/LogServices/Crashdump/Entries/")
         .privileges(redfish::privileges::getLogEntryCollection)
         .methods(boost::beast::http::verb::get)
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         ([&app](const crow::Request& req,
                 const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                 const std::string& systemName) {
@@ -546,6 +566,7 @@ inline void requestRoutesCrashdumpEntryCollection(App& app)
             if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
             {
                 // Option currently returns no systems.  TBD
+                // 该选项目前不返回任何系统。TBD（待定）
                 messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                            systemName);
                 return;
@@ -562,6 +583,7 @@ inline void requestRoutesCrashdumpEntryCollection(App& app)
             dbus::utility::getSubTreePaths(
                 "/", 0, interfaces,
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                 [asyncResp](const boost::system::error_code& ec,
                             const std::vector<std::string>& resp) {
                     if (ec)
@@ -592,12 +614,14 @@ inline void requestRoutesCrashdumpEntryCollection(App& app)
                     {
                         const sdbusplus::object_path objPath(path);
                         // Get the log ID
+                        // 获取日志 ID。
                         std::string logID = objPath.filename();
                         if (logID.empty())
                         {
                             continue;
                         }
                         // Add the log entry to the array
+                        // 将该日志条目添加到数组中。
                         logCrashdumpEntry(asyncResp, logID,
                                           asyncResp->res.jsonValue["Members"]);
                     }
@@ -612,6 +636,7 @@ inline void requestRoutesCrashdumpEntry(App& app)
         .privileges(redfish::privileges::getLogEntry)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& systemName, const std::string& param) {
@@ -622,6 +647,7 @@ inline void requestRoutesCrashdumpEntry(App& app)
                 if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
                 {
                     // Option currently returns no systems.  TBD
+                    // 该选项目前不返回任何系统。TBD（待定）
                     messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                                systemName);
                     return;
@@ -645,16 +671,20 @@ inline void requestRoutesCrashdumpFile(App& app)
         .privileges(redfish::privileges::getLogEntry)
         .methods(boost::beast::http::verb::get)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [](const crow::Request& req,
                const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                const std::string& systemName, const std::string& logID,
                const std::string& fileName) {
                 // Do not call getRedfishRoute here since the crashdump file is
                 // not a Redfish resource.
+                // 不要在这里调用 getRedfishRoute，因为 crashdump 文件
+                // 不是 Redfish 资源。
 
                 if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
                 {
                     // Option currently returns no systems.  TBD
+                    // 该选项目前不返回任何系统。TBD（待定）
                     messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                                systemName);
                     return;
@@ -697,6 +727,7 @@ inline void requestRoutesCrashdumpFile(App& app)
                         }
 
                         // Verify the file name parameter is correct
+                        // 校验文件名参数是否正确。
                         if (fileName != dbusFilename)
                         {
                             messages::resourceNotFound(asyncResp->res,
@@ -714,6 +745,7 @@ inline void requestRoutesCrashdumpFile(App& app)
 
                         // Configure this to be a file download when accessed
                         // from a browser
+                        // 将其配置为从浏览器访问时作为文件下载。
                         asyncResp->res.addHeader(
                             boost::beast::http::field::content_disposition,
                             "attachment");
@@ -755,6 +787,7 @@ inline void requestRoutesCrashdumpCollect(App& app)
                         postLogServiceSubOverComputerSystemLogServiceCollection)
         .methods(boost::beast::http::verb::post)(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [&app](const crow::Request& req,
                    const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& systemName) {
@@ -766,6 +799,7 @@ inline void requestRoutesCrashdumpCollect(App& app)
                 if constexpr (BMCWEB_EXPERIMENTAL_REDFISH_MULTI_COMPUTER_SYSTEM)
                 {
                     // Option currently returns no systems.  TBD
+                    // 该选项目前不返回任何系统。TBD（待定）
                     messages::resourceNotFound(asyncResp->res, "ComputerSystem",
                                                systemName);
                     return;
@@ -860,6 +894,7 @@ inline void requestRoutesCrashdumpCollect(App& app)
                         std::shared_ptr<task::TaskData> task =
                             task::TaskData::createTask(
                                 // ast-grep-ignore: long-lambda
+                                // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                                 [](const boost::system::error_code& ec2,
                                    sdbusplus::message_t&,
                                    const std::shared_ptr<task::TaskData>&
@@ -892,6 +927,7 @@ inline void requestRoutesSystemsLogServiceCollection(App& app)
     /**
      * Functions triggers appropriate requests on DBus
      */
+    /* 相关函数会在 DBus 上触发相应的请求。 */
     BMCWEB_ROUTE(app, "/redfish/v1/Systems/<str>/LogServices/")
         .privileges(redfish::privileges::getLogServiceCollection)
         .methods(boost::beast::http::verb::get)(std::bind_front(

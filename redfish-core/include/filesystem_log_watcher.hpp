@@ -32,6 +32,8 @@ class FilesystemLogWatcher
     std::array<char, 1024> readBuffer{};
     // Explicit make the last item so it is canceled before the buffer goes out
     // of scope.
+    // 显式地将其作为最后一项，使其在缓冲区离开作用域之前
+    // 被取消。
     boost::asio::posix::stream_descriptor inotifyConn;
 
   public:

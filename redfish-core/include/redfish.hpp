@@ -16,6 +16,7 @@ namespace redfish
 /*
  * @brief Top level class installing and providing Redfish services
  */
+/* @brief 安装并提供 Redfish 服务的顶层类 */
 class RedfishService
 {
   public:
@@ -26,10 +27,15 @@ class RedfishService
      *
      * @param[in] app   Crow app on which Redfish will initialize
      */
+    /* @brief Redfish 服务构造函数
+     * 加载 Redfish 配置并安装 schema 资源
+     * @param[in] app   Redfish 将在其上初始化的 Crow app */
     explicit RedfishService(App& app);
 
     // Temporary change to make redfish instance available in other places
     // like query delegation.
+    // 临时改动，使 redfish 实例可在其他地方使用，
+    // 例如查询委派（query delegation）。
     static RedfishService& getInstance(App& app)
     {
         static RedfishService redfish(app);

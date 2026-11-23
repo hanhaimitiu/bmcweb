@@ -34,6 +34,7 @@ TEST(Ethernet, parseAddressesEmpty)
 }
 
 // Create full entry with all fields
+// 创建包含所有字段的完整条目
 TEST(Ethernet, parseAddressesCreateOne)
 {
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
@@ -60,6 +61,7 @@ TEST(Ethernet, parseAddressesCreateOne)
 }
 
 // Missing gateway should default to no gateway
+// 缺少 gateway 时应默认为无 gateway
 TEST(Ethernet, parseAddressesCreateOneNoGateway)
 {
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
@@ -85,6 +87,7 @@ TEST(Ethernet, parseAddressesCreateOneNoGateway)
 }
 
 // Create two entries with conflicting gateways.
+// 创建两个 gateway 相互冲突的条目。
 TEST(Ethernet, conflictingGatewaysNew)
 {
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
@@ -106,6 +109,7 @@ TEST(Ethernet, conflictingGatewaysNew)
 }
 
 // Create full entry with all fields
+// 创建包含所有字段的完整条目
 TEST(Ethernet, conflictingGatewaysExisting)
 {
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
@@ -130,6 +134,7 @@ TEST(Ethernet, conflictingGatewaysExisting)
 }
 
 // Missing address should fail
+// 缺少 address 应失败
 TEST(Ethernet, parseMissingAddress)
 {
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
@@ -147,6 +152,7 @@ TEST(Ethernet, parseMissingAddress)
 }
 
 // Missing subnet should fail
+// 缺少 subnet 应失败
 TEST(Ethernet, parseAddressesMissingSubnet)
 {
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
@@ -165,6 +171,8 @@ TEST(Ethernet, parseAddressesMissingSubnet)
 
 // With one existing address, and a null, it should request deletion
 // and clear gateway
+// 有一个现有地址且输入为 null 时，应请求删除
+// 并清除 gateway
 TEST(Ethernet, parseAddressesDeleteExistingOnNull)
 {
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
@@ -190,6 +198,8 @@ TEST(Ethernet, parseAddressesDeleteExistingOnShortLength)
 {
     // With one existing address, and an input of len(0) it should request
     // deletion and clear gateway
+    // 有一个现有地址且输入长度为 0 时，应请求
+    // 删除并清除 gateway
     std::vector<std::variant<nlohmann::json::object_t, std::nullptr_t>> addr;
     std::vector<IPv4AddressData> existingAddr;
     IPv4AddressData& existing = existingAddr.emplace_back();

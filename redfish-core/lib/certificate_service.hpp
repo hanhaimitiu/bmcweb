@@ -84,6 +84,8 @@ constexpr const char* authorityObjectPath =
  * actions available to manage certificates and links to where certificates
  * are installed.
  */
+/* Certificate schema 定义了一个 Certificate Service，
+ * 它表示可用于管理证书的操作，以及证书安装位置的链接。 */
 
 inline std::string getCertificateFromReqBody(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
@@ -94,6 +96,7 @@ inline std::string getCertificateFromReqBody(
     if (ret != JsonParseResult::Success)
     {
         // We did not receive JSON request, proceed as it is RAW data
+        // 未收到 JSON 请求，按原始（RAW）数据处理。
         return req.body();
     }
 
@@ -124,6 +127,7 @@ inline std::string getCertificateFromReqBody(
 /**
  * Class to create a temporary certificate file for uploading to system
  */
+/* 用于创建临时证书文件以上传到系统的类。 */
 class CertificateFile
 {
   public:
@@ -185,10 +189,16 @@ class CertificateFile
  * @param[in] type Issuer/Subject
  * @return None
  */
+/* @brief 解析并更新证书的 Issuer/Subject 属性。
+ * @param[in] asyncResp 指向响应消息的共享指针。
+ * @param[in] str 键值对形式的 Issuer/Subject 值。
+ * @param[in] type Issuer 或 Subject。
+ * @return 无。 */
 inline void updateCertIssuerOrSubject(nlohmann::json& out,
                                       std::string_view value)
 {
     // example: O=openbmc-project.xyz,CN=localhost
+    // 示例：O=openbmc-project.xyz,CN=localhost
     std::string_view::iterator i = value.begin();
     while (i != value.end())
     {
@@ -234,6 +244,7 @@ inline void updateCertIssuerOrSubject(nlohmann::json& out,
             out["State"] = val;
         }
         // skip comma character
+        // 跳过逗号字符。
         if (i != value.end())
         {
             std::advance(i, 1);
@@ -250,6 +261,12 @@ inline void updateCertIssuerOrSubject(nlohmann::json& out,
  * @param[in] countPtr Json pointer to the count in asyncResp
  * @return None
  */
+/* @brief 检索已安装的证书列表。
+ * @param[in] asyncResp 指向响应消息的共享指针。
+ * @param[in] basePath 要搜索的 D-Bus 对象路径。
+ * @param[in] listPtr 指向 asyncResp 中列表的 json 指针。
+ * @param[in] countPtr 指向 asyncResp 中计数的 json 指针。
+ * @return 无。 */
 inline void getCertificateList(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& basePath, const nlohmann::json::json_pointer& listPtr,
@@ -260,6 +277,7 @@ inline void getCertificateList(
     dbus::utility::getSubTreePaths(
         basePath, 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, listPtr, countPtr](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreePathsResponse& certPaths) {
@@ -327,6 +345,13 @@ inline void getCertificateList(
  * @param[in] name  name of the certificate
  * @return None
  */
+/* @brief 检索证书属性并追加到响应消息中。
+ * @param[in] asyncResp 指向响应消息的共享指针。
+ * @param[in] objectPath D-Bus 服务对象的路径。
+ * @param[in] certId 证书的 Id。
+ * @param[in] certURL 证书对象的 URL。
+ * @param[in] name 证书名称。
+ * @return 无。 */
 inline void getCertificateProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& objectPath, const std::string& service,
@@ -338,6 +363,7 @@ inline void getCertificateProperties(
     dbus::utility::getAllProperties(
         service, objectPath, certs::certPropIntf,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, certURL, certId,
          name](const boost::system::error_code& ec,
                const dbus::utility::DBusPropertiesMap& properties) {
@@ -425,6 +451,7 @@ inline void deleteCertificate(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          id{objectPath.filename()}](const boost::system::error_code& ec) {
             if (ec)
@@ -463,6 +490,8 @@ inline void handleCertificateServiceGet(
     // /redfish/v1/CertificateService/CertificateLocations is something
     // only ConfigureManager can access then only display when the user
     // has permissions ConfigureManager
+    // /redfish/v1/CertificateService/CertificateLocations 只有 ConfigureManager 可访问，
+    // 因此仅在用户拥有 ConfigureManager 权限时才显示。
     Privileges effectiveUserPrivileges =
         redfish::getUserPrivileges(*req.session);
     if (isOperationAllowedWithPrivileges({{"ConfigureManager"}},
@@ -551,6 +580,7 @@ inline void handleReplaceCertificateAction(
     if (!certificateType)
     {
         // should never happen, but it never hurts to be paranoid.
+        // 这种情况不应发生，但谨慎一点总没坏处。
         return;
     }
     if (certificateType != "PEM")
@@ -611,6 +641,7 @@ inline void handleReplaceCertificateAction(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, certFile, objectPath, service, url{*parsedUrl}, id, name,
          certificate](const boost::system::error_code& ec,
                       sdbusplus::message_t& m) {
@@ -649,6 +680,13 @@ static std::unique_ptr<sdbusplus::match> csrMatcher;
  * @param[in] csrObjPath CSR D-Bus object path
  * @return None
  */
+/* @brief 从 CSR 的 D-Bus 对象读取数据并设置到响应中。
+ * @param[in] asyncResp 指向响应消息的共享指针。
+ * @param[in] certURI 证书集合 URI 的链接。
+ * @param[in] service D-Bus 服务名。
+ * @param[in] certObjPath 证书的 D-Bus 对象路径。
+ * @param[in] csrObjPath CSR 的 D-Bus 对象路径。
+ * @return 无。 */
 inline void getCSR(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                    const std::string& certURI, const std::string& service,
                    const std::string& certObjPath,
@@ -659,6 +697,7 @@ inline void getCSR(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          certURI](const boost::system::error_code& ec, const std::string& csr) {
             if (ec)
@@ -691,6 +730,7 @@ inline void handleGenerateCSRAction(
     static const int rsaKeyBitLength = 2048;
 
     // Required parameters
+    // 必需参数
     std::string city;
     std::string commonName;
     std::string country;
@@ -700,6 +740,7 @@ inline void handleGenerateCSRAction(
     std::string certURI;
 
     // Optional parameters
+    // 可选参数
     std::optional<std::vector<std::string>> optAlternativeNames =
         std::vector<std::string>();
     std::optional<std::string> optContactPerson = "";
@@ -744,6 +785,9 @@ inline void handleGenerateCSRAction(
     // password, which will likely cause bmcweb to crash on startup
     // if this is not set on a post so not allowing the user to set
     // value
+    // bmcweb 无法存储或解码私钥 challenge 密码，
+    // 如果 POST 请求中未设置该项，可能导致 bmcweb 启动时崩溃，
+    // 因此不允许用户设置该值。
     if (!optChallengePassword->empty())
     {
         messages::actionParameterNotSupported(
@@ -774,6 +818,7 @@ inline void handleGenerateCSRAction(
     }
 
     // supporting only EC and RSA algorithm
+    // 仅支持 EC 和 RSA 算法。
     if (*optKeyPairAlgorithm != "EC" && *optKeyPairAlgorithm != "RSA")
     {
         messages::actionParameterNotSupported(
@@ -783,6 +828,7 @@ inline void handleGenerateCSRAction(
 
     // supporting only 2048 key bit length for RSA algorithm due to
     // time consumed in generating private key
+    // 由于生成私钥耗时，RSA 算法仅支持 2048 位密钥长度。
     if (*optKeyPairAlgorithm == "RSA" && *optKeyBitLength != rsaKeyBitLength)
     {
         messages::propertyValueNotInList(asyncResp->res, *optKeyBitLength,
@@ -791,6 +837,7 @@ inline void handleGenerateCSRAction(
     }
 
     // validate KeyUsage supporting only 1 type based on URL
+    // 校验 KeyUsage，根据 URL 仅支持一种类型。
     if (certURI.starts_with(std::format(
             "/redfish/v1/Managers/{}/NetworkProtocol/HTTPS/Certificates",
             BMCWEB_REDFISH_MANAGER_URI_NAME)))
@@ -841,6 +888,8 @@ inline void handleGenerateCSRAction(
 
     // Only allow one CSR matcher at a time so setting retry
     // time-out and timer expiry to 10 seconds for now.
+    // 同一时间只允许一个 CSR matcher，
+    // 因此暂时将重试超时和定时器到期时间设为 10 秒。
     static const int timeOut = 10;
     if (csrMatcher)
     {
@@ -850,15 +899,18 @@ inline void handleGenerateCSRAction(
     }
 
     // Make this static so it survives outside this method
+    // 将其设为 static，使其在该方法之外仍然存在。
     static boost::asio::steady_timer timeout(getIoContext());
     timeout.expires_after(std::chrono::seconds(timeOut));
     // ast-grep-ignore: long-lambda
+    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
     timeout.async_wait([asyncResp](const boost::system::error_code& ec) {
         csrMatcher = nullptr;
         if (ec)
         {
             // operation_aborted is expected if timer is canceled
             // before completion.
+            // 如果定时器在完成前被取消，出现 operation_aborted 是预期行为。
             if (ec != boost::asio::error::operation_aborted)
             {
                 BMCWEB_LOG_ERROR("Async_wait failed {}", ec);
@@ -870,6 +922,7 @@ inline void handleGenerateCSRAction(
     });
 
     // create a matcher to wait on CSR object
+    // 创建一个 matcher 等待 CSR 对象。
     BMCWEB_LOG_DEBUG("create matcher with path {}", objectPath);
     std::string match("type='signal',"
                       "interface='org.freedesktop.DBus.ObjectManager',"
@@ -880,6 +933,7 @@ inline void handleGenerateCSRAction(
     csrMatcher = std::make_unique<sdbusplus::match>(
         *crow::connections::systemBus, match,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, service, objectPath, certURI](sdbusplus::message_t& m) {
             timeout.cancel();
             dbus::utility::DBusInterfacesMap interfacesProperties;
@@ -1008,6 +1062,7 @@ inline void handleHTTPSCertificateCollectionPost(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, certFile, certHttpBody](const boost::system::error_code& ec,
                                             const std::string& objectPath) {
             if (ec)
@@ -1125,6 +1180,7 @@ inline void handleLDAPCertificateCollectionPost(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, certFile, certHttpBody](const boost::system::error_code& ec,
                                             const std::string& objectPath) {
             if (ec)
@@ -1263,6 +1319,7 @@ inline void handleTrustStoreCertificateCollectionPost(
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, certFile, certHttpBody](const boost::system::error_code& ec,
                                             const std::string& objectPath) {
             if (ec)

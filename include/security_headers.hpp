@@ -80,5 +80,9 @@ inline void addSecurityHeaders(crow::Response& res)
         // strings. img-src 'self' data: is used to allow that.
         // https://stackoverflow.com/questions/18447970/content-security-polic
         // y-data-not-working-for-base64-images-in-chrome-28
+        // KVM 目前需要从 base64 编码的字符串加载图片。
+        // img-src 'self' data: 用于允许这种加载。
+        // 参考：
+        // https://stackoverflow.com/questions/18447970/content-security-policy-data-not-working-for-base64-images-in-chrome-28
     }
 }

@@ -48,12 +48,21 @@ bool DbusEventLogMonitor::eventLogObjectFromDBus(
     //
     // This will need resolved before
     // experimental-redfish-dbus-log-subscription is stabilized
+    // 该 dbus 属性的文档并未说明其包含 Redfish Message Id，
+    // 但可以这样使用。作为临时方案这已经足够，
+    // 因为如果 event.messageId 无效，事件过滤代码无论如何都会丢弃该事件。
+    // 在
+    // experimental-redfish-dbus-log-subscription 稳定之前需要解决这个问题
     event.messageId = entry.Message;
 
     // The order of 'AdditionalData' is not what's specified in an e.g.
     // busctl call to create the Event Log Entry. So it cannot be used
     // to map to the message args. Leaving this branch here for it to be
     // implemented when the mapping is available
+    // 'AdditionalData' 的顺序与例如 busctl 创建
+    // Event Log Entry 时指定的顺序不同。因此不能用它来
+    // 映射到消息参数。这里保留这个分支，以便在有映射方案
+    // 时实现它
 
     return true;
 }

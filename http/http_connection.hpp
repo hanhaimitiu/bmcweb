@@ -64,6 +64,7 @@ namespace crow
 static int connectionCount = 0;
 
 // request body limit size set by the BMCWEB_HTTP_BODY_LIMIT option
+// 由 BMCWEB_HTTP_BODY_LIMIT 选项设置的请求体大小上限
 constexpr uint64_t httpReqBodyLimit = 1024UL * 1024UL * BMCWEB_HTTP_BODY_LIMIT;
 
 constexpr uint64_t loggedOutPostBodyLimit = 4096U;
@@ -130,6 +131,9 @@ class Connection :
         // If tls strict mode is disabled
         // We always return true to allow full auth flow for resources that
         // don't require auth
+        // 如果 tls 严格模式被禁用
+        // 我们总是返回 true，以允许对不需要认证的资源
+        // 执行完整的认证流程
         return true;
     }
 
@@ -261,6 +265,7 @@ class Connection :
             }
         }
         // If http2 is enabled, negotiate the protocol
+        // 如果启用了 http2，则协商协议
         if constexpr (BMCWEB_HTTP2)
         {
             const unsigned char* alpn = nullptr;
@@ -289,10 +294,13 @@ class Connection :
             parser.emplace();
 
         // reset header limit for newly created parser
+        // 为新创建的 parser 重置头部大小限制
         instance.header_limit(httpHeaderLimit);
 
         // Initially set no body limit. We don't yet know if the user is
         // authenticated.
+        // 初始时不设置请求体大小限制。此时还不知道用户
+        // 是否已通过认证。
         instance.body_limit(boost::none);
     }
 
@@ -312,6 +320,7 @@ class Connection :
     }
 
     // returns whether connection was upgraded
+    // 返回连接是否已升级
     bool doUpgrade(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
     {
         using boost::beast::http::field;
@@ -324,11 +333,13 @@ class Connection :
         bool isWebsocket = false;
         bool isH2c = false;
         // Check connection header is upgrade
+        // 检查 connection 头是否为 upgrade
         if (token_list{req->req[field::connection]}.exists("upgrade"))
         {
             BMCWEB_LOG_DEBUG("{} Connection: Upgrade header was present",
                              logPtr(this));
             // Parse if upgrade is h2c or websocket
+            // 解析升级目标是 h2c 还是 websocket
             token_list upgrade{req->req[field::upgrade]};
             isWebsocket = upgrade.exists("websocket");
             isH2c = upgrade.exists("h2c");
@@ -348,6 +359,7 @@ class Connection :
         }
 
         // websocket and SSE are only allowed on GET
+        // websocket 和 SSE 只允许用于 GET
         if (req->req.method() == boost::beast::http::verb::get)
         {
             if (isWebsocket || isSse)
@@ -362,6 +374,12 @@ class Connection :
                             // which implies successful handle upgrade. Response
                             // needs to be sent over this connection only on
                             // failure.
+                            // 如果在处理升级之前发生任何错误，
+                            // 响应中的 result 会被设置成相应的
+                            // 错误码。默认情况下 Result 为 OK (200)，
+                            // 表示升级处理成功。只有在
+                            // 失败时才需要通过此连接发送
+                            // 响应。
                             self->completeRequest(thisRes);
                             return;
                         }
@@ -403,9 +421,11 @@ class Connection :
         accept = req->getHeaderValue(field::accept);
         acceptEncoding = req->getHeaderValue(field::accept_encoding);
         // Fetch the client IP address
+        // 获取客户端 IP 地址
         req->ipAddress = ip;
 
         // Check for HTTP version 1.1.
+        // 检查是否为 HTTP 1.1 版本。
         if (req->version() == 11)
         {
             if (req->getHeaderValue(field::host).empty())
@@ -515,6 +535,8 @@ class Connection :
 
         // delete lambda with self shared_ptr
         // to enable connection destruction
+        // 删除持有 self shared_ptr 的 lambda，
+        // 以便销毁连接
         res.setCompleteRequestHandler(nullptr);
     }
 
@@ -529,6 +551,8 @@ class Connection :
         {
             // If remote endpoint fails keep going. "ClientOriginIPAddress"
             // will be empty.
+            // 如果对端获取失败则继续执行，"ClientOriginIPAddress"
+            // 将为空。
             BMCWEB_LOG_ERROR("Failed to get the client's IP Address. ec : {}",
                              ec);
             return;
@@ -557,6 +581,8 @@ class Connection :
 
     // Returns true if content length was within limits
     // Returns false if content length error has been returned
+    // 如果 content length 在限制范围内则返回 true
+    // 如果已经返回 content length 错误则返回 false
     bool handleContentLengthError()
     {
         if (!parser)
@@ -579,6 +605,9 @@ class Connection :
             // If the users content limit is between the logged in
             // and logged out limits They probably just didn't log
             // in
+            // 如果用户的内容长度介于已登录
+            // 和未登录限制之间，则可能只是没有
+            // 登录
             if (*contentLength > loggedOutPostBodyLimit &&
                 *contentLength < httpReqBodyLimit)
             {
@@ -592,6 +621,8 @@ class Connection :
             {
                 // Otherwise they're over both limits, so inform
                 // them
+                // 否则说明同时超出了两个限制，因此
+                // 通知用户
                 BMCWEB_LOG_DEBUG(
                     "{} Content length {} was greater than global limit {}."
                     " Setting payload too large",
@@ -708,6 +739,8 @@ class Connection :
     {
         // BMCWEB_LOG_DEBUG("{} async_read_some {} Bytes", logPtr(this),
         //                  bytesTransferred);
+        // BMCWEB_LOG_DEBUG("{} async_read_some {} Bytes", logPtr(this),
+        //                  bytesTransferred);
 
         if (ec)
         {
@@ -738,6 +771,10 @@ class Connection :
         // incrementally one piece at a time. If authentication is
         // disabled then there is no user session hence always allow to
         // send one piece at a time.
+        // 如果用户已登录，允许其以增量方式
+        // 一次发送一小块文件。如果认证被
+        // 禁用，则没有用户会话，因此总是允许
+        // 一次发送一小块。
         if (userSession != nullptr)
         {
             cancelDeadlineTimer();
@@ -760,6 +797,7 @@ class Connection :
 
     void doRead()
     {
+        // BMCWEB_LOG_DEBUG("{} doRead", logPtr(this));
         // BMCWEB_LOG_DEBUG("{} doRead", logPtr(this));
         if (!parser)
         {
@@ -823,6 +861,7 @@ class Connection :
         if (res.result() == boost::beast::http::status::continue_)
         {
             // Reset the result to ok
+            // 将 result 重置为 ok
             res.result(boost::beast::http::status::ok);
             doRead();
             return;
@@ -888,6 +927,8 @@ class Connection :
     {
         // Note, we are ignoring other types of errors here;  If the timer
         // failed for any reason, we should still close the connection
+        // 注意，此处忽略其他类型的错误；如果 timer
+        // 因任何原因失败，仍应关闭连接
         std::shared_ptr<Connection<Adaptor, Handler>> self = weakSelf.lock();
         if (!self)
         {
@@ -912,6 +953,7 @@ class Connection :
             if (ec == boost::asio::error::operation_aborted)
             {
                 // BMCWEB_LOG_DEBUG("{} Timer canceled", logPtr(self.get()));
+                // BMCWEB_LOG_DEBUG("{} Timer canceled", logPtr(self.get()));
                 return;
             }
             BMCWEB_LOG_CRITICAL("{} Timer failed {}", logPtr(self.get()), ec);
@@ -926,6 +968,7 @@ class Connection :
     void startDeadline(DeadlineTimerType timerType)
     {
         // Timer is already started so no further action is required.
+        // 定时器已经启动，因此无需进一步操作。
         if (timerStarted)
         {
             return;
@@ -936,6 +979,8 @@ class Connection :
         {
             // if we're waiting for future requests while idle in keepalive,
             // allow up to 15 minutes of delay
+            // 如果在 keepalive 期间空闲等待后续请求，
+            // 允许最多 15 分钟的延迟
             timeoutDurationSeconds = 15 * 60;
         }
 
@@ -947,6 +992,7 @@ class Connection :
                                          weak_from_this()));
 
         timerStarted = true;
+        // BMCWEB_LOG_DEBUG("{} timer started", logPtr(this));
         // BMCWEB_LOG_DEBUG("{} timer started", logPtr(this));
     }
 
@@ -960,6 +1006,8 @@ class Connection :
 
     // Making this a std::optional allows it to be efficiently destroyed and
     // re-created on Connection reset
+    // 将其设为 std::optional 可以在 Connection 重置时
+    // 高效地销毁并重新创建
     std::optional<boost::beast::http::request_parser<bmcweb::HttpBody>> parser;
 
     boost::beast::flat_static_buffer<8192> buffer;

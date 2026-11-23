@@ -21,6 +21,7 @@ class SubRequest
         url_(req.url().encoded_path()), method_(req.method())
     {
         // Extract OEM payload if present
+        // 如果存在 OEM 载荷，则将其提取出来。
         if (req.method() == boost::beast::http::verb::patch ||
             req.method() == boost::beast::http::verb::post)
         {

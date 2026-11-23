@@ -55,6 +55,7 @@ enum NetworkProtocolListenResponseElements
 /**
  * @brief D-Bus Unit structure returned in array from ListUnits Method
  */
+/* @brief ListUnits 方法返回的数组中包含的 D-Bus Unit 结构体。 */
 using UnitStruct =
     std::tuple<std::string, std::string, std::string, std::string, std::string,
                std::string, sdbusplus::object_path, uint32_t, std::string,
@@ -65,9 +66,11 @@ void getMainChassisId(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                       CallbackFunc&& callback)
 {
     // Find managed chassis
+    // 查找受管的 chassis。
     dbus::utility::getSubTree(
         "/xyz/openbmc_project/inventory", 0, chassisInterfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<CallbackFunc>(callback),
          asyncResp](const boost::system::error_code& ec,
                     const dbus::utility::MapperGetSubTreeResponse& subtree) {
@@ -104,6 +107,7 @@ void getPortStatusAndPath(
 {
     dbus::utility::async_method_call(
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [protocolToDBus, callback = std::forward<CallbackFunc>(callback)](
             const boost::system::error_code& ec,
             const std::vector<UnitStruct>& r) {
@@ -112,18 +116,22 @@ void getPortStatusAndPath(
             {
                 BMCWEB_LOG_ERROR("{}", ec);
                 // return error code
+                // 返回错误码。
                 callback(ec, socketData);
                 return;
             }
 
             // save all service output into vector
+            // 将所有服务的输出保存到 vector。
             for (const UnitStruct& unit : r)
             {
                 // Only traverse through <xyz>.socket units
+                // 只遍历 <xyz>.socket 单元。
                 const std::string& unitName =
                     std::get<NET_PROTO_UNIT_NAME>(unit);
 
                 // find "." into unitsName
+                // 在 unitsName 中查找 "."。
                 size_t lastCharPos = unitName.rfind('.');
                 if (lastCharPos == std::string::npos)
                 {
@@ -131,6 +139,7 @@ void getPortStatusAndPath(
                 }
 
                 // is unitsName end with ".socket"
+                // 判断 unitsName 是否以 ".socket" 结尾。
                 std::string unitNameEnd = unitName.substr(lastCharPos);
                 if (unitNameEnd != ".socket")
                 {
@@ -138,6 +147,7 @@ void getPortStatusAndPath(
                 }
 
                 // find "@" into unitsName
+                // 在 unitsName 中查找 "@"。
                 if (size_t atCharPos = unitName.rfind('@');
                     atCharPos != std::string::npos)
                 {
@@ -146,12 +156,15 @@ void getPortStatusAndPath(
 
                 // unitsName without "@eth(x).socket", only <xyz>
                 // unitsName without ".socket", only <xyz>
+                // 去掉 "@eth(x).socket" 的 unitsName，只保留 <xyz>。
+                // 去掉 ".socket" 的 unitsName，只保留 <xyz>。
                 std::string unitNameStr = unitName.substr(0, lastCharPos);
 
                 for (const auto& kv : protocolToDBus)
                 {
                     // We are interested in services, which starts with
                     // mapped service name
+                    // 我们关注的是以映射的服务名开头的服务。
                     if (unitNameStr != kv.second)
                     {
                         continue;
@@ -168,6 +181,8 @@ void getPortStatusAndPath(
                     // Some protocols may have multiple services associated with
                     // them (for example IPMI). Look to see if we've already
                     // added an entry for the current protocol.
+                    // 某些协议可能有多个关联的服务（例如 IPMI）。
+                    // 查看是否已经为当前协议添加了条目。
                     auto find = std::ranges::find_if(
                         socketData,
                         [&kv](const std::tuple<std::string, std::string, bool>&
@@ -179,10 +194,14 @@ void getPortStatusAndPath(
                         // has it enabled (or the new one is disabled) then just
                         // continue, otherwise remove the current one and add
                         // this new one.
+                        // 只要有一个 systemd 服务启用，就认为该协议已启用。
+                        // 因此，如果当前条目已启用它（或新条目被禁用），
+                        // 则直接继续；否则删除当前条目并添加这个新条目。
                         if (std::get<2>(*find) || !isProtocolEnabled)
                         {
                             // Already registered as enabled or current one is
                             // not enabled, nothing to do
+                            // 已注册为启用状态，或当前条目未启用，无需操作。
                             BMCWEB_LOG_DEBUG(
                                 "protocolName: {}, already true or current one is false: {}",
                                 kv.first, isProtocolEnabled);
@@ -190,12 +209,14 @@ void getPortStatusAndPath(
                         }
                         // Remove existing entry and replace with new one
                         // (below)
+                        // 删除现有条目并替换为新条目（见下文）。
                         socketData.erase(find);
                     }
 
                     socketData.emplace_back(socketPath, std::string(kv.first),
                                             isProtocolEnabled);
                     // We found service, return from inner loop.
+                    // 找到了服务，从内层循环返回。
                     break;
                 }
             }
@@ -214,6 +235,7 @@ void getPortNumber(const std::string& socketPath, CallbackFunc&& callback)
         *crow::connections::systemBus, "org.freedesktop.systemd1", socketPath,
         "org.freedesktop.systemd1.Socket", "Listen",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<CallbackFunc>(callback)](
             const boost::system::error_code& ec,
             const std::vector<std::tuple<std::string, std::string>>& resp) {
@@ -226,10 +248,12 @@ void getPortNumber(const std::string& socketPath, CallbackFunc&& callback)
             if (resp.empty())
             {
                 // Network Protocol Listen Response Elements is empty
+                // Network Protocol Listen 响应元素为空。
                 boost::system::error_code ec1 =
                     boost::system::errc::make_error_code(
                         boost::system::errc::no_such_file_or_directory);
                 // return error code
+                // 返回错误码。
                 callback(ec1, 0);
                 return;
             }
@@ -242,6 +266,7 @@ void getPortNumber(const std::string& socketPath, CallbackFunc&& callback)
             {
                 // there is only two possibility invalid_argument and
                 // result_out_of_range
+                // 只有两种可能：invalid_argument 和 result_out_of_range。
                 boost::system::error_code ec3 =
                     boost::system::errc::make_error_code(
                         boost::system::errc::invalid_argument);
@@ -251,6 +276,7 @@ void getPortNumber(const std::string& socketPath, CallbackFunc&& callback)
                         boost::system::errc::result_out_of_range);
                 }
                 // return error code
+                // 返回错误码。
                 callback(ec3, 0);
                 BMCWEB_LOG_ERROR("{}", ec3);
             }

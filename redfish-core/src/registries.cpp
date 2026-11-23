@@ -5,6 +5,9 @@
 // We need the registries_selector pulled into some cpp part so that the
 // registration hooks run.
 // NOLINTNEXTLINE(misc-include-cleaner)
+// 我们需要把 registries_selector 引入到某个 cpp 部分，
+// 以便注册钩子能够运行。
+// NOLINTNEXTLINE(misc-include-cleaner)
 #include "registries_selector.hpp"
 #include "str_utility.hpp"
 
@@ -72,6 +75,8 @@ std::optional<MessageId> getMessageComponents(std::string_view message)
 {
     // Redfish Message are in the form
     // RegistryName.MajorVersion.MinorVersion.MessageKey
+    // Redfish 消息的格式为
+    // RegistryName.MajorVersion.MinorVersion.MessageKey
     std::vector<std::string> fields;
     fields.reserve(4);
     bmcweb::split(fields, message, '.');
@@ -93,6 +98,7 @@ const Message* getMessage(std::string_view messageID)
     }
 
     // Find the right registry and check it for the MessageKey
+    // 找到正确的注册表并检查其中的 MessageKey
     return getMessageFromRegistry(
         msgComponents->messageKey,
         getRegistryMessagesFromPrefix(msgComponents->registryName));

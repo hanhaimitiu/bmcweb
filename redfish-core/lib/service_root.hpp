@@ -96,6 +96,7 @@ inline void handleServiceRootGetImpl(
     protocolFeatures["ExpandQuery"]["ExpandAll"] =
         BMCWEB_INSECURE_ENABLE_REDFISH_QUERY;
     // This is the maximum level defined in ServiceRoot.v1_13_0.json
+    // 这是 ServiceRoot.v1_13_0.json 中定义的最大层级。
     if constexpr (BMCWEB_INSECURE_ENABLE_REDFISH_QUERY)
     {
         protocolFeatures["ExpandQuery"]["MaxLevels"] = 6;

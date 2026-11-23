@@ -16,6 +16,7 @@ namespace ibm_utils
 inline bool createDirectory(std::string_view path)
 {
     // Create persistent directory
+    // 创建持久化目录
     std::error_code ec;
 
     BMCWEB_LOG_DEBUG("Creating persistent directory : {}", path);
@@ -31,6 +32,7 @@ inline bool createDirectory(std::string_view path)
     if (dirCreated)
     {
         // set the permission of the directory to 700
+        // 将目录权限设置为 700
         BMCWEB_LOG_DEBUG("Setting the permission to 700");
         std::filesystem::perms permission = std::filesystem::perms::owner_all;
         std::filesystem::permissions(path, permission);

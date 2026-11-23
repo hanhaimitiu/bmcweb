@@ -15,6 +15,8 @@ struct DbusEventLogEntry
 {
     // represents a subset of an instance of dbus interface
     // xyz.openbmc_project.Logging.Entry
+    // 表示 D-Bus 接口
+    // xyz.openbmc_project.Logging.Entry 的一个实例的子集
 
     uint32_t Id = 0;
     std::string Message;

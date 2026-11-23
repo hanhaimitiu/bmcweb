@@ -71,6 +71,7 @@ static void dumpEscaped(std::string& out, const std::string& str)
     std::size_t bytes = 0; // number of bytes written to string_buffer
 
     // number of bytes written at the point of the last valid byte
+    // 在最后一个有效字节处已写入的字节数
     std::size_t bytesAfterLastAccept = 0;
     std::size_t undumpedChars = 0;
 
@@ -172,6 +173,7 @@ static void dumpEscaped(std::string& out, const std::string& str)
                     default:
                     {
                         // escape control characters (0x00..0x1F)
+                        // 转义控制字符 (0x00..0x1F)
                         if ((codePoint <= 0x1F) or (codePoint >= 0x7F))
                         {
                             if (codePoint <= 0xFFFF)
@@ -198,6 +200,8 @@ static void dumpEscaped(std::string& out, const std::string& str)
                         {
                             // copy byte to buffer (all previous bytes
                             // been copied have in default case above)
+                            // 将字节复制到缓冲区（此前所有字节都已在上方的
+                            // default 分支中复制）
                             stringBuffer[bytes++] = str[i];
                         }
                         break;
@@ -207,6 +211,9 @@ static void dumpEscaped(std::string& out, const std::string& str)
                 // write buffer and reset index; there must be 13 bytes
                 // left, as this is the maximal number of bytes to be
                 // written ("\uxxxx\uxxxx\0") for one code point
+                // 写入缓冲区并重置索引；必须还剩下 13 个字节，
+                // 因为这是一个码点最多需要写入的字节数
+                // ("\uxxxx\uxxxx\0")。
                 if (stringBuffer.size() - bytes < 13)
                 {
                     out.append(stringBuffer.data(), bytes);
@@ -214,6 +221,7 @@ static void dumpEscaped(std::string& out, const std::string& str)
                 }
 
                 // remember the byte position of this accept
+                // 记录此次接受（accept）的字节位置
                 bytesAfterLastAccept = bytes;
                 undumpedChars = 0;
                 break;
@@ -225,6 +233,10 @@ static void dumpEscaped(std::string& out, const std::string& str)
                 // would like to read it again, because the byte
                 // may be OK for itself, but just not OK for the
                 // previous sequence
+                // 如果是第一次看到该字符，我们希望
+                // 再读取它一次，因为该字节本身
+                // 可能是合法的，但相对于前面的序列
+                // 却不合法。
                 if (undumpedChars > 0)
                 {
                     --i;
@@ -232,6 +244,8 @@ static void dumpEscaped(std::string& out, const std::string& str)
 
                 // reset length buffer to the last accepted index;
                 // thus removing/ignoring the invalid characters
+                // 将长度缓冲区重置到最后接受的索引；
+                // 从而移除/忽略非法字符
                 bytes = bytesAfterLastAccept;
 
                 stringBuffer[bytes++] = '\\';
@@ -246,6 +260,7 @@ static void dumpEscaped(std::string& out, const std::string& str)
                 undumpedChars = 0;
 
                 // continue processing the string
+                // 继续处理字符串
                 state = utf8Accept;
                 break;
             }
@@ -259,9 +274,11 @@ static void dumpEscaped(std::string& out, const std::string& str)
     }
 
     // we finished processing the string
+    // 字符串处理完毕
     if (state == utf8Accept)
     {
         // write buffer
+        // 写入缓冲区
         if (bytes > 0)
         {
             out.append(stringBuffer.data(), bytes);
@@ -270,6 +287,7 @@ static void dumpEscaped(std::string& out, const std::string& str)
     else
     {
         // write all accepted bytes
+        // 写入所有已接受的字节
         out.append(stringBuffer.data(), bytesAfterLastAccept);
         out += "\\ufffd";
     }
@@ -330,6 +348,7 @@ void dumpInteger(std::string& out, NumberType number)
     }};
 
     // special case for "0"
+    // 对 "0" 的特殊处理
     if (number == 0)
     {
         out += '0';
@@ -337,6 +356,7 @@ void dumpInteger(std::string& out, NumberType number)
     }
 
     // use a pointer to fill the buffer
+    // 使用指针填充缓冲区
     auto* bufferPtr = numberbuffer.begin();
 
     const bool isNegative = std::is_same<NumberType, int64_t>::value &&
@@ -351,6 +371,7 @@ void dumpInteger(std::string& out, NumberType number)
         absValue = static_cast<uint64_t>(0 - number);
 
         // account one more byte for the minus sign
+        // 为负号多算一个字节
         nChars = 1 + countDigits(absValue);
     }
     else
@@ -360,6 +381,7 @@ void dumpInteger(std::string& out, NumberType number)
     }
 
     // spare 1 byte for '\0'
+    // 为 '\0' 预留 1 个字节
     if (nChars >= numberbuffer.size() - 1)
     {
         return;
@@ -367,10 +389,14 @@ void dumpInteger(std::string& out, NumberType number)
 
     // jump to the end to generate the string from backward
     // so we later avoid reversing the result
+    // 跳到末尾以便从后向前生成字符串，
+    // 这样之后就无需反转结果
     std::advance(bufferPtr, nChars - 1);
 
     // Fast int2ascii implementation inspired by "Fastware" talk by Andrei
     // Alexandrescu See: https://www.youtube.com/watch?v=o4-CwDo2zpg
+    // 受 Andrei Alexandrescu 的 "Fastware" 演讲启发的
+    // 快速 int2ascii 实现。参见：https://www.youtube.com/watch?v=o4-CwDo2zpg
     while (absValue >= 100)
     {
         const auto digitsIndex = static_cast<unsigned>((absValue % 100));
@@ -388,11 +414,13 @@ void dumpInteger(std::string& out, NumberType number)
         bufferPtr = std::prev(bufferPtr);
         *bufferPtr = digitsTo99[digitsIndex][0];
         // assignment never used: bufferPtr = std::prev(bufferPtr);
+        // 从未使用的赋值：bufferPtr = std::prev(bufferPtr);
     }
     else
     {
         *bufferPtr = static_cast<char>('0' + absValue);
         // assignment never used: bufferPtr = std::prev(bufferPtr);
+        // 从未使用的赋值：bufferPtr = std::prev(bufferPtr);
     }
 
     out.append(numberbuffer.data(), nChars);
@@ -400,6 +428,7 @@ void dumpInteger(std::string& out, NumberType number)
 
 static void dumpfloat(std::string& out, double number)
 {
+    // NaN / inf
     // NaN / inf
     if (!std::isfinite(number))
     {
@@ -486,6 +515,7 @@ static void dump(std::string& out, const nlohmann::json& val)
             out += "<div class=tab>";
 
             // first n-1 elements
+            // 前 n-1 个元素
             const nlohmann::json::array_t* arr =
                 val.get_ptr<const nlohmann::json::array_t*>();
             if (arr == nullptr)
@@ -499,6 +529,7 @@ static void dump(std::string& out, const nlohmann::json& val)
             }
 
             // last element
+            // 最后一个元素
             dump(out, val.back());
 
             out += "</div>";
@@ -565,6 +596,7 @@ static void dump(std::string& out, const nlohmann::json& val)
         default:
         {
             // Do nothing;  Should never happen.
+            // 不执行任何操作；这不应发生。
             return;
         }
     }

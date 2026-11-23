@@ -12,6 +12,7 @@ namespace
 
 using ::testing::ElementsAre;
 // Also see redfish-core/ut/configfile_test.cpp
+// 另见 redfish-core/ut/configfile_test.cpp
 TEST(OpenbmcDbusRestTest, ValidFilenameGood)
 {
     EXPECT_TRUE(validateFilename("GoodConfigFile"));
@@ -27,6 +28,7 @@ TEST(OpenbmcDbusRestTest, ValidFilenameGood)
 }
 
 // There is no length test yet because validateFilename() does not care yet
+// 目前没有长度测试，因为 validateFilename() 尚不关心长度
 TEST(OpenbmcDbusRestTest, ValidFilenameBad)
 {
     EXPECT_FALSE(validateFilename(""));
@@ -44,6 +46,7 @@ TEST(OpenbmcDbusRestTest, ValidFilenameBad)
 TEST(OpenBmcDbusTest, TestArgSplit)
 {
     // test the basic types
+    // 测试基本类型
     EXPECT_THAT(dbusArgSplit("x"), ElementsAre("x"));
     EXPECT_THAT(dbusArgSplit("y"), ElementsAre("y"));
     EXPECT_THAT(dbusArgSplit("b"), ElementsAre("b"));
@@ -56,14 +59,17 @@ TEST(OpenBmcDbusTest, TestArgSplit)
     EXPECT_THAT(dbusArgSplit("d"), ElementsAre("d"));
     EXPECT_THAT(dbusArgSplit("h"), ElementsAre("h"));
     // test arrays
+    // 测试数组
     EXPECT_THAT(dbusArgSplit("ai"), ElementsAre("ai"));
     EXPECT_THAT(dbusArgSplit("ax"), ElementsAre("ax"));
     // test tuples
+    // 测试元组
     EXPECT_THAT(dbusArgSplit("(sss)"), ElementsAre("(sss)"));
     EXPECT_THAT(dbusArgSplit("(sss)b"), ElementsAre("(sss)", "b"));
     EXPECT_THAT(dbusArgSplit("b(sss)"), ElementsAre("b", "(sss)"));
 
     // Test nested types
+    // 测试嵌套类型
     EXPECT_THAT(dbusArgSplit("a{si}b"), ElementsAre("a{si}", "b"));
     EXPECT_THAT(dbusArgSplit("a(sss)b"), ElementsAre("a(sss)", "b"));
     EXPECT_THAT(dbusArgSplit("aa{si}b"), ElementsAre("aa{si}", "b"));

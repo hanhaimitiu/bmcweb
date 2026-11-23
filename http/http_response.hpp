@@ -90,6 +90,7 @@ struct Response
         completed(res.completed)
     {
         // See note in operator= move handler for why this is needed.
+        // 关于为何需要这样做，请参见 operator= 移动处理函数中的说明。
         if (!res.completed)
         {
             completeRequestHandler = std::move(res.completeRequestHandler);
@@ -120,6 +121,11 @@ struct Response
         // while in a completion handler for that response object.  This check
         // is intended to prevent destructing the functor we are currently
         // executing from in that case.
+        // 只有在尚未完成时才需要移动 completion handler
+        // 注意，有时可能会在该 Response 对象的 completion handler 中
+        // 移出该 Response 对象。此检查
+        // 旨在防止在这种情况下析构我们当前
+        // 正在执行的仿函数（functor）。
         if (!r.completed)
         {
             completeRequestHandler = std::move(r.completeRequestHandler);
@@ -257,11 +263,13 @@ struct Response
     std::string getCurrentEtag() const
     {
         // Only set etag if this request succeeded
+        // 仅当此请求成功时才设置 etag
         if (result() != http::status::ok)
         {
             return "";
         }
         // and the json response isn't empty
+        // 并且 json 响应不为空
         if (jsonValue.empty())
         {
             return "";
@@ -304,6 +312,8 @@ struct Response
 
         // Now that we have a new completion handler attached, we're no longer
         // complete
+        // 现在已经挂载了新的 completion handler，我们不再是
+        // 已完成状态
         completed = false;
     }
 
@@ -320,6 +330,7 @@ struct Response
     void setResponseEtagAndHandleNotModified()
     {
         // Can only hash if we have content that's valid
+        // 只有内容有效时才能进行哈希
         if (jsonValue.empty() || result() != http::status::ok)
         {
             return;

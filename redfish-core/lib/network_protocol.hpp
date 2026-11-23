@@ -51,6 +51,7 @@ static constexpr std::string_view ipmiServiceName = "phosphor-ipmi-net";
 
 // Mapping from Redfish NetworkProtocol key name to backend service that hosts
 // that protocol.
+// 从 Redfish NetworkProtocol 键名到承载该协议的后端服务的映射。
 static constexpr std::array<std::pair<std::string_view, std::string_view>, 3>
     networkProtocolToDbus = {{{"SSH", sshServiceName},
                               {"HTTPS", httpsServiceName},
@@ -119,6 +120,7 @@ void getEthernetIfaceData(CallbackFunc&& callback)
     dbus::utility::getManagedObjects(
         "xyz.openbmc_project.Network", path,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<CallbackFunc>(callback)](
             const boost::system::error_code& ec,
             const dbus::utility::ManagedObjectType& dbusData) {
@@ -199,6 +201,10 @@ inline void getNetworkData(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     // but from security perspective it is not recommended to use.
     // Hence using protocolEnabled as false to make it OCP and security-wise
     // compliant
+    // 根据 OCP Baseline Profile - v1.0.0，HTTP 是强制属性，
+    // 但从安全角度来看不建议使用。
+    // 因此将 protocolEnabled 设为 false，
+    // 以同时满足 OCP 和安全性要求。
     asyncResp->res.jsonValue["HTTP"]["Port"] = nullptr;
     asyncResp->res.jsonValue["HTTP"]["ProtocolEnabled"] = false;
 
@@ -207,6 +213,10 @@ inline void getNetworkData(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     // have been disabled, then the systemd socket unit files will not be found
     // and the protocols will not be returned in this Redfish query. Set some
     // defaults to ensure something is always returned.
+    // 以下协议的 ProtocolEnabled 通过检查关联的 systemd socket 状态来确定。
+    // 如果这些协议被禁用，则找不到对应的 systemd socket unit 文件，
+    // 这些协议也不会在此 Redfish 查询中返回。
+    // 请设置一些默认值，以确保始终有内容返回。
     for (const auto& nwkProtocol : networkProtocolToDbus)
     {
         asyncResp->res.jsonValue[nwkProtocol.first]["Port"] = nullptr;
@@ -220,6 +230,7 @@ inline void getNetworkData(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     getNTPProtocolEnabled(asyncResp);
 
     // ast-grep-ignore: long-lambda
+    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
     getEthernetIfaceData([hostName, asyncResp](
                              const bool& success,
                              const std::vector<std::string>& ntpServers,
@@ -252,6 +263,9 @@ inline void getNetworkData(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     // /redfish/v1/Managers/bmc/NetworkProtocol/HTTPS/Certificates is
     // something only ConfigureManager can access then only display when
     // the user has permissions ConfigureManager
+    // /redfish/v1/Managers/bmc/NetworkProtocol/HTTPS/Certificates
+    // 只有 ConfigureManager 可以访问，
+    // 因此仅在用户拥有 ConfigureManager 权限时才显示。
     if (isOperationAllowedWithPrivileges({{"ConfigureManager"}},
                                          effectiveUserPrivileges))
     {
@@ -294,6 +308,10 @@ inline void handleNTPProtocolEnabled(
 // string, to set a value
 // null, to delete the value
 // object_t, empty json object, to ignore the value
+// Redfish 规定 ip 地址可以是：
+// string，用于设置值；
+// null，用于删除该值；
+// object_t（空 json 对象），用于忽略该值。
 using IpAddress =
     std::variant<std::string, nlohmann::json::object_t, std::nullptr_t>;
 
@@ -310,6 +328,7 @@ inline void handleNTPServersPatch(
         if (std::holds_alternative<std::nullptr_t>(ntpServer))
         {
             // Can't delete an item that doesn't exist
+            // 不能删除不存在的条目。
             if (currentNtpServer == currentNtpServers.end())
             {
                 messages::propertyValueNotInList(
@@ -333,6 +352,7 @@ inline void handleNTPServersPatch(
                 return;
             }
             // Can't retain an item that doesn't exist
+            // 不能保留不存在的条目。
             if (currentNtpServer == currentNtpServers.end())
             {
                 messages::propertyValueOutOfRange(
@@ -342,6 +362,7 @@ inline void handleNTPServersPatch(
                 return;
             }
             // empty objects should leave the NtpServer unmodified
+            // 空对象表示不修改 NtpServer。
             currentNtpServer++;
             continue;
         }
@@ -355,6 +376,7 @@ inline void handleNTPServersPatch(
         if (currentNtpServer == currentNtpServers.end())
         {
             // if we're at the end of the list, append to the end
+            // 如果已到达列表末尾，则追加到末尾。
             currentNtpServers.push_back(*ntpServerStr);
             currentNtpServer = currentNtpServers.end();
             continue;
@@ -364,6 +386,7 @@ inline void handleNTPServersPatch(
     }
 
     // Any remaining array elements should be removed
+    // 其余数组元素应被移除。
     currentNtpServers.erase(currentNtpServer, currentNtpServers.end());
 
     constexpr std::array<std::string_view, 1> ethInterfaces = {
@@ -371,6 +394,7 @@ inline void handleNTPServersPatch(
     dbus::utility::getSubTree(
         "/xyz/openbmc_project", 0, ethInterfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, currentNtpServers](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreeResponse& subtree) {
@@ -412,6 +436,7 @@ inline void handleProtocolEnabled(
     dbus::utility::getSubTree(
         "/xyz/openbmc_project/control/service", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [protocolEnabled, asyncResp, netBasePath,
          redfishProperty = std::string(redfishProperty)](
             const boost::system::error_code& ec,
@@ -534,6 +559,7 @@ inline void handleManagersNetworkProtocolPatch(
     {
         getEthernetIfaceData(
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [asyncResp, ntpServerObjects](
                 const bool success, std::vector<std::string>& currentNtpServers,
                 const std::vector<std::string>& /*dynamicNtpServers*/,

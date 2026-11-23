@@ -13,6 +13,8 @@ namespace bmcweb
  * AsyncResp
  * Gathers data needed for response processing after async calls are done
  */
+/* AsyncResp
+ * 收集异步调用完成后进行响应处理所需的数据 */
 
 class AsyncResp
 {

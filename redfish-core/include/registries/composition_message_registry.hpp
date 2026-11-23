@@ -11,6 +11,14 @@
  * should be first pushed to the relevant registry in the DMTF
  * github organization.
  ***************************************************************/
+/*                 请先阅读此警告
+ * 这是一个自动生成的头文件，其中包含
+ * Redfish DMTF 定义消息的相关定义。
+ * 除运行 parse_registries.py 脚本外，
+ * 请勿修改此注册表。本文件中所含的
+ * 定义归 DMTF 所有。对这些文件的任何修改，
+ * 都应先推送到 DMTF github 组织中的
+ * 相应注册表。 */
 #include "registries.hpp"
 
 #include <array>

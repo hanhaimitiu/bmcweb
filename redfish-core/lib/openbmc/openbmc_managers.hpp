@@ -222,6 +222,7 @@ inline void afterAsyncPopulatePid(
             }
 
             // pid and fans are off the same configuration
+            // pid 和风扇来自同一配置
             else if (intfPair.first == pidConfigurationIface)
             {
                 if (classPtr == nullptr)
@@ -260,10 +261,12 @@ inline void afterAsyncPopulatePid(
             }
 
             // used for making maps out of 2 vectors
+            // 用于根据两个 vector 构造 map
             const std::vector<double>* keys = nullptr;
             const std::vector<double>* values = nullptr;
 
             // Optional PID-only properties (do NOT fail GET if missing)
+            // 仅在 PID 中使用的可选属性（缺失时不要让 GET 失败）
             const bool* checkHysteresisWithSetpoint = nullptr;
             const double* dCoefficient = nullptr;
             if (intfPair.first == pidConfigurationIface)
@@ -294,6 +297,7 @@ inline void afterAsyncPopulatePid(
                     continue;
                 }
                 // handled above via unpackPropertiesNoThrow (PID only)
+                // 已在上面通过 unpackPropertiesNoThrow 处理（仅 PID）
                 if (intfPair.first == pidConfigurationIface &&
                     (propertyPair.first == "CheckHysteresisWithSetpoint" ||
                      propertyPair.first == "DCoefficient"))
@@ -301,6 +305,7 @@ inline void afterAsyncPopulatePid(
                     continue;
                 }
                 // zones
+                // 区域（zones）
                 if (intfPair.first == pidZoneConfigurationIface)
                 {
                     const double* ptr =
@@ -377,6 +382,7 @@ inline void afterAsyncPopulatePid(
                 }
 
                 // pid and fans are off the same configuration
+                // pid 和风扇来自同一配置
                 if (intfPair.first == pidConfigurationIface ||
                     intfPair.first == stepwiseConfigurationIface)
                 {
@@ -414,6 +420,10 @@ inline void afterAsyncPopulatePid(
                     // could add another loop to cover all cases,
                     // but I'm okay kicking this can down the road a
                     // bit
+                    // todo(james)：可能永远不会发生，但这假设 PID 配置中
+                    // 引用的配置数据由同一个守护进程提供。
+                    // 我们可以再加一层循环来覆盖所有情况，
+                    // 不过我同意先把这个问题暂缓一下。
 
                     else if (propertyPair.first == "Inputs" ||
                              propertyPair.first == "Outputs")
@@ -445,6 +455,7 @@ inline void afterAsyncPopulatePid(
                             return;
                         }
                         // translate from dbus to redfish
+                        // 从 dbus 转换到 redfish
                         if (*ptr == "WarningHigh")
                         {
                             (*config)["SetPointOffset"] =
@@ -473,6 +484,7 @@ inline void afterAsyncPopulatePid(
                         }
                     }
                     // doubles
+                    // 双精度浮点数（doubles）
                     else if (propertyPair.first == "FFGainCoefficient" ||
                              propertyPair.first == "FFOffCoefficient" ||
                              propertyPair.first == "ICoefficient" ||
@@ -546,6 +558,7 @@ inline const dbus::utility::ManagedObjectType::value_type* findChassis(
         return nullptr;
     }
     // /xyz/openbmc_project/inventory/system/chassis/<chassis-name>
+    // /xyz/openbmc_project/inventory/system/chassis/<chassis-name>（机箱对象路径格式）
     sdbusplus::object_path path(it->first.str);
     chassis = path.filename();
 
@@ -585,6 +598,8 @@ inline bool getZonesFromJsonReq(
 
         // 8 below comes from
         // /redfish/v1/Managers/bmc#/Oem/OpenBmc/Fan/FanZones/Left
+        // 下面的 8 来自
+        // /redfish/v1/Managers/bmc#/Oem/OpenBmc/Fan/FanZones/Left
         std::string managerId;
         if (!crow::utility::readUrlSegments(
                 *parsed, "redfish", "v1", "Managers", std::ref(managerId),
@@ -609,6 +624,7 @@ inline CreatePIDRet createPidInterface(
     const std::string& profile)
 {
     // common deleter
+    // 通用删除器
     if (jsonValue == nullptr)
     {
         std::string iface;
@@ -633,6 +649,7 @@ inline CreatePIDRet createPidInterface(
 
         BMCWEB_LOG_DEBUG("del {} {}", path, iface);
         // delete interface
+        // 删除接口
         dbus::utility::async_method_call(
             response,
             [response, path](const boost::system::error_code& ec) {
@@ -653,6 +670,8 @@ inline CreatePIDRet createPidInterface(
     {
         // if we aren't creating a new object, we should be able to find it on
         // d-bus
+        // 如果我们不是在创建新对象，就应该能在
+        // d-bus 上找到它
         managedItem = findChassis(managedObj, name, chassis);
         if (managedItem == nullptr)
         {
@@ -808,6 +827,7 @@ inline CreatePIDRet createPidInterface(
         if (setpointOffset)
         {
             // translate between redfish and dbus names
+            // 在 redfish 和 dbus 名称之间转换
             if (*setpointOffset == "UpperThresholdNonCritical")
             {
                 output.emplace_back("SetPointOffset", "WarningLow");
@@ -855,6 +875,7 @@ inline CreatePIDRet createPidInterface(
         }
 
         // doubles
+        // 双精度浮点数（doubles）
         for (const auto& pairs : doubles)
         {
             if (!pairs.second)
@@ -1037,12 +1058,14 @@ struct GetPIDValues : std::enable_shared_from_this<GetPIDValues>
         std::shared_ptr<GetPIDValues> self = shared_from_this();
 
         // get all configurations
+        // 获取所有配置
         constexpr std::array<std::string_view, 4> interfaces = {
             pidConfigurationIface, pidZoneConfigurationIface,
             objectManagerIface, stepwiseConfigurationIface};
         dbus::utility::getSubTree(
             "/", 0, interfaces,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [self](
                 const boost::system::error_code& ec,
                 const dbus::utility::MapperGetSubTreeResponse& subtreeLocal) {
@@ -1056,11 +1079,13 @@ struct GetPIDValues : std::enable_shared_from_this<GetPIDValues>
             });
 
         // at the same time get the selected profile
+        // 同时获取选定的 profile
         constexpr std::array<std::string_view, 1> thermalModeIfaces = {
             thermalModeIface};
         dbus::utility::getSubTree(
             "/", 0, thermalModeIfaces,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [self](
                 const boost::system::error_code& ec,
                 const dbus::utility::MapperGetSubTreeResponse& subtreeLocal) {
@@ -1071,6 +1096,7 @@ struct GetPIDValues : std::enable_shared_from_this<GetPIDValues>
                 if (subtreeLocal[0].second.size() != 1)
                 {
                     // invalid mapper response, should never happen
+                    // 无效的 mapper 响应，不应发生
                     BMCWEB_LOG_ERROR("GetPIDValues: Mapper Error");
                     messages::internalError(self->asyncResp->res);
                     return;
@@ -1083,6 +1109,7 @@ struct GetPIDValues : std::enable_shared_from_this<GetPIDValues>
                     *crow::connections::systemBus, owner, path,
                     thermalModeIface,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                     [path, owner,
                      self](const boost::system::error_code& ec2,
                            const dbus::utility::DBusPropertiesMap& resp) {
@@ -1131,6 +1158,7 @@ struct GetPIDValues : std::enable_shared_from_this<GetPIDValues>
             return;
         }
         // create map of <connection, path to objMgr>>
+        // 创建 <connection, path to objMgr> 的映射
         boost::container::flat_map<
             std::string, std::string, std::less<>,
             std::vector<std::pair<std::string, std::string>>>
@@ -1156,6 +1184,8 @@ struct GetPIDValues : std::enable_shared_from_this<GetPIDValues>
                     }
                     // this list is alphabetical, so we
                     // should have found the objMgr by now
+                    // 这个列表是按字母顺序排列的，所以现在
+                    // 应该已经找到 objMgr 了
                     if (interface == pidConfigurationIface ||
                         interface == pidZoneConfigurationIface ||
                         interface == stepwiseConfigurationIface)
@@ -1226,10 +1256,13 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
 
         // todo(james): might make sense to do a mapper call here if this
         // interface gets more traction
+        // todo(james)：如果这个接口得到更广泛的应用，
+        // 在这里调用一次 mapper 可能比较合理
         sdbusplus::object_path objPath("/xyz/openbmc_project/inventory");
         dbus::utility::getManagedObjects(
             "xyz.openbmc_project.EntityManager", objPath,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [self](const boost::system::error_code& ec,
                    const dbus::utility::ManagedObjectType& mObj) {
                 if (ec)
@@ -1258,11 +1291,13 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
             });
 
         // at the same time get the profile information
+        // 同时获取 profile 信息
         constexpr std::array<std::string_view, 1> thermalModeIfaces = {
             thermalModeIface};
         dbus::utility::getSubTree(
             "/", 0, thermalModeIfaces,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
             [self](const boost::system::error_code& ec,
                    const dbus::utility::MapperGetSubTreeResponse& subtree) {
                 if (ec || subtree.empty())
@@ -1272,6 +1307,7 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
                 if (subtree[0].second.empty())
                 {
                     // invalid mapper response, should never happen
+                    // 无效的 mapper 响应，不应发生
                     BMCWEB_LOG_ERROR("SetPIDValues: Mapper Error");
                     messages::internalError(self->asyncResp->res);
                     return;
@@ -1283,6 +1319,7 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
                     *crow::connections::systemBus, owner, path,
                     thermalModeIface,
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                     [self, path,
                      owner](const boost::system::error_code& ec2,
                             const dbus::utility::DBusPropertiesMap& r) {
@@ -1377,6 +1414,8 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
 
                 // determines if we're patching entity-manager or
                 // creating a new object
+                // 判断我们是在 patch entity-manager，还是
+                // 在创建一个新对象
                 bool createNewObject = (pathItr == managedObj.end());
                 BMCWEB_LOG_DEBUG("Found = {}", !createNewObject);
 
@@ -1417,6 +1456,7 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
                     }
 
                     // create new object if interface not found
+                    // 如果未找到接口则创建新对象
                     if (!findInterface)
                     {
                         createNewObject = true;
@@ -1426,6 +1466,7 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
                 if (createNewObject && value == nullptr)
                 {
                     // can't delete a non-existent object
+                    // 不能删除不存在的对象
                     messages::propertyValueNotInList(response->res, value,
                                                      name);
                     continue;
@@ -1440,6 +1481,7 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
                 BMCWEB_LOG_DEBUG("Create new = {}", createNewObject);
 
                 // arbitrary limit to avoid attacks
+                // 为防止攻击而设置的任意限制
                 constexpr const size_t controllerLimit = 500;
                 if (createNewObject && objectCount >= controllerLimit)
                 {
@@ -1470,6 +1512,7 @@ struct SetPIDValues : std::enable_shared_from_this<SetPIDValues>
                         dbus::utility::async_method_call(
                             asyncResp,
                             // ast-grep-ignore: long-lambda
+                            // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                             [response,
                              propertyName{std::string(property.first)}](
                                 const boost::system::error_code& ec) {
@@ -1565,6 +1608,7 @@ inline void handleGetManagerOpenBmc(
     const std::string& /*managerId*/)
 {
     // Default OEM data
+    // 默认 OEM 数据
     nlohmann::json& oemOpenbmc = asyncResp->res.jsonValue;
     oemOpenbmc["@odata.type"] = "#OpenBMCManager.v1_1_0.Manager";
     oemOpenbmc["@odata.id"] =

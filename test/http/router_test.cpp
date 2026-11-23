@@ -24,6 +24,7 @@ using utility::getParameterTag;
 TEST(Router, AllowHeader)
 {
     // Callback handler that does nothing
+    // 不执行任何操作的回调处理函数
     auto nullCallback =
         [](const Request&, const std::shared_ptr<bmcweb::AsyncResp>&) {};
 
@@ -35,6 +36,7 @@ TEST(Router, AllowHeader)
     Request req{{boost::beast::http::verb::get, url, 11}, ec};
 
     // No route should return no methods.
+    // 没有路由时应不返回任何方法。
     router.validate();
     EXPECT_EQ(router.findRoute(req).allowHeader, "");
     EXPECT_EQ(router.findRoute(req).route.rule, nullptr);
@@ -59,6 +61,7 @@ TEST(Router, AllowHeader)
 TEST(Router, OverlapingRoutes)
 {
     // Callback handler that does nothing
+    // 不执行任何操作的回调处理函数
     auto fooCallback =
         [](const Request&, const std::shared_ptr<bmcweb::AsyncResp>&) {
             EXPECT_FALSE(true);
@@ -96,6 +99,7 @@ TEST(Router, 404)
 {
     bool notFoundCalled = false;
     // Callback handler that does nothing
+    // 不执行任何操作的回调处理函数
     auto nullCallback =
         [&notFoundCalled](const Request&,
                           const std::shared_ptr<bmcweb::AsyncResp>&) {
@@ -125,6 +129,7 @@ TEST(Router, 404)
 TEST(Router, 405)
 {
     // Callback handler that does nothing
+    // 不执行任何操作的回调处理函数
     auto nullCallback =
         [](const Request&, const std::shared_ptr<bmcweb::AsyncResp>&) {};
     bool called = false;

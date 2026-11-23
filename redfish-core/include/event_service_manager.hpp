@@ -78,6 +78,7 @@ class EventServiceManager
     explicit EventServiceManager()
     {
         // Load config from persist store.
+        // 从持久化存储加载配置。
         initConfig();
     }
 
@@ -124,9 +125,11 @@ class EventServiceManager
             updateNoOfSubscribersCount();
 
             // Update retry configuration.
+            // 更新重试配置。
             subValue->updateRetryConfig(retryAttempts, retryTimeoutInterval);
 
             // schedule a heartbeat if sendHeartbeat was set to true
+            // 如果 sendHeartbeat 设为 true，则安排一次心跳
             if (subValue->userSub->sendHeartbeat)
             {
                 subValue->scheduleNextHeartbeatEvent();
@@ -227,6 +230,7 @@ class EventServiceManager
         if (updateRetryCfg)
         {
             // Update the changed retry config to all subscriptions
+            // 将变更后的重试配置更新到所有订阅
             for (const auto& it :
                  EventServiceManager::getInstance().subscriptionsMap)
             {
@@ -335,6 +339,7 @@ class EventServiceManager
         }
 
         // Set Subscription ID for back trace
+        // 设置订阅 ID 以便回溯
         subValue->userSub->id = id;
 
         persistent_data::EventServiceStore::getInstance()
@@ -343,6 +348,7 @@ class EventServiceManager
         updateNoOfSubscribersCount();
 
         // Update retry configuration.
+        // 更新重试配置。
         subValue->updateRetryConfig(retryAttempts, retryTimeoutInterval);
 
         return id;
@@ -364,6 +370,7 @@ class EventServiceManager
                         return std::to_string(event.id) == lastEventId;
                     });
             // Can't find a matching ID
+            // 找不到匹配的 ID
             if (lastEvent == messages.end())
             {
                 nlohmann::json msg = messages::eventBufferExceeded();
@@ -376,6 +383,7 @@ class EventServiceManager
             else
             {
                 // Skip the last event the user already has
+                // 跳过用户已收到的最后一个事件
                 lastEvent++;
 
                 for (boost::circular_buffer<Event>::const_iterator event =
@@ -526,6 +534,7 @@ class EventServiceManager
             logEntryJson["MessageArgs"] = *testEvent.messageArgs;
         }
         // MemberId is 0 : since we are sending one event record.
+        // MemberId 为 0：因为我们只发送一条事件记录。
         logEntryJson["MemberId"] = "0";
 
         nlohmann::json::object_t msg;
@@ -589,6 +598,7 @@ class EventServiceManager
         }
 
         // MemberId is 0 : since we are sending one event record.
+        // MemberId 为 0：因为我们只发送一条事件记录。
         eventMessage["MemberId"] = "0";
 
         messages.push_back(Event(eventId, eventMessage));

@@ -33,6 +33,7 @@ TEST(UpdateService, ParseHTTSPPostitive)
     crow::Response res;
     {
         // No protocol, schema on url
+        // url 中没有 protocol，有 schema
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("https://1.1.1.1/path", std::nullopt, res);
         ASSERT_TRUE(ret);
@@ -46,6 +47,7 @@ TEST(UpdateService, ParseHTTSPPostitive)
     }
     {
         // Protocol, no schema on url
+        // url 中有 protocol，没有 schema
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("1.1.1.1/path", "HTTPS", res);
         ASSERT_TRUE(ret);
@@ -59,6 +61,7 @@ TEST(UpdateService, ParseHTTSPPostitive)
     }
     {
         // Both protocol and schema on url
+        // url 中同时有 protocol 和 schema
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("https://1.1.1.1/path", "HTTPS", res);
         ASSERT_TRUE(ret);
@@ -77,6 +80,7 @@ TEST(UpdateService, ParseHTTPSPostitive)
     crow::Response res;
     {
         // No protocol, schema on url
+        // url 中没有 protocol，有 schema
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("https://1.1.1.1/path", std::nullopt, res);
         ASSERT_TRUE(ret);
@@ -90,6 +94,7 @@ TEST(UpdateService, ParseHTTPSPostitive)
     }
     {
         // Protocol, no schema on url
+        // url 中有 protocol，没有 schema
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("1.1.1.1/path", "HTTPS", res);
         ASSERT_TRUE(ret);
@@ -103,6 +108,7 @@ TEST(UpdateService, ParseHTTPSPostitive)
     }
     {
         // Both protocol and schema on url with path
+        // url 中同时有 protocol 和 schema，且带路径
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("https://1.1.1.1/path", "HTTPS", res);
         ASSERT_TRUE(ret);
@@ -116,6 +122,7 @@ TEST(UpdateService, ParseHTTPSPostitive)
     }
     {
         // Both protocol and schema on url without path
+        // url 中同时有 protocol 和 schema，且不带路径
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("https://1.1.1.1", "HTTPS", res);
         ASSERT_TRUE(ret);
@@ -129,6 +136,7 @@ TEST(UpdateService, ParseHTTPSPostitive)
     }
     {
         // Both protocol and schema on url without path
+        // url 中同时有 protocol 和 schema，且不带路径
         std::optional<boost::urls::url> ret =
             parseSimpleUpdateUrl("https://[2001:db8::1]", "HTTPS", res);
         ASSERT_TRUE(ret);
@@ -146,9 +154,11 @@ TEST(UpdateService, ParseHTTPSNegative)
 {
     crow::Response res;
     // No protocol, no schema
+    // 没有 protocol，也没有 schema
     ASSERT_EQ(parseSimpleUpdateUrl("1.1.1.1/path", std::nullopt, res),
               std::nullopt);
     // No host
+    // 没有 host
     ASSERT_EQ(parseSimpleUpdateUrl("/path", "HTTPS", res), std::nullopt);
 }
 
@@ -261,6 +271,9 @@ TEST(UpdateService, MalformedUpdateParametersReturnsBadRequest)
 // A Software.Version object that omits the deprecated Purpose property must
 // still succeed: the handler must not fail the resource and must skip the
 // Purpose-derived Description.
+// 省略了已弃用 Purpose 属性的 Software.Version 对象
+// 仍应成功：处理程序不得使该资源失败，且必须跳过
+// 由 Purpose 派生的 Description。
 TEST(UpdateService, MissingPurposeIsToleratedAndSkipsDescription)
 {
     auto asyncResp = std::make_shared<bmcweb::AsyncResp>();
@@ -275,6 +288,8 @@ TEST(UpdateService, MissingPurposeIsToleratedAndSkipsDescription)
 
 // When Purpose is present, Description is the trailing token of the
 // VersionPurpose enum string plus " image"; exercise that transform.
+// 当存在 Purpose 时，Description 是 VersionPurpose 枚举
+// 字符串的最后一个标记加上 " image"；验证这一转换。
 TEST(UpdateService, PurposeIsTranslatedToDescription)
 {
     auto asyncResp = std::make_shared<bmcweb::AsyncResp>();
@@ -290,6 +305,7 @@ TEST(UpdateService, PurposeIsTranslatedToDescription)
 }
 
 // Version is mandatory; its absence is an internal error.
+// Version 是必填项；缺少它属于内部错误。
 TEST(UpdateService, MissingVersionIsError)
 {
     auto asyncResp = std::make_shared<bmcweb::AsyncResp>();

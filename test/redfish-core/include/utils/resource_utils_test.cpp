@@ -25,6 +25,7 @@ std::shared_ptr<bmcweb::AsyncResp> createAsyncResp()
 }
 
 // Tests for determineResourceState
+// determineResourceState 的测试
 
 TEST(DetermineResourceState, Absent)
 {
@@ -88,6 +89,7 @@ TEST(DetermineResourceState, WithJsonPointer)
 }
 
 // Tests for determineResourceHealth
+// determineResourceHealth 的测试
 
 TEST(DetermineResourceHealth, OK)
 {
@@ -124,18 +126,22 @@ TEST(DetermineResourceHealth, WithJsonPointer)
 }
 
 // Integration-style tests
+// 集成风格的测试
 
 TEST(ResourceUtils, MultipleResourcesWithDifferentStates)
 {
     auto asyncResp = createAsyncResp();
 
     // Resource 1: Absent
+    // 资源 1：Absent
     determineResourceState(asyncResp, false, true, "/Resource1"_json_pointer);
 
     // Resource 2: UnavailableOffline
+    // 资源 2：UnavailableOffline
     determineResourceState(asyncResp, true, false, "/Resource2"_json_pointer);
 
     // Resource 3: Enabled
+    // 资源 3：Enabled
     determineResourceState(asyncResp, true, true, "/Resource3"_json_pointer);
 
     EXPECT_EQ(asyncResp->res.jsonValue["Resource1"]["Status"]["State"],
@@ -179,6 +185,7 @@ TEST(GetStatusAvailableState, MissingInterfaceDefaultsToEnabled)
     boost::system::error_code ec(EBADR, boost::system::generic_category());
 
     // EBADR should cause Enabled
+    // EBADR 应导致 Enabled
     getStatusAvailableState(asyncResp, ""_json_pointer, true, ec, false);
 
     EXPECT_EQ(asyncResp->res.jsonValue["Status"]["State"],
@@ -228,6 +235,7 @@ TEST(AfterGetResourceHealth, MissingInterfaceDefaultsToOK)
     boost::system::error_code ec(EBADR, boost::system::generic_category());
 
     // The bool value supplied on error is false, but on EBADR result in OK
+    // 出错时提供的 bool 值为 false，但在 EBADR 时结果为 OK
     afterGetResourceHealth(asyncResp, ""_json_pointer, ec, false);
 
     EXPECT_EQ(asyncResp->res.jsonValue["Status"]["Health"],

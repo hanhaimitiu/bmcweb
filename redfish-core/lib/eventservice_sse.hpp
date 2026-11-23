@@ -64,9 +64,11 @@ inline void createSubscription(crow::sse_socket::Connection& conn,
     }
 
     // Save filter expression
+    // 保存 filter 表达式。
     subValue->filter = std::move(filter);
 
     // GET on this URI means, Its SSE subscriptionType.
+    // 对此 URI 执行 GET 表示这是 SSE 订阅类型（subscriptionType）。
     subValue->userSub->subscriptionType = redfish::subscriptionTypeSSE;
 
     subValue->userSub->protocol = "Redfish";
@@ -89,6 +91,8 @@ inline void requestRoutesEventServiceSse(App& app)
 {
     // Note, this endpoint is given the same privilege level as creating a
     // subscription, because functionally, that's the operation being done
+    // 注意，该端点被赋予与创建订阅相同的权限级别，
+    // 因为从功能上讲，它执行的就是该操作。
     BMCWEB_ROUTE(app, "/redfish/v1/EventService/SSE/")
         .privileges(redfish::privileges::postEventDestinationCollection)
         .serverSentEvent()

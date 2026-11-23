@@ -22,6 +22,9 @@ inline void getRegistryAndMessageKey(const std::string& messageID,
     // Redfish MessageIds are in the form
     // RegistryName.MajorVersion.MinorVersion.MessageKey, so parse it to find
     // the right Message
+    // Redfish MessageId 的格式为
+    // RegistryName.MajorVersion.MinorVersion.MessageKey，因此解析它以找到
+    // 正确的 Message
     std::vector<std::string> fields;
     fields.reserve(4);
     bmcweb::split(fields, messageID, '.');
@@ -37,9 +40,11 @@ inline bool eventMatchesFilter(const persistent_data::UserSubscription& userSub,
                                std::string_view resType)
 {
     // If resourceTypes list is empty, assume all
+    // 如果 resourceTypes 列表为空，则假定为全部
     if (!userSub.resourceTypes.empty())
     {
         // Search the resourceTypes list for the subscription.
+        // 在 resourceTypes 列表中搜索该订阅。
         auto resourceTypeIndex = std::ranges::find_if(
             userSub.resourceTypes, [resType](const std::string& rtEntry) {
                 return rtEntry == resType;
@@ -55,6 +60,8 @@ inline bool eventMatchesFilter(const persistent_data::UserSubscription& userSub,
 
     // If registryPrefixes list is empty, don't filter events
     // send everything.
+    // 如果 registryPrefixes 列表为空，则不过滤事件
+    // 发送所有内容。
     if (!userSub.registryPrefixes.empty())
     {
         auto eventJson = eventMessage.find("MessageId");
@@ -108,6 +115,7 @@ inline bool eventMatchesFilter(const persistent_data::UserSubscription& userSub,
     }
 
     // If registryMsgIds list is empty, assume all
+    // 如果 registryMsgIds 列表为空，则假定为所有
     if (!userSub.registryMsgIds.empty())
     {
         auto eventJson = eventMessage.find("MessageId");

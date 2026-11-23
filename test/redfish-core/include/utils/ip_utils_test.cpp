@@ -108,20 +108,25 @@ TEST(ipv4VerifyIpAndGetBitcount, NegativeTests)
 {
     uint8_t bits = 0;
     // > 256 in any field
+    // 任意字段 > 256
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("256.0.0.0", &bits));
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("1.256.0.0", &bits));
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("1.1.256.0", &bits));
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("1.1.1.256", &bits));
 
     // Non contiguous mask
+    // 非连续的掩码
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("255.0.255.0", &bits));
 
     // Too many fields
+    // 字段过多
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("1.1.1.1.1", &bits));
     // Not enough fields
+    // 字段不足
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("1.1.1", &bits));
 
     // Empty string
+    // 空字符串
     EXPECT_FALSE(ipv4VerifyIpAndGetBitcount("", &bits));
 }
 } // namespace

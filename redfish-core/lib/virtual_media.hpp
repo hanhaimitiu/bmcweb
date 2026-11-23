@@ -103,6 +103,7 @@ inline void findAndParseObject(
     dbus::utility::getManagedObjects(
         service, path,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [service, resName, asyncResp, handler = std::move(handler)](
             const boost::system::error_code& ec,
             const dbus::utility::ManagedObjectType& subtree) {
@@ -131,6 +132,7 @@ inline void findAndParseObject(
 /**
  * @brief Function extracts transfer protocol name from URI.
  */
+/* @brief 从 URI 中提取传输协议名称的函数。 */
 inline virtual_media::TransferProtocolType getTransferProtocolTypeFromUri(
     const std::string& imageUri)
 {
@@ -155,6 +157,7 @@ inline virtual_media::TransferProtocolType getTransferProtocolTypeFromUri(
 /**
  * @brief Read all known properties from VM object interfaces
  */
+/* @brief 从 VM 对象接口读取所有已知属性 */
 inline void vmParseInterfaceObject(
     const dbus::utility::DBusInterfacesMap& interfaces,
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
@@ -176,6 +179,7 @@ inline void vmParseInterfaceObject(
                     if (!endpointIdValue->empty())
                     {
                         // Proxy mode
+                        // 代理（Proxy）模式
                         asyncResp->res
                             .jsonValue["Oem"]["OpenBMC"]["WebSocketEndpoint"] =
                             *endpointIdValue;
@@ -194,6 +198,8 @@ inline void vmParseInterfaceObject(
                         {
                             // this will handle https share, which not
                             // necessarily has to have filename given.
+                            // 这将处理 https 共享，它不
+                            // 一定需要给出文件名。
                             asyncResp->res.jsonValue["ImageName"] = "";
                         }
                         else
@@ -255,6 +261,7 @@ inline void vmParseInterfaceObject(
 /**
  * @brief Fill template for Virtual Media Item.
  */
+/* @brief 填充 Virtual Media Item 的模板。 */
 inline nlohmann::json vmItemTemplate(const std::string& name,
                                      const std::string& resName)
 {
@@ -280,6 +287,7 @@ inline nlohmann::json vmItemTemplate(const std::string& name,
 /**
  *  @brief Fills collection data
  */
+/*  @brief 填充集合数据 */
 inline void getVmResourceList(std::shared_ptr<bmcweb::AsyncResp> asyncResp,
                               const std::string& service,
                               const std::string& name)
@@ -289,6 +297,7 @@ inline void getVmResourceList(std::shared_ptr<bmcweb::AsyncResp> asyncResp,
     dbus::utility::getManagedObjects(
         service, objPath,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [name, asyncResp{std::move(asyncResp)}](
             const boost::system::error_code& ec,
             const dbus::utility::ManagedObjectType& subtree) {
@@ -333,6 +342,7 @@ inline void afterGetVmData(
     asyncResp->res.jsonValue = vmItemTemplate(name, resName);
 
     // Check if dbus path is Legacy type
+    // 检查 dbus 路径是否为 Legacy 类型
     if (mode == VmMode::Legacy)
     {
         asyncResp->res.jsonValue["Actions"]["#VirtualMedia.InsertMedia"]
@@ -352,6 +362,7 @@ inline void afterGetVmData(
 /**
  *  @brief Fills data for specific resource
  */
+/*  @brief 填充特定资源的数据 */
 inline void getVmData(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                       const std::string& service, const std::string& name,
                       const std::string& resName)
@@ -366,6 +377,7 @@ inline void getVmData(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @brief Transfer protocols supported for InsertMedia action.
  *
  */
+/* @brief InsertMedia 动作支持的传输协议。 */
 enum class TransferProtocol
 {
     https,
@@ -377,6 +389,7 @@ enum class TransferProtocol
  * @brief Function extracts transfer protocol type from URI.
  *
  */
+/* @brief 从 URI 中提取传输协议类型的函数。 */
 inline std::optional<TransferProtocol> getTransferProtocolFromUri(
     const boost::urls::url_view_base& imageUri)
 {
@@ -401,6 +414,7 @@ inline std::optional<TransferProtocol> getTransferProtocolFromUri(
  * @brief Function convert transfer protocol from string param.
  *
  */
+/* @brief 从字符串参数转换传输协议的函数。 */
 inline std::optional<TransferProtocol> getTransferProtocolFromParam(
     const std::optional<std::string>& transferProtocolType)
 {
@@ -426,6 +440,7 @@ inline std::optional<TransferProtocol> getTransferProtocolFromParam(
  * @brief Function extends URI with transfer protocol type.
  *
  */
+/* @brief 用传输协议类型扩展 URI 的函数。 */
 inline std::string getUriWithTransferProtocol(
     const std::string& imageUri, const TransferProtocol& transferProtocol)
 {
@@ -458,6 +473,8 @@ struct InsertMediaActionParams
  *
  * All BMC state properties will be retrieved before sending reset request.
  */
+/* @brief 该函数直接与 dbus 收发数据。
+ * 在发送复位请求之前将检索所有 BMC 状态属性。 */
 inline void doMountVmLegacy(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                             const std::string& service, const std::string& name,
                             const std::string& imageUrl, bool rw,
@@ -487,12 +504,14 @@ inline void doMountVmLegacy(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         return;
     }
     // Open pipe
+    // 打开管道（pipe）
     std::shared_ptr<CredentialsPipe> secretPipe =
         std::make_shared<CredentialsPipe>(
             crow::connections::systemBus->get_io_context());
     int fd = secretPipe->releaseFd();
 
     // Pass secret over pipe
+    // 通过管道传递密钥（secret）
     secretPipe->asyncWrite(
         std::move(userName), std::move(password),
         [asyncResp,
@@ -511,6 +530,7 @@ inline void doMountVmLegacy(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     dbus::utility::async_method_call(
         asyncResp,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp](const boost::system::error_code& ec, bool success) {
             if (ec)
             {
@@ -532,6 +552,7 @@ inline void doMountVmLegacy(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @brief Function validate parameters of insert media request.
  *
  */
+/* @brief 校验 InsertMedia 请求参数的函数。 */
 inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                            const std::string& service,
                            const std::string& resName,
@@ -539,6 +560,7 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
 {
     BMCWEB_LOG_DEBUG("Validation started");
     // required param imageUrl must not be empty
+    // 必填参数 imageUrl 不能为空
     if (!actionParams.imageUrl)
     {
         BMCWEB_LOG_ERROR("Request action parameter Image is empty.");
@@ -549,6 +571,7 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // optional param inserted must be true
+    // 可选参数 inserted 必须为 true
     if (actionParams.inserted && !*actionParams.inserted)
     {
         BMCWEB_LOG_ERROR(
@@ -561,6 +584,7 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // optional param transferMethod must be stream
+    // 可选参数 transferMethod 必须为 stream
     if (actionParams.transferMethod &&
         (*actionParams.transferMethod != "Stream"))
     {
@@ -587,6 +611,7 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         getTransferProtocolFromParam(actionParams.transferProtocolType);
 
     // ImageUrl does not contain valid protocol type
+    // ImageUrl 不包含有效的协议类型
     if (uriTransferProtocolType &&
         *uriTransferProtocolType == TransferProtocol::invalid)
     {
@@ -600,6 +625,7 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // transferProtocolType should contain value from list
+    // transferProtocolType 应包含列表中的值
     if (paramTransferProtocolType &&
         *paramTransferProtocolType == TransferProtocol::invalid)
     {
@@ -614,6 +640,7 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // valid transfer protocol not provided either with URI nor param
+    // URI 和参数中都没有提供有效的传输协议
     if (!uriTransferProtocolType && !paramTransferProtocolType)
     {
         BMCWEB_LOG_ERROR("Request action parameter ImageUrl must "
@@ -626,9 +653,11 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // valid transfer protocol provided both with URI and param
+    // URI 和参数中都提供了有效的传输协议
     if (paramTransferProtocolType && uriTransferProtocolType)
     {
         // check if protocol is the same for URI and param
+        // 检查 URI 和参数中的协议是否相同
         if (*paramTransferProtocolType != *uriTransferProtocolType)
         {
             BMCWEB_LOG_ERROR("Request action parameter "
@@ -645,6 +674,7 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     }
 
     // validation passed, add protocol to URI if needed
+    // 校验通过，如需要则将协议添加到 URI
     if (!uriTransferProtocolType && paramTransferProtocolType)
     {
         actionParams.imageUrl = getUriWithTransferProtocol(
@@ -672,11 +702,14 @@ inline void validateParams(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  *
  * All BMC state properties will be retrieved before sending reset request.
  */
+/* @brief 该函数直接与 dbus 收发数据。
+ * 在发送复位请求之前将检索所有 BMC 状态属性。 */
 inline void doEjectAction(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                           const std::string& service, const std::string& name,
                           bool legacy)
 {
     // Legacy mount requires parameter with image
+    // Legacy 挂载需要带 image 的参数
     if (legacy)
     {
         dbus::utility::async_method_call(
@@ -731,6 +764,7 @@ inline void handleManagersVirtualMediaActionInsertPost(
     InsertMediaActionParams actionParams;
 
     // Read obligatory parameters (url of image)
+    // 读取必填参数（image 的 url）
     if (!json_util::readJsonAction(                                    //
             req, asyncResp->res,                                       //
             "Image", actionParams.imageUrl,                            //
@@ -748,6 +782,7 @@ inline void handleManagersVirtualMediaActionInsertPost(
     dbus::utility::getDbusObject(
         "/xyz/openbmc_project/VirtualMedia", {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, action, actionParams,
          resName](const boost::system::error_code& ec,
                   const dbus::utility::MapperGetObject& getObjectType) mutable {
@@ -766,12 +801,14 @@ inline void handleManagersVirtualMediaActionInsertPost(
             dbus::utility::getManagedObjects(
                 service, path,
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                 [service, resName, action, actionParams, asyncResp](
                     const boost::system::error_code& ec2,
                     const dbus::utility::ManagedObjectType& subtree) mutable {
                     if (ec2)
                     {
                         // Not possible in proxy mode
+                        // 在代理（proxy）模式下不可行
                         BMCWEB_LOG_DEBUG("InsertMedia not "
                                          "allowed in proxy mode");
                         messages::resourceNotFound(asyncResp->res, action,
@@ -819,6 +856,7 @@ inline void handleManagersVirtualMediaActionEject(
     dbus::utility::getDbusObject(
         "/xyz/openbmc_project/VirtualMedia", {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, action,
          resName](const boost::system::error_code& ec2,
                   const dbus::utility::MapperGetObject& getObjectType) {
@@ -837,6 +875,7 @@ inline void handleManagersVirtualMediaActionEject(
             dbus::utility::getManagedObjects(
                 service, path,
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
                 [resName, service, action,
                  asyncResp](const boost::system::error_code& ec,
                             const dbus::utility::ManagedObjectType& subtree) {
@@ -891,6 +930,7 @@ inline void handleManagersVirtualMediaCollectionGet(
     dbus::utility::getDbusObject(
         "/xyz/openbmc_project/VirtualMedia", {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, name](const boost::system::error_code& ec,
                           const dbus::utility::MapperGetObject& getObjectType) {
             if (ec)
@@ -926,6 +966,7 @@ inline void handleVirtualMediaGet(
     dbus::utility::getDbusObject(
         "/xyz/openbmc_project/VirtualMedia", {},
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具指令：忽略过长的 lambda 表达式）
         [asyncResp, name,
          resName](const boost::system::error_code& ec,
                   const dbus::utility::MapperGetObject& getObjectType) {

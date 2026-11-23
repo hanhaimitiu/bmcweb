@@ -29,6 +29,7 @@ enum class PrivilegeType
 };
 
 /** @brief A fixed array of compile time privileges  */
+/* @brief 编译期权限的固定数组 */
 constexpr std::array<std::string_view, 5> basePrivileges{
     "Login", "ConfigureManager", "ConfigureComponents", "ConfigureSelf",
     "ConfigureUsers"};
@@ -36,6 +37,7 @@ constexpr std::array<std::string_view, 5> basePrivileges{
 constexpr const size_t basePrivilegeCount = basePrivileges.size();
 
 /** @brief Max number of privileges per type  */
+/* @brief 每种类型的最大权限数 */
 constexpr const size_t maxPrivilegeCount = 32;
 
 /**
@@ -44,6 +46,10 @@ constexpr const size_t maxPrivilegeCount = 32;
  * "hostconsole" user group. This privilege is required to access the host
  * console.
  */
+/* @brief 所有权限名称及其索引组成的 vector
+ * 权限 "OpenBMCHostConsole" 会添加到属于
+ * "hostconsole" 用户组的用户。访问主机控制台
+ * 需要此权限。 */
 constexpr std::array<std::string_view, maxPrivilegeCount> privilegeNames{
     "Login",         "ConfigureManager", "ConfigureComponents",
     "ConfigureSelf", "ConfigureUsers",   "OpenBMCHostConsole"};
@@ -65,6 +71,16 @@ constexpr std::array<std::string_view, maxPrivilegeCount> privilegeNames{
  *        (user domain) and false otherwise.
  *
  */
+/* @brief Redfish 权限
+ *        这里实现了一组 Redfish 权限。它们直接表示
+ *        用户权限，并有助于表示实体权限。
+ *        每个传入的 Connection 都需要比较发起请求的用户
+ *        所持有的权限与目标实体的权限。
+ *        为确保此比较具有最佳运行时性能，权限用
+ *        bitset 表示。bitset 中的每一位对应一个
+ *        唯一的权限名称。
+ *        当某权限是被要求的（实体域）或已被授予的（用户域）时，
+ *        相应的位被置位，否则为 false。 */
 class Privileges
 {
   public:
@@ -72,6 +88,7 @@ class Privileges
      * @brief Constructs object without any privileges active
      *
      */
+    /* @brief 构造一个不激活任何权限的对象 */
     Privileges() = default;
 
     /**
@@ -80,6 +97,8 @@ class Privileges
      * @param[in] privilegeList  List of privileges to be activated
      *
      */
+    /* @brief 构造一个激活给定权限的对象
+     * @param[in] privilegeList  要激活的权限列表 */
     Privileges(std::initializer_list<const char*> privilegeList)
     {
         for (const char* privilege : privilegeList)
@@ -100,6 +119,9 @@ class Privileges
      * @return               None
      *
      */
+    /* @brief 在 bitset 中设置给定的权限
+     * @param[in] privilege  要设置的权限
+     * @return               无 */
     bool setSinglePrivilege(std::string_view privilege)
     {
         for (size_t searchIndex = 0; searchIndex < privilegeNames.size();
@@ -123,6 +145,9 @@ class Privileges
      * @return               None
      *
      */
+    /* @brief 在 bitset 中重置给定的权限
+     * @param[in] privilege  要重置的权限
+     * @return               无 */
     bool resetSinglePrivilege(const char* privilege)
     {
         for (size_t searchIndex = 0; searchIndex < privilegeNames.size();
@@ -146,6 +171,10 @@ class Privileges
      * the setSinglePrivilege is called, or the Privilege structure is destroyed
      *
      */
+    /* @brief 获取给定类型的所有激活权限的名称
+     * @param[in] type    Base 或 OEM
+     * @return            激活权限组成的 vector。指针在调用
+     * setSinglePrivilege 或 Privilege 结构被销毁之前有效 */
     std::vector<std::string> getActivePrivilegeNames(
         const PrivilegeType type) const
     {
@@ -179,6 +208,10 @@ class Privileges
      * @return               None
      *
      */
+    /* @brief 判断此 Privilege 集合是否为给定权限集合的
+     * 超集
+     * @param[in] privilege  要检查的权限
+     * @return               无 */
     bool isSupersetOf(const Privileges& p) const
     {
         return (privilegeBitset & p.privilegeBitset) == p.privilegeBitset;
@@ -192,6 +225,9 @@ class Privileges
      * @return               The new Privilege set.
      *
      */
+    /* @brief 返回两个 Privilege 集合的交集。
+     * @param[in] privilege  要求交集的权限集合。
+     * @return               新的 Privilege 集合。 */
     Privileges intersection(const Privileges& p) const
     {
         return Privileges{privilegeBitset & p.privilegeBitset};
@@ -207,14 +243,17 @@ class Privileges
 inline Privileges getUserPrivileges(const persistent_data::UserSession& session)
 {
     // default to no access
+    // 默认无访问权限
     Privileges privs;
 
     // Check if user is member of hostconsole group
+    // 检查用户是否属于 hostconsole 组
     for (const auto& userGroup : session.userGroups)
     {
         if (userGroup == "hostconsole")
         {
             // Redfish privilege : host console access
+            // Redfish 权限：主机控制台访问
             privs.setSinglePrivilege("OpenBMCHostConsole");
             break;
         }
@@ -223,6 +262,7 @@ inline Privileges getUserPrivileges(const persistent_data::UserSession& session)
     if (session.userRole == "priv-admin")
     {
         // Redfish privilege : Administrator
+        // Redfish 权限：管理员
         privs.setSinglePrivilege("Login");
         privs.setSinglePrivilege("ConfigureManager");
         privs.setSinglePrivilege("ConfigureSelf");
@@ -232,6 +272,7 @@ inline Privileges getUserPrivileges(const persistent_data::UserSession& session)
     else if (session.userRole == "priv-operator")
     {
         // Redfish privilege : Operator
+        // Redfish 权限：操作员
         privs.setSinglePrivilege("Login");
         privs.setSinglePrivilege("ConfigureSelf");
         privs.setSinglePrivilege("ConfigureComponents");
@@ -239,6 +280,7 @@ inline Privileges getUserPrivileges(const persistent_data::UserSession& session)
     else if (session.userRole == "priv-user")
     {
         // Redfish privilege : Readonly
+        // Redfish 权限：只读
         privs.setSinglePrivilege("Login");
         privs.setSinglePrivilege("ConfigureSelf");
     }
@@ -258,6 +300,14 @@ inline Privileges getUserPrivileges(const persistent_data::UserSession& session)
  * the ConfigureSelf privilege to operate only on your own account or
  * session.
  **/
+/* @brief OperationMap 表示访问单个实体（URI）所需的
+ * 权限。它将允许的 verb 映射到使用该操作
+ * 所需的权限。
+ * 这表示规范中给出并在 Privilege Registry 中展示的
+ * Redfish "Privilege AND and OR syntax"。它不实现任何
+ * Redfish 属性覆盖、下级覆盖或资源 URI 覆盖。
+ * 它也不实现 ConfigureSelf 权限只能操作
+ * 自己账户或会话的限制。 */
 using OperationMap = boost::container::flat_map<boost::beast::http::verb,
                                                 std::vector<Privileges>>;
 
@@ -268,11 +318,16 @@ using OperationMap = boost::container::flat_map<boost::beast::http::verb,
  *
  * @return                 True if operation is allowed, false otherwise
  */
+/* @brief 检查是否允许用户调用某个操作
+ * @param[in] operationPrivilegesRequired   所需的权限
+ * @param[in] userPrivileges                用户拥有的权限
+ * @return                 允许操作则为 true，否则为 false */
 inline bool isOperationAllowedWithPrivileges(
     const std::vector<Privileges>& operationPrivilegesRequired,
     const Privileges& userPrivileges)
 {
     // If there are no privileges assigned, there are no privileges required
+    // 如果未分配任何权限，则不需要任何权限
     if (operationPrivilegesRequired.empty())
     {
         return true;
@@ -298,6 +353,10 @@ inline bool isOperationAllowedWithPrivileges(
  * @return                 True if method allowed, false otherwise
  *
  */
+/* @brief 检查给定权限是否允许调用某个 HTTP 方法
+ * @param[in] method       HTTP 方法
+ * @param[in] user         权限
+ * @return                 允许该方法则为 true，否则为 false */
 inline bool isMethodAllowedWithPrivileges(const boost::beast::http::verb method,
                                           const OperationMap& operationMap,
                                           const Privileges& userPrivileges)

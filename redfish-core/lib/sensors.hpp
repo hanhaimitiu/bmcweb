@@ -128,6 +128,8 @@ static constexpr std::array<sensorPair, 3> paths = {
  * SensorsAsyncResp
  * Gathers data needed for response processing after async calls are done
  */
+/* SensorsAsyncResp
+ * 在异步调用完成后，收集响应处理所需的数据。 */
 class SensorsAsyncResp
 {
   public:
@@ -151,6 +153,7 @@ class SensorsAsyncResp
     {}
 
     // Store extra data about sensor mapping and return it in callback
+    // 存储有关传感器映射的额外数据，并在回调中返回。
     SensorsAsyncResp(const std::shared_ptr<bmcweb::AsyncResp>& asyncRespIn,
                      const std::string& chassisIdIn,
                      std::span<const std::string_view> typesIn,
@@ -163,6 +166,7 @@ class SensorsAsyncResp
     {}
 
     // sensor collections expand
+    // 传感器集合展开（expand）。
     SensorsAsyncResp(const std::shared_ptr<bmcweb::AsyncResp>& asyncRespIn,
                      const std::string& chassisIdIn,
                      std::span<const std::string_view> typesIn,
@@ -179,6 +183,8 @@ class SensorsAsyncResp
             // Reset the json object to clear out any data that made it in
             // before the error happened todo(ed) handle error condition with
             // proper code
+            // 重置 json 对象，清除错误发生前已写入的数据。
+            // todo(ed)：用恰当的代码处理错误情况。
             asyncResp->res.jsonValue = nlohmann::json::object();
         }
 
@@ -264,6 +270,10 @@ using InventoryItem = sensor_utils::InventoryItem;
  * @param sensorNames Sensors retrieved from chassis
  * @param callback Callback for processing gathered connections
  */
+/* @brief 获取传感器连接所需的对象。
+ * @param SensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param sensorNames 从 chassis 检索到的传感器。
+ * @param callback 用于处理收集到的连接的回调。 */
 template <typename Callback>
 void getObjectsWithConnection(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
@@ -276,13 +286,16 @@ void getObjectsWithConnection(
         "xyz.openbmc_project.Sensor.Value"};
 
     // Make call to ObjectMapper to find all sensors objects
+    // 调用 ObjectMapper 查找所有传感器对象。
     dbus::utility::getSubTree(
         path, 2, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<Callback>(callback), sensorsAsyncResp,
          sensorNames](const boost::system::error_code& ec,
                       const dbus::utility::MapperGetSubTreeResponse& subtree) {
             // Response handler for parsing objects subtree
+            // 用于解析对象子树的响应 handler。
             BMCWEB_LOG_DEBUG("getObjectsWithConnection resp_handler enter");
             if (ec)
             {
@@ -296,6 +309,8 @@ void getObjectsWithConnection(
 
             // Make unique list of connections only for requested sensor types
             // and found in the chassis
+            // 仅为请求的传感器类型且在 chassis 中找到的对象，
+            // 生成去重后的连接列表。
             std::set<std::string> connections;
             std::set<std::pair<std::string, std::string>> objectsWithConnection;
 
@@ -336,6 +351,10 @@ void getObjectsWithConnection(
  * @param sensorNames Sensors retrieved from chassis
  * @param callback Callback for processing gathered connections
  */
+/* @brief 创建传感器所需的连接。
+ * @param SensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param sensorNames 从 chassis 检索到的传感器。
+ * @param callback 用于处理收集到的连接的回调。 */
 template <typename Callback>
 void getConnections(const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
                     const std::shared_ptr<std::set<std::string>>& sensorNames,
@@ -359,6 +378,11 @@ void getConnections(const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
  * allSensors list.  Eliminate Thermal sensors when a Power request is
  * made, and eliminate Power sensors when a Thermal request is made.
  */
+/* @brief 缩减待处理的传感器列表。
+ * @param SensorsAsyncResp 持有 Redfish 响应的类。
+ * @param allSensors 与 chassis 元素（如基板、前面板等）关联的所有传感器列表。
+ * @param activeSensors 对传入的 allSensors 列表进行缩减后的列表。
+ * 发出 Power 请求时剔除 Thermal 传感器，发出 Thermal 请求时剔除 Power 传感器。 */
 inline void reduceSensorList(
     crow::Response& res, std::string_view chassisSubNode,
     std::span<const std::string_view> sensorTypes,
@@ -377,6 +401,7 @@ inline void reduceSensorList(
     if (allSensors->empty())
     {
         // Nothing to do, the activeSensors object is also empty
+        // 无需操作，activeSensors 对象同样为空。
         return;
     }
 
@@ -397,6 +422,8 @@ inline void reduceSensorList(
  *SensorCollection, Power, or Thermal schemas.
  *
  * */
+/* 为给定子节点填充顶层集合。
+ * 填充 SensorCollection、Power 或 Thermal schema。 */
 inline void populateChassisNode(nlohmann::json& jsonValue,
                                 std::string_view chassisSubNode)
 {
@@ -430,6 +457,9 @@ inline void populateChassisNode(nlohmann::json& jsonValue,
  * @param SensorsAsyncResp   Pointer to object holding response data
  * @param callback  Callback for next step in gathered sensor processing
  */
+/* @brief 从 DBus 检索请求的 chassis 传感器和冗余数据。
+ * @param SensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param callback 用于传感器处理下一步的回调。 */
 template <typename Callback>
 void getChassis(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                 std::string_view chassisId, std::string_view chassisSubNode,
@@ -439,9 +469,11 @@ void getChassis(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     BMCWEB_LOG_DEBUG("getChassis enter");
 
     // Get the Chassis Collection
+    // 获取 Chassis Collection。
     dbus::utility::getSubTreePaths(
         "/xyz/openbmc_project/inventory", 0, chassisInterfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<Callback>(callback), asyncResp,
          chassisIdStr{std::string(chassisId)},
          chassisSubNode{std::string(chassisSubNode)},
@@ -483,9 +515,11 @@ void getChassis(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
                 "/redfish/v1/Chassis/{}/{}", chassisIdStr, chassisSubNode);
 
             // Get the list of all sensors for this Chassis element
+            // 获取该 Chassis 元素的所有传感器列表。
             std::string sensorPath = *chassisPath + "/all_sensors";
             dbus::utility::getAssociationEndPoints(
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                 sensorPath, [asyncResp, chassisSubNode, sensorTypes,
                              callback = std::forward<Callback>(callback)](
                                 const boost::system::error_code& ec2,
@@ -525,6 +559,14 @@ void getChassis(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
  * @param inventoryItem D-Bus inventory item associated with the sensor.  Will
  * be nullptr if no associated inventory item was found.
  */
+/* @brief 为传感器构建 json 表示。
+ * @param sensorName 要构建的传感器名称。
+ * @param sensorType 要构建的传感器类型（temperature、fan_tach 等）。
+ * @param chassisSubNode 传感器的子节点（thermal、sensor 等）。
+ * @param interfacesDict 要构建的接口及其属性的字典。
+ * @param sensorJson 要填充的 json 对象。
+ * @param inventoryItem 与传感器关联的 D-Bus inventory item。
+ * 如果未找到关联的 inventory item，则为 nullptr。 */
 inline void objectInterfacesToJson(
     const std::string& sensorName, const std::string& sensorType,
     const sensor_utils::ChassisSubNode chassisSubNode,
@@ -548,6 +590,7 @@ inline void populateFanRedundancy(
     dbus::utility::getSubTree(
         "/xyz/openbmc_project/control", 2, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [sensorsAsyncResp](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreeResponse& resp) {
@@ -570,6 +613,7 @@ inline void populateFanRedundancy(
                 dbus::utility::getAssociationEndPoints(
                     path + "/chassis",
                     // ast-grep-ignore: long-lambda
+                    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                     [path, owner, sensorsAsyncResp](
                         const boost::system::error_code& ec2,
                         const dbus::utility::MapperEndPoints& endpoints) {
@@ -577,6 +621,7 @@ inline void populateFanRedundancy(
                         {
                             return; // if they don't have an association we
                                     // can't tell what chassis is
+                                    // 无法判断是哪个 chassis。
                         }
                         auto found = std::ranges::find_if(
                             endpoints,
@@ -593,6 +638,7 @@ inline void populateFanRedundancy(
                             *crow::connections::systemBus, owner, path,
                             "xyz.openbmc_project.Control.FanRedundancy",
                             // ast-grep-ignore: long-lambda
+                            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                             [path, sensorsAsyncResp](
                                 const boost::system::error_code& ec3,
                                 const dbus::utility::DBusPropertiesMap& ret) {
@@ -600,6 +646,7 @@ inline void populateFanRedundancy(
                                 {
                                     return; // don't have to have this
                                             // interface
+                                            // 接口（不是必需的）。
                                 }
 
                                 const uint8_t* allowedFailures = nullptr;
@@ -636,6 +683,7 @@ inline void populateFanRedundancy(
                                 if (name.empty())
                                 {
                                     // this should be impossible
+                                    // 这应该不可能发生。
                                     messages::internalError(
                                         sensorsAsyncResp->asyncResp->res);
                                     return;
@@ -669,6 +717,9 @@ inline void populateFanRedundancy(
                                     todo(ed): merge patch that fixes the names
                                     std::replace(itemName.begin(),
                                                  itemName.end(), '_', ' ');*/
+                                    /* todo(ed)：合并修复名称的 patch。
+                                     * std::replace(itemName.begin(),
+                                     * itemName.end(), '_', ' '); */
                                     auto schemaItem = std::ranges::find_if(
                                         fanRedfish,
                                         [itemName](const nlohmann::json& fan) {
@@ -752,6 +803,7 @@ inline void sortJSONResponse(
         json_util::sortJsonArrayByKey(*arr, "Name");
 
         // add the index counts to the end of each entry
+        // 在每个条目末尾添加索引计数。
         size_t count = 0;
         for (nlohmann::json& sensorJson : *entry)
         {
@@ -789,6 +841,10 @@ inline void sortJSONResponse(
  * @param invItemObjPath D-Bus object path of inventory item.
  * @return Inventory item within vector, or nullptr if no match found.
  */
+/* @brief 查找具有指定对象路径的 inventory item。
+ * @param inventoryItems 与传感器关联的 D-Bus inventory items。
+ * @param invItemObjPath inventory item 的 D-Bus 对象路径。
+ * @return vector 中的 inventory item；若未找到匹配项则返回 nullptr。 */
 inline InventoryItem* findInventoryItem(
     const std::shared_ptr<std::vector<InventoryItem>>& inventoryItems,
     const std::string& invItemObjPath)
@@ -809,6 +865,10 @@ inline InventoryItem* findInventoryItem(
  * @param sensorObjPath D-Bus object path of sensor.
  * @return Inventory item within vector, or nullptr if no match found.
  */
+/* @brief 查找与指定传感器关联的 inventory item。
+ * @param inventoryItems 与传感器关联的 D-Bus inventory items。
+ * @param sensorObjPath 传感器的 D-Bus 对象路径。
+ * @return vector 中的 inventory item；若未找到匹配项则返回 nullptr。 */
 inline InventoryItem* findInventoryItemForSensor(
     const std::shared_ptr<std::vector<InventoryItem>>& inventoryItems,
     const std::string& sensorObjPath)
@@ -837,15 +897,25 @@ inline InventoryItem* findInventoryItemForSensor(
  * @param invItemObjPath D-Bus object path of inventory item.
  * @param sensorObjPath D-Bus object path of sensor
  */
+/* @brief 将 inventory item 和关联的传感器添加到指定 vector。
+ * 如有必要，向 vector 添加新的 InventoryItem。
+ * 搜索具有指定对象路径的现有 InventoryItem。
+ * 若未找到，则将其添加到 vector 中。
+ * 接下来，将指定传感器添加到与该 InventoryItem 关联的传感器集合中。
+ * @param inventoryItems 与传感器关联的 D-Bus inventory items。
+ * @param invItemObjPath inventory item 的 D-Bus 对象路径。
+ * @param sensorObjPath 传感器的 D-Bus 对象路径。 */
 inline void addInventoryItem(
     const std::shared_ptr<std::vector<InventoryItem>>& inventoryItems,
     const std::string& invItemObjPath, const std::string& sensorObjPath)
 {
     // Look for inventory item in vector
+    // 在 vector 中查找 inventory item。
     InventoryItem* inventoryItem =
         findInventoryItem(inventoryItems, invItemObjPath);
 
     // If inventory item doesn't exist in vector, add it
+    // 如果 vector 中不存在该 inventory item，则添加它。
     if (inventoryItem == nullptr)
     {
         inventoryItems->emplace_back(invItemObjPath);
@@ -853,6 +923,7 @@ inline void addInventoryItem(
     }
 
     // Add sensor to set of sensors associated with inventory item
+    // 将传感器添加到与 inventory item 关联的传感器集合中。
     inventoryItem->sensors.emplace(sensorObjPath);
 }
 
@@ -869,11 +940,17 @@ inline void addInventoryItem(
  * @param interfacesDict Map containing D-Bus interfaces and their properties
  * for the specified inventory item.
  */
+/* @brief 将 D-Bus 数据存储到指定的 inventory item 中。
+ * 在指定的接口映射中查找 D-Bus 数据，并将其存储到指定的 InventoryItem 中。
+ * 这些数据稍后用于在 JSON 响应中提供传感器属性值。
+ * @param inventoryItem 用于存储数据的 inventory item。
+ * @param interfacesDict 包含指定 inventory item 的 D-Bus 接口及其属性的映射。 */
 inline void storeInventoryItemData(
     InventoryItem& inventoryItem,
     const dbus::utility::DBusInterfacesMap& interfacesDict)
 {
     // Get properties from Inventory.Item interface
+    // 从 Inventory.Item 接口获取属性。
 
     for (const auto& [interface, values] : interfacesDict)
     {
@@ -892,6 +969,7 @@ inline void storeInventoryItemData(
             }
         }
         // Check if Inventory.Item.PowerSupply interface is present
+        // 检查是否存在 Inventory.Item.PowerSupply 接口。
 
         if (interface == "xyz.openbmc_project.Inventory.Item.PowerSupply")
         {
@@ -899,6 +977,7 @@ inline void storeInventoryItemData(
         }
 
         // Get properties from Inventory.Decorator.Asset interface
+        // 从 Inventory.Decorator.Asset 接口获取属性。
         if (interface == "xyz.openbmc_project.Inventory.Decorator.Asset")
         {
             for (const auto& [name, dbusValue] : values)
@@ -990,6 +1069,24 @@ inline void storeInventoryItemData(
  * @param invConnectionsIndex Current index in invConnections.  Only specified
  * in recursive calls to this function.
  */
+/* @brief 获取与传感器关联的 inventory items 的 D-Bus 数据。
+ * 使用指定的连接（服务）获取与传感器关联的 inventory items 的 D-Bus 数据。
+ * 将结果数据存入 inventoryItems vector。
+ * 这些数据稍后用于在 JSON 响应中提供传感器属性值。
+ * 异步查找 inventory item 数据。获取数据后调用回调。
+ * 回调必须具有以下签名：
+ *   @code
+ *   callback(void)
+ *   @endcode
+ * 该函数以递归方式调用，每次调用从一个连接异步获取数据。
+ * 这确保只有在最后一个异步函数完成后才调用回调。
+ * @param sensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param inventoryItems 与传感器关联的 D-Bus inventory items。
+ * @param invConnections 为 inventory items 提供数据的连接。
+ * 实现了 ObjectManager。
+ * @param callback 获取 inventory 数据后调用的回调。
+ * @param invConnectionsIndex 当前在 invConnections 中的索引。
+ * 仅在递归调用该函数时指定。 */
 template <typename Callback>
 void getInventoryItemsData(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
@@ -1000,6 +1097,7 @@ void getInventoryItemsData(
     BMCWEB_LOG_DEBUG("getInventoryItemsData enter");
 
     // If no more connections left, call callback
+    // 如果没有剩余连接，则调用回调。
     if (invConnectionsIndex >= invConnections->size())
     {
         callback();
@@ -1008,6 +1106,7 @@ void getInventoryItemsData(
     }
 
     // Get inventory item data from current connection
+    // 从当前连接获取 inventory item 数据。
     auto it = invConnections->begin();
     std::advance(it, invConnectionsIndex);
     if (it != invConnections->end())
@@ -1015,10 +1114,12 @@ void getInventoryItemsData(
         const std::string& invConnection = *it;
 
         // Get all object paths and their interfaces for current connection
+        // 获取当前连接的所有对象路径及其接口。
         sdbusplus::object_path path("/xyz/openbmc_project/inventory");
         dbus::utility::getManagedObjects(
             invConnection, path,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [sensorsAsyncResp, inventoryItems, invConnections,
              callback = std::forward<Callback>(callback), invConnectionsIndex](
                 const boost::system::error_code& ec,
@@ -1033,6 +1134,7 @@ void getInventoryItemsData(
                 }
 
                 // Loop through returned object paths
+                // 遍历返回的对象路径。
                 for (const auto& objDictEntry : resp)
                 {
                     const std::string& objPath =
@@ -1040,17 +1142,20 @@ void getInventoryItemsData(
 
                     // If this object path is one of the specified inventory
                     // items
+                    // 如果该对象路径是指定 inventory items 之一。
                     InventoryItem* inventoryItem =
                         findInventoryItem(inventoryItems, objPath);
                     if (inventoryItem != nullptr)
                     {
                         // Store inventory data in InventoryItem
+                        // 将 inventory 数据存储到 InventoryItem 中。
                         storeInventoryItemData(*inventoryItem,
                                                objDictEntry.second);
                     }
                 }
 
                 // Recurse to get inventory item data from next connection
+                // 递归从下一个连接获取 inventory item 数据。
                 getInventoryItemsData(sensorsAsyncResp, inventoryItems,
                                       invConnections, std::move(callback),
                                       invConnectionsIndex + 1);
@@ -1080,6 +1185,16 @@ void getInventoryItemsData(
  * @param inventoryItems D-Bus inventory items associated with sensors.
  * @param callback Callback to invoke when connections have been obtained.
  */
+/* @brief 获取为 inventory items 提供 D-Bus 数据的连接。
+ * 获取为与传感器关联的 inventory items 提供数据的 D-Bus 连接（服务）。
+ * 异步查找连接。获取信息后调用回调。
+ * 回调必须具有以下签名：
+ *   @code
+ *   callback(std::shared_ptr<std::set<std::string>> invConnections)
+ *   @endcode
+ * @param sensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param inventoryItems 与传感器关联的 D-Bus inventory items。
+ * @param callback 获取连接后调用的回调。 */
 template <typename Callback>
 void getInventoryItemsConnections(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
@@ -1096,14 +1211,17 @@ void getInventoryItemsConnections(
         "xyz.openbmc_project.State.Decorator.OperationalStatus"};
 
     // Make call to ObjectMapper to find all inventory items
+    // 调用 ObjectMapper 查找所有 inventory items。
     dbus::utility::getSubTree(
         path, 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<Callback>(callback), sensorsAsyncResp,
          inventoryItems](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreeResponse& subtree) mutable {
             // Response handler for parsing output from GetSubTree
+            // 用于解析 GetSubTree 输出的响应 handler。
             BMCWEB_LOG_DEBUG("getInventoryItemsConnections respHandler enter");
             if (ec)
             {
@@ -1115,20 +1233,24 @@ void getInventoryItemsConnections(
             }
 
             // Make unique list of connections for desired inventory items
+            // 为目标 inventory items 生成去重后的连接列表。
             std::shared_ptr<std::set<std::string>> invConnections =
                 std::make_shared<std::set<std::string>>();
 
             // Loop through objects from GetSubTree
+            // 遍历 GetSubTree 返回的对象。
             for (const std::pair<std::string,
                                  std::vector<std::pair<
                                      std::string, std::vector<std::string>>>>&
                      object : subtree)
             {
                 // Check if object path is one of the specified inventory items
+                // 检查对象路径是否为指定 inventory items 之一。
                 const std::string& objPath = object.first;
                 if (findInventoryItem(inventoryItems, objPath) != nullptr)
                 {
                     // Store all connections to inventory item
+                    // 存储到该 inventory item 的所有连接。
                     for (const std::pair<std::string, std::vector<std::string>>&
                              objData : object.second)
                     {
@@ -1163,6 +1285,17 @@ void getInventoryItemsConnections(
  * implements ObjectManager.
  * @param callback Callback to invoke when inventory items have been obtained.
  */
+/* @brief 获取从传感器到 inventory items 的关联。
+ * 查找从指定传感器到相关 inventory items 的 ObjectMapper 关联。
+ * 异步查找 inventory items。获取信息后调用回调。
+ * 回调必须具有以下签名：
+ *   @code
+ *   callback(std::shared_ptr<std::vector<InventoryItem>> inventoryItems)
+ *   @endcode
+ * @param sensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param sensorNames 当前 chassis 中的所有传感器。
+ * 实现了 ObjectManager。
+ * @param callback 获取 inventory items 后调用的回调。 */
 template <typename Callback>
 void getInventoryItemAssociations(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
@@ -1172,10 +1305,12 @@ void getInventoryItemAssociations(
     BMCWEB_LOG_DEBUG("getInventoryItemAssociations enter");
 
     // Call GetManagedObjects on the ObjectMapper to get all associations
+    // 对 ObjectMapper 调用 GetManagedObjects 以获取所有关联。
     sdbusplus::object_path path("/");
     dbus::utility::getManagedObjects(
         "xyz.openbmc_project.ObjectMapper", path,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<Callback>(callback), sensorsAsyncResp,
          sensorNames](const boost::system::error_code& ec,
                       const dbus::utility::ManagedObjectType& resp) mutable {
@@ -1190,10 +1325,12 @@ void getInventoryItemAssociations(
             }
 
             // Create vector to hold list of inventory items
+            // 创建 vector 保存 inventory items 列表。
             std::shared_ptr<std::vector<InventoryItem>> inventoryItems =
                 std::make_shared<std::vector<InventoryItem>>();
 
             // Loop through returned object paths
+            // 遍历返回的对象路径。
             std::string sensorAssocPath;
             sensorAssocPath.reserve(128); // avoid memory allocations
             for (const auto& objDictEntry : resp)
@@ -1203,6 +1340,7 @@ void getInventoryItemAssociations(
 
                 // If path is inventory association for one of the specified
                 // sensors
+                // 如果路径是指定传感器之一的 inventory 关联。
                 for (const std::string& sensorName : *sensorNames)
                 {
                     sensorAssocPath = sensorName;
@@ -1210,6 +1348,7 @@ void getInventoryItemAssociations(
                     if (objPath == sensorAssocPath)
                     {
                         // Get Association interface for object path
+                        // 获取对象路径的 Association 接口。
                         for (const auto& [interface, values] :
                              objDictEntry.second)
                         {
@@ -1227,6 +1366,7 @@ void getInventoryItemAssociations(
                                             !endpoints->empty())
                                         {
                                             // Add inventory item to vector
+                                            // 将 inventory item 添加到 vector。
                                             const std::string& invItemPath =
                                                 endpoints->front();
                                             addInventoryItem(inventoryItems,
@@ -1273,6 +1413,20 @@ void getInventoryItemAssociations(
  *        Supply Attributes
  * @param callback Callback to invoke when data has been obtained.
  */
+/* @brief 获取 Power Supply 属性（如 EfficiencyPercent）的 D-Bus 数据。
+ * 使用指定的连接（服务）（目前假设只有一个）获取 Power Supply 属性的 D-Bus 数据。
+ * 将结果数据存入 inventoryItems vector。
+ * 只存储到 Power Supply 类型的 inventoryItems 中。
+ * 这些数据稍后用于在 JSON 响应中提供传感器属性值。
+ * 异步查找 Power Supply 属性数据。获取数据后调用回调。
+ * 回调必须具有以下签名：
+ *   @code
+ *   callback(std::shared_ptr<std::vector<InventoryItem>> inventoryItems)
+ *   @endcode
+ * @param sensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param inventoryItems 与传感器关联的 D-Bus inventory items。
+ * @param psAttributesConnections 为 Power Supply 属性提供数据的连接。
+ * @param callback 获取数据后调用的回调。 */
 template <typename Callback>
 void getPowerSupplyAttributesData(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
@@ -1290,6 +1444,7 @@ void getPowerSupplyAttributesData(
     }
 
     // Assuming just one connection (service) for now
+    // 目前假设只有一个连接（服务）。
     auto it = psAttributesConnections.begin();
 
     const std::string& psAttributesPath = (*it).first;
@@ -1297,6 +1452,8 @@ void getPowerSupplyAttributesData(
 
     // Response handler for Get DeratingFactor property
     // ast-grep-ignore: long-lambda
+    // Get DeratingFactor 属性的响应 handler。
+    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
     auto respHandler = [sensorsAsyncResp, inventoryItems,
                         callback = std::forward<Callback>(callback)](
                            const boost::system::error_code& ec,
@@ -1312,6 +1469,7 @@ void getPowerSupplyAttributesData(
 
         BMCWEB_LOG_DEBUG("PS EfficiencyPercent value: {}", value);
         // Store value in Power Supply Inventory Items
+        // 将值存储到 Power Supply Inventory Items 中。
         for (InventoryItem& inventoryItem : *inventoryItems)
         {
             if (inventoryItem.isPowerSupply)
@@ -1327,6 +1485,8 @@ void getPowerSupplyAttributesData(
 
     // Get the DeratingFactor property for the PowerSupplyAttributes
     // Currently only property on the interface/only one we care about
+    // 获取 PowerSupplyAttributes 的 DeratingFactor 属性。
+    // 目前这是该接口上唯一的属性/我们唯一关心的属性。
     dbus::utility::getProperty<uint32_t>(
         psAttributesConnection, psAttributesPath,
         "xyz.openbmc_project.Control.PowerSupplyAttributes", "DeratingFactor",
@@ -1358,6 +1518,20 @@ void getPowerSupplyAttributesData(
  * @param inventoryItems D-Bus inventory items associated with sensors.
  * @param callback Callback to invoke when data has been obtained.
  */
+/* @brief 获取 Power Supply 属性（如 EfficiencyPercent）。
+ * 获取提供 Power Supply 属性数据的 D-Bus 连接（服务），
+ * 然后从该连接获取 Power Supply 属性数据（目前假设只有 1 个连接），
+ * 并将数据存储到 inventory item 中。
+ * 这些数据稍后用于在 JSON 响应中提供传感器属性值。
+ * D-Bus 上的 DeratingFactor 映射到 Redfish 上的 EfficiencyPercent。
+ * 异步查找 Power Supply 属性数据。获取信息后调用回调。
+ * 回调必须具有以下签名：
+ *   @code
+ *   callback(std::shared_ptr<std::vector<InventoryItem>> inventoryItems)
+ *   @endcode
+ * @param sensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param inventoryItems 与传感器关联的 D-Bus inventory items。
+ * @param callback 获取数据后调用的回调。 */
 template <typename Callback>
 void getPowerSupplyAttributes(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
@@ -1367,6 +1541,7 @@ void getPowerSupplyAttributes(
     BMCWEB_LOG_DEBUG("getPowerSupplyAttributes enter");
 
     // Only need the power supply attributes when the Power Schema
+    // 只有在 Power Schema 时才需要电源属性。
     if (sensorsAsyncResp->chassisSubNode != sensors::powerNodeStr)
     {
         BMCWEB_LOG_DEBUG("getPowerSupplyAttributes exit since not Power");
@@ -1378,14 +1553,17 @@ void getPowerSupplyAttributes(
         "xyz.openbmc_project.Control.PowerSupplyAttributes"};
 
     // Make call to ObjectMapper to find the PowerSupplyAttributes service
+    // 调用 ObjectMapper 查找 PowerSupplyAttributes 服务。
     dbus::utility::getSubTree(
         "/xyz/openbmc_project", 0, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [callback = std::forward<Callback>(callback), sensorsAsyncResp,
          inventoryItems](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreeResponse& subtree) mutable {
             // Response handler for parsing output from GetSubTree
+            // 用于解析 GetSubTree 输出的响应 handler。
             BMCWEB_LOG_DEBUG("getPowerSupplyAttributes respHandler enter");
             if (ec)
             {
@@ -1404,6 +1582,9 @@ void getPowerSupplyAttributes(
             // Currently we only support 1 power supply attribute, use this for
             // all the power supplies. Build map of object path to connection.
             // Assume just 1 connection and 1 path for now.
+            // 目前我们只支持 1 个电源属性，将其用于所有电源。
+            // 构建对象路径到连接的映射。
+            // 目前假设只有 1 个连接和 1 个路径。
             std::map<std::string, std::string> psAttributesConnections;
 
             if (subtree[0].first.empty() || subtree[0].second.empty())
@@ -1457,6 +1638,19 @@ void getPowerSupplyAttributes(
  * implements ObjectManager.
  * @param callback Callback to invoke when inventory items have been obtained.
  */
+/* @brief 获取与传感器关联的 inventory items。
+ * 查找与指定传感器关联的 inventory items。
+ * 然后获取 inventory items 的 D-Bus 数据，例如 presence 和 VPD。
+ * 这些数据稍后用于在 JSON 响应中提供传感器属性值。
+ * 异步查找 inventory items。获取 inventory items 后调用回调。
+ * 回调必须具有以下签名：
+ *   @code
+ *   callback(std::shared_ptr<std::vector<InventoryItem>> inventoryItems)
+ *   @endcode
+ * @param sensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param sensorNames 当前 chassis 中的所有传感器。
+ * 实现了 ObjectManager。
+ * @param callback 获取 inventory items 后调用的回调。 */
 template <typename Callback>
 inline void getInventoryItems(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
@@ -1466,12 +1660,14 @@ inline void getInventoryItems(
     BMCWEB_LOG_DEBUG("getInventoryItems enter");
     auto getInventoryItemAssociationsCb =
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [sensorsAsyncResp, callback = std::forward<Callback>(callback)](
             const std::shared_ptr<std::vector<InventoryItem>>&
                 inventoryItems) mutable {
             BMCWEB_LOG_DEBUG("getInventoryItemAssociationsCb enter");
             auto getInventoryItemsConnectionsCb =
                 // ast-grep-ignore: long-lambda
+                // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                 [sensorsAsyncResp, inventoryItems,
                  callback = std::forward<Callback>(callback)](
                     const std::shared_ptr<std::set<std::string>>&
@@ -1479,12 +1675,14 @@ inline void getInventoryItems(
                     BMCWEB_LOG_DEBUG("getInventoryItemsConnectionsCb enter");
                     auto getInventoryItemsDataCb =
                         // ast-grep-ignore: long-lambda
+                        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
                         [sensorsAsyncResp, inventoryItems,
                          callback =
                              std::forward<Callback>(callback)]() mutable {
                             BMCWEB_LOG_DEBUG("getInventoryItemsDataCb enter");
 
                             // Find Power Supply Attributes and get the data
+                            // 查找 Power Supply 属性并获取数据。
                             getPowerSupplyAttributes(sensorsAsyncResp,
                                                      inventoryItems,
                                                      std::move(callback));
@@ -1492,6 +1690,7 @@ inline void getInventoryItems(
                         };
 
                     // Get inventory item data from connections
+                    // 从连接获取 inventory item 数据。
                     getInventoryItemsData(sensorsAsyncResp, inventoryItems,
                                           invConnections,
                                           std::move(getInventoryItemsDataCb));
@@ -1499,6 +1698,7 @@ inline void getInventoryItems(
                 };
 
             // Get connections that provide inventory item data
+            // 获取提供 inventory item 数据的连接。
             getInventoryItemsConnections(
                 sensorsAsyncResp, inventoryItems,
                 std::move(getInventoryItemsConnectionsCb));
@@ -1506,6 +1706,7 @@ inline void getInventoryItems(
         };
 
     // Get associations from sensors to inventory items
+    // 获取从传感器到 inventory items 的关联。
     getInventoryItemAssociations(sensorsAsyncResp, sensorNames,
                                  std::move(getInventoryItemAssociationsCb));
     BMCWEB_LOG_DEBUG("getInventoryItems exit");
@@ -1527,6 +1728,15 @@ inline void getInventoryItems(
  * @param chassisId Chassis that contains the power supply.
  * @return JSON PowerSupply object for the specified inventory item.
  */
+/* @brief 为指定的 inventory item 返回 JSON PowerSupply 对象。
+ * 搜索与指定 inventory item 匹配的 JSON PowerSupply 对象。
+ * 如果未找到，则向 JSON 数组添加新的 PowerSupply 对象。
+ * 通常多个传感器与一个电源 inventory item 关联。
+ * 因此，多个传感器值存储在一个 JSON PowerSupply 对象中。
+ * @param powerSupplyArray 包含 Redfish PowerSupply 对象的 JSON 数组。
+ * @param inventoryItem 电源的 inventory item。
+ * @param chassisId 包含该电源的 chassis。
+ * @return 指定 inventory item 的 JSON PowerSupply 对象。 */
 inline nlohmann::json& getPowerSupply(nlohmann::json& powerSupplyArray,
                                       const InventoryItem& inventoryItem,
                                       const std::string& chassisId)
@@ -1535,6 +1745,7 @@ inline nlohmann::json& getPowerSupply(nlohmann::json& powerSupplyArray,
     nameS.resize(inventoryItem.name.size());
     std::ranges::replace_copy(inventoryItem.name, nameS.begin(), '_', ' ');
     // Check if matching PowerSupply object already exists in JSON array
+    // 检查 JSON 数组中是否已存在匹配的 PowerSupply 对象。
     for (nlohmann::json& powerSupply : powerSupplyArray)
     {
         nlohmann::json::iterator nameIt = powerSupply.find("Name");
@@ -1554,6 +1765,7 @@ inline nlohmann::json& getPowerSupply(nlohmann::json& powerSupplyArray,
     }
 
     // Add new PowerSupply object to JSON array
+    // 向 JSON 数组添加新的 PowerSupply 对象。
     powerSupplyArray.push_back({});
     nlohmann::json& powerSupply = powerSupplyArray.back();
     boost::urls::url url =
@@ -1610,6 +1822,21 @@ inline nlohmann::json& getPowerSupply(nlohmann::json& powerSupplyArray,
  * implements ObjectManager.
  * @param inventoryItems Inventory items associated with the sensors.
  */
+/* @brief 获取指定传感器的值。
+ * 将结果作为 JSON 存储到 SensorsAsyncResp 中。
+ * 异步获取传感器值。稍后在获得信息时存储结果。
+ * sensorNames 集合包含当前 chassis 中所有请求的传感器。
+ * 为减少 DBus 调用次数，使用 DBus 方法
+ * org.freedesktop.DBus.ObjectManager.GetManagedObjects()
+ * 来获取某个连接（服务）提供的所有传感器的值。
+ * connections 集合包含所有提供传感器值的连接。
+ * InventoryItem vector 包含与传感器关联的 D-Bus inventory items。
+ * 某些 Redfish 传感器属性需要 inventory item 数据。
+ * @param SensorsAsyncResp 指向保存响应数据的对象的指针。
+ * @param sensorNames 当前 chassis 中所有请求的传感器。
+ * @param connections 提供传感器值的连接。
+ * 实现了 ObjectManager。
+ * @param inventoryItems 与传感器关联的 inventory items。 */
 inline void getSensorData(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp,
     const std::shared_ptr<std::set<std::string>>& sensorNames,
@@ -1618,12 +1845,14 @@ inline void getSensorData(
 {
     BMCWEB_LOG_DEBUG("getSensorData enter");
     // Get managed objects from all services exposing sensors
+    // 从所有暴露传感器的服务获取受管对象。
     for (const std::string& connection : connections)
     {
         sdbusplus::object_path sensorPath("/xyz/openbmc_project/sensors");
         dbus::utility::getManagedObjects(
             connection, sensorPath,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [sensorsAsyncResp, sensorNames,
              inventoryItems](const boost::system::error_code& ec,
                              const dbus::utility::ManagedObjectType& resp) {
@@ -1637,6 +1866,7 @@ inline void getSensorData(
                 auto chassisSubNode = sensor_utils::chassisSubNodeFromString(
                     sensorsAsyncResp->chassisSubNode);
                 // Go through all objects and update response with sensor data
+                // 遍历所有对象，用传感器数据更新响应。
                 for (const auto& objDictEntry : resp)
                 {
                     const std::string& objPath =
@@ -1646,6 +1876,8 @@ inline void getSensorData(
 
                     std::vector<std::string> split;
                     // Reserve space for
+                    // /xyz/openbmc_project/sensors/<name>/<subname>
+                    // 为以下路径预留空间：
                     // /xyz/openbmc_project/sensors/<name>/<subname>
                     split.reserve(6);
                     // NOLINTNEXTLINE
@@ -1658,6 +1890,7 @@ inline void getSensorData(
                     }
                     // These indexes aren't intuitive, as split puts an empty
                     // string at the beginning
+                    // 这些索引不直观，因为 split 会在开头放入一个空字符串。
                     const std::string& sensorType = split[4];
                     const std::string& sensorName = split[5];
                     BMCWEB_LOG_DEBUG("sensorName {} sensorType {}", sensorName,
@@ -1669,6 +1902,7 @@ inline void getSensorData(
                     }
 
                     // Find inventory item (if any) associated with sensor
+                    // 查找与传感器关联的 inventory item（如果有）。
                     InventoryItem* inventoryItem =
                         findInventoryItemForSensor(inventoryItems, objPath);
 
@@ -1727,6 +1961,7 @@ inline void getSensorData(
                             else
                             {
                                 // Other power sensors are in SensorCollection
+                                // 其他电源传感器位于 SensorCollection 中。
                                 continue;
                             }
                         }
@@ -1748,6 +1983,8 @@ inline void getSensorData(
                                 // Put multiple "sensors" into a single
                                 // PowerControl. Follows MemberId naming and
                                 // naming in power.hpp.
+                                // 将多个 "sensor" 放入单个 PowerControl。
+                                // 遵循 MemberId 命名以及 power.hpp 中的命名。
                                 nlohmann::json::object_t power;
                                 boost::urls::url url = boost::urls::format(
                                     "/redfish/v1/Chassis/{}/{}",
@@ -1842,6 +2079,7 @@ inline void processSensorList(
     const std::shared_ptr<std::set<std::string>>& sensorNames)
 {
     // ast-grep-ignore: long-lambda
+    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
     auto getConnectionCb = [sensorsAsyncResp, sensorNames](
                                const std::set<std::string>& connections) {
         BMCWEB_LOG_DEBUG("getConnectionCb enter");
@@ -1851,12 +2089,14 @@ inline void processSensorList(
                     inventoryItems) mutable {
                 BMCWEB_LOG_DEBUG("getInventoryItemsCb enter");
                 // Get sensor data and store results in JSON
+                // 获取传感器数据并将结果存入 JSON。
                 getSensorData(sensorsAsyncResp, sensorNames, connections,
                               inventoryItems);
                 BMCWEB_LOG_DEBUG("getInventoryItemsCb exit");
             };
 
         // Get inventory items associated with sensors
+        // 获取与传感器关联的 inventory items。
         getInventoryItems(sensorsAsyncResp, sensorNames,
                           std::move(getInventoryItemsCb));
 
@@ -1864,6 +2104,7 @@ inline void processSensorList(
     };
 
     // Get set of connections that provide sensor values
+    // 获取提供传感器值的连接集合。
     getConnections(sensorsAsyncResp, sensorNames, std::move(getConnectionCb));
 }
 
@@ -1872,6 +2113,8 @@ inline void processSensorList(
  *        chassis.
  * @param SensorsAsyncResp   Pointer to object holding response data
  */
+/* @brief 检索与请求 chassis 相关的传感器数据的入口。
+ * @param SensorsAsyncResp 指向保存响应数据的对象的指针。 */
 inline void getChassisData(
     const std::shared_ptr<SensorsAsyncResp>& sensorsAsyncResp)
 {
@@ -1884,12 +2127,14 @@ inline void getChassisData(
             BMCWEB_LOG_DEBUG("getChassisCb exit");
         };
     // SensorCollection doesn't contain the Redundancy property
+    // SensorCollection 不包含 Redundancy 属性。
     if (sensorsAsyncResp->chassisSubNode != sensors::sensorsNodeStr)
     {
         sensorsAsyncResp->asyncResp->res.jsonValue["Redundancy"] =
             nlohmann::json::array();
     }
     // Get set of sensors in chassis
+    // 获取 chassis 中的传感器集合。
     getChassis(sensorsAsyncResp->asyncResp, sensorsAsyncResp->chassisId,
                sensorsAsyncResp->chassisSubNode, sensorsAsyncResp->types,
                std::move(getChassisCb));
@@ -1905,6 +2150,10 @@ inline void getChassisData(
  * @param sensorsModified  The list of sensors that were found as a result of
  *                         repeated calls to this function
  */
+/* @brief 在 chassis 节点提供的所有传感器列表中查找请求的 sensorName。
+ * @param sensorName PATCH 请求中提供的传感器名称。
+ * @param sensorsList chassis 节点管理的传感器列表。
+ * @param sensorsModified 通过反复调用该函数而找到的传感器列表。 */
 inline bool findSensorNameUsingSensorPath(
     std::string_view sensorName, const std::set<std::string>& sensorsList,
     std::set<std::string>& sensorsModified)
@@ -1933,6 +2182,10 @@ inline bool findSensorNameUsingSensorPath(
  * @param allCollections   Collections extract from sensors' request patch info
  * @param chassisSubNode   Chassis Node for which the query has to happen
  */
+/* @brief 覆盖给定传感器值的入口。
+ * @param sensorAsyncResp 响应对象。
+ * @param allCollections 从传感器的 PATCH 请求信息中提取的集合。
+ * @param chassisSubNode 要查询的 Chassis 节点。 */
 inline void setSensorsOverride(
     const std::shared_ptr<SensorsAsyncResp>& sensorAsyncResp,
     std::unordered_map<std::string, std::vector<nlohmann::json::object_t>>&
@@ -1975,6 +2228,7 @@ inline void setSensorsOverride(
     }
 
     // ast-grep-ignore: long-lambda
+    // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
     auto getChassisSensorListCb = [sensorAsyncResp, overrideMap,
                                    propertyValueNameStr =
                                        std::string(propertyValueName)](
@@ -1982,6 +2236,7 @@ inline void setSensorsOverride(
                                           std::set<std::string>>& sensorsList) {
         // Match sensor names in the PATCH request to those managed by the
         // chassis node
+        // 将 PATCH 请求中的传感器名称与 chassis 节点管理的传感器名称匹配。
         const std::shared_ptr<std::set<std::string>> sensorNames =
             std::make_shared<std::set<std::string>>();
         for (const auto& item : overrideMap)
@@ -2000,6 +2255,8 @@ inline void setSensorsOverride(
         }
         // Get the connection to which the memberId belongs
         // ast-grep-ignore: long-lambda
+        // 获取 memberId 所属的连接。
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         auto getObjectsWithConnectionCb = [sensorAsyncResp, overrideMap,
                                            propertyValueNameStr](
                                               const std::set<
@@ -2047,10 +2304,12 @@ inline void setSensorsOverride(
             }
         };
         // Get object with connection for the given sensor name
+        // 获取给定传感器名称对应的带连接的对象。
         getObjectsWithConnection(sensorAsyncResp, sensorNames,
                                  std::move(getObjectsWithConnectionCb));
     };
     // get full sensor list for the given chassisId and cross verify the sensor.
+    // 获取给定 chassisId 的完整传感器列表并交叉验证该传感器。
     getChassis(sensorAsyncResp->asyncResp, sensorAsyncResp->chassisId,
                sensorAsyncResp->chassisSubNode, sensorAsyncResp->types,
                std::move(getChassisSensorListCb));
@@ -2069,6 +2328,12 @@ inline void setSensorsOverride(
  * values
  * @param mapComplete   Callback to be called with retrieval result
  */
+/* @brief 检索 Redfish URI 到传感器值属性再到传感器 D-Bus 路径的映射。
+ * 该函数为给定 chassis 和节点的传感器查询构建有效的 Redfish 响应，
+ * 然后构建有关 Redfish<->D-Bus 对应关系的元数据，并通过回调提供给调用方。
+ * @param chassis 要执行检索的 chassis。
+ * @param node 传感器节点（组）。支持的值参见 sensor_utils::node。
+ * @param mapComplete 用检索结果调用的回调。 */
 template <typename Callback>
 inline void retrieveUriToDbusMap(
     const std::string& chassis, const std::string& node, Callback&& mapComplete)
@@ -2152,6 +2417,7 @@ inline void handleSensorCollectionGet(
     if (delegatedQuery.expandType != query_param::ExpandType::None)
     {
         // we perform efficient expand.
+        // 我们执行高效展开（efficient expand）。
         auto sensorsAsyncResp = std::make_shared<SensorsAsyncResp>(
             asyncResp, chassisId, sensors::dbus::sensorPaths,
             sensors::sensorsNodeStr,
@@ -2165,6 +2431,8 @@ inline void handleSensorCollectionGet(
 
     // We get all sensors as hyperlinkes in the chassis (this
     // implies we reply on the default query parameters handler)
+    // 我们以超链接形式获取 chassis 中的所有传感器
+    // （这意味着我们依赖默认的查询参数处理器）。
     getChassis(asyncResp, chassisId, sensors::sensorsNodeStr, dbus::sensorPaths,
                std::bind_front(sensors::getChassisCallback, asyncResp,
                                chassisId, sensors::sensorsNodeStr));
@@ -2188,6 +2456,7 @@ inline void getSensorFromDbus(
     ::dbus::utility::getAllProperties(
         *crow::connections::systemBus, connectionName, sensorPath, "",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          sensorPath](const boost::system::error_code& ec,
                      const ::dbus::utility::DBusPropertiesMap& valuesDict) {
@@ -2234,9 +2503,12 @@ inline void handleSensorGet(App& app, const crow::Request& req,
                              '/' + nameType.second;
     // Get a list of all of the sensors that implement Sensor.Value
     // and get the path and service name associated with the sensor
+    // 获取所有实现 Sensor.Value 的传感器列表，
+    // 并获取与该传感器关联的路径和服务名。
     ::dbus::utility::getDbusObject(
         sensorPath, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, sensorId,
          sensorPath](const boost::system::error_code& ec,
                      const ::dbus::utility::MapperGetObject& subtree) {

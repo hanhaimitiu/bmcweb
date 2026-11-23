@@ -30,6 +30,8 @@ void addMessageToErrorJson(nlohmann::json& target,
 
     // If this is the first error message, fill in the information from the
     // first error message to the top level struct
+    // 如果这是第一条错误消息，则将第一条错误消息中的信息
+    // 填充到顶层结构体
     if (errorObj == nullptr)
     {
         auto messageIdIterator = message.find("MessageId");
@@ -55,6 +57,7 @@ void addMessageToErrorJson(nlohmann::json& target,
     else
     {
         // More than 1 error occurred, so the message has to be generic
+        // 发生了多个错误，因此消息必须通用
         (*errorObj)["code"] =
             std::string(messageVersionPrefix) + "GeneralError";
         (*errorObj)["message"] =
@@ -65,6 +68,9 @@ void addMessageToErrorJson(nlohmann::json& target,
     // This check could technically be done in the default construction
     // branch above, but because we need the pointer to the extended info field
     // anyway, it's more efficient to do it here.
+    // 严格来说，这个检查可以在上面的默认构造分支中完成，
+    // 但由于我们无论如何都需要指向 extended info 字段的指针，
+    // 在这里做效率更高。
     auto extendedInfo = errorObj->try_emplace(messages::messageAnnotation,
                                               nlohmann::json::array());
 
@@ -84,6 +90,7 @@ void moveErrorsToErrorJson(nlohmann::json& target, nlohmann::json& source)
     if (errorIt == sourceObj->end())
     {
         // caller puts error message in root
+        // 调用者将错误消息放在根节点
         messages::addMessageToErrorJson(target, source);
         source.clear();
         return;
@@ -121,6 +128,7 @@ void addMessageToJsonRoot(nlohmann::json& target, const nlohmann::json& message)
     if (!annotation.is_array())
     {
         // Force object to be an array
+        // 强制将对象变为数组
         annotation = nlohmann::json::array();
     }
 

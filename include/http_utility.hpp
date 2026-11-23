@@ -194,6 +194,7 @@ inline Encoding getPreferredEncoding(
     }
 
     // Fall back to raw bytes if it was allowed
+    // 如果允许则回退到原始字节
     auto it = std::ranges::find(availableEncodings, Encoding::UnencodedBytes);
     if (it != availableEncodings.end())
     {

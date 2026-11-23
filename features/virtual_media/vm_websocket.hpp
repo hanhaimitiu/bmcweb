@@ -49,6 +49,9 @@ static crow::websocket::Connection* session = nullptr;
 // The max network block device buffer size is 128kb plus 16bytes
 // for the message header:
 // https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md#simple-reply-message
+// 网络块设备（nbd）的最大缓冲区大小为 128kb 加上
+// 消息头的 16 字节：
+// https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md#simple-reply-message
 static constexpr auto nbdBufferSize = (128 * 1024 + 16) * 4;
 
 class Handler : public std::enable_shared_from_this<Handler>
@@ -72,6 +75,9 @@ class Handler : public std::enable_shared_from_this<Handler>
     {
         // boost::process::child::terminate uses SIGKILL, need to send SIGTERM
         // to allow the proxy to stop nbd-client and the USB device gadget.
+        // NOLINTNEXTLINE(misc-include-cleaner)
+        // boost::process::child::terminate 使用 SIGKILL，需要发送 SIGTERM
+        // 以便让 proxy 停止 nbd-client 和 USB device gadget。
         // NOLINTNEXTLINE(misc-include-cleaner)
         int rc = kill(proxy.id(), SIGTERM);
         if (rc != 0)
@@ -196,6 +202,9 @@ using boost::asio::local::stream_protocol;
 // The max network block device buffer size is 128kb plus 16bytes
 // for the message header:
 // https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md#simple-reply-message
+// 网络块设备（nbd）的最大缓冲区大小为 128kb 加上
+// 消息头的 16 字节：
+// https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md#simple-reply-message
 static constexpr auto nbdBufferSize = (128 * 1024 + 16) * 4;
 
 struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
@@ -281,6 +290,7 @@ struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
         self->connection.resumeRead();
         self->peerSocket = std::move(socket);
         //  Start reading from socket
+        // 开始从 socket 读取数据
         self->doRead();
     }
 
@@ -334,6 +344,7 @@ struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
         }
 
         // Send to websocket
+        // 发送到 websocket
         self->ux2wsBuf.commit(bytesRead);
         self->connection.sendEx(
             crow::websocket::MessageType::Binary,
@@ -344,6 +355,7 @@ struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
     void doRead()
     {
         // Trigger async read
+        // 触发异步读取
         peerSocket.async_read_some(ux2wsBuf.prepare(nbdBufferSize),
                                    std::bind_front(&NbdProxyServer::afterRead,
                                                    this, weak_from_this()));
@@ -371,6 +383,7 @@ struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
         }
 
         // Retrigger doWrite if there is something in buffer
+        // 如果缓冲区中还有数据，则再次触发 doWrite
         if (self->ws2uxBuf.size() > 0)
         {
             self->doWrite(std::move(onDone));
@@ -401,6 +414,7 @@ struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
     }
 
     // Keeps UNIX socket endpoint file path
+    // 保存 UNIX socket 的 endpoint 文件路径
     const std::string socketId;
     const std::string endpointId;
     const std::string path;
@@ -408,15 +422,19 @@ struct NbdProxyServer : std::enable_shared_from_this<NbdProxyServer>
     bool uxWriteInProgress = false;
 
     // UNIX => WebSocket buffer
+    // UNIX => WebSocket 缓冲区
     boost::beast::flat_static_buffer<nbdBufferSize> ux2wsBuf;
 
     // WebSocket => UNIX buffer
+    // WebSocket => UNIX 缓冲区
     boost::beast::flat_static_buffer<nbdBufferSize> ws2uxBuf;
 
     // The socket used to communicate with the client.
+    // 用于与客户端通信的 socket。
     stream_protocol::socket peerSocket;
 
     // Default acceptor for UNIX socket
+    // UNIX socket 的默认 acceptor
     stream_protocol::acceptor acceptor;
 
     crow::websocket::Connection& connection;
@@ -464,9 +482,12 @@ inline void afterGetSocket(
 
     // If the socket file exists (i.e. after bmcweb crash),
     // we cannot reuse it.
+    // 如果 socket 文件已存在（例如 bmcweb 崩溃后），
+    // 则无法复用它。
     std::error_code ec2;
     std::filesystem::remove(socket.c_str(), ec2);
     // Ignore failures.  File might not exist.
+    // 忽略失败，文件可能本就不存在。
 
     sessions[&conn] =
         std::make_shared<NbdProxyServer>(conn, socket, endpointId, path);
@@ -499,6 +520,9 @@ inline void onOpen(crow::websocket::Connection& conn)
     // We need to wait for dbus and the websockets to hook up before data is
     // sent/received.  Tell the core to hold off messages until the sockets are
     // up
+    // 在收发数据前需要等待 dbus 和 websockets 建立连接。
+    // 通知核心层暂缓发送消息，直到 socket
+    // 就绪
     conn.deferRead();
 }
 
@@ -513,6 +537,7 @@ inline void onClose(crow::websocket::Connection& conn,
         return;
     }
     // Remove reference to session in global map
+    // 从全局 map 中移除对 session 的引用
     sessions.erase(session);
 }
 
@@ -523,6 +548,7 @@ inline void onMessage(crow::websocket::Connection& conn, std::string_view data,
     BMCWEB_LOG_DEBUG("nbd-proxy.onMessage(len = {})", data.size());
 
     // Acquire proxy from sessions
+    // 从 sessions 中获取 proxy
     auto session = sessions.find(&conn);
     if (session == sessions.end() || session->second == nullptr)
     {
@@ -565,6 +591,7 @@ inline void requestRoutes(App& app)
             .privileges({{"ConfigureComponents", "ConfigureManager"}})
             .websocket()
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             .onopen([](crow::websocket::Connection& conn) {
                 BMCWEB_LOG_DEBUG("Connection {} opened", logPtr(&conn));
 
@@ -584,11 +611,14 @@ inline void requestRoutes(App& app)
 
                 // media is the last digit of the endpoint /vm/0/0. A future
                 // enhancement can include supporting different endpoint values.
+                // media 是 endpoint /vm/0/0 的最后一位数字。未来可以
+                // 增强为支持不同的 endpoint 值。
                 const char* media = "0";
                 handler = std::make_shared<Handler>(media, getIoContext());
                 handler->connect();
             })
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             .onclose([](crow::websocket::Connection& conn,
                         const std::string& /*reason*/) {
                 if (&conn != session)
@@ -603,6 +633,7 @@ inline void requestRoutes(App& app)
                 handler.reset();
             })
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
             .onmessage([](crow::websocket::Connection& conn,
                           const std::string& data, bool) {
                 if (data.length() > handler->inputBuffer.capacity() -

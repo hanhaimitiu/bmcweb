@@ -27,6 +27,7 @@ TEST(HttpHttpBodyValueType, MoveString)
 {
     HttpBody::value_type value("teststring");
     // Move constructor
+    // 移动构造函数
     HttpBody::value_type value2(std::move(value));
     EXPECT_EQ(value2.encodingType, EncodingType::Raw);
     EXPECT_EQ(value2.str(), "teststring");
@@ -38,6 +39,7 @@ TEST(HttpHttpBodyValueType, MoveOperatorString)
     HttpBody::value_type value;
     value.str() = "teststring";
     // Move constructor
+    // 移动构造函数
     HttpBody::value_type value2 = std::move(value);
     EXPECT_EQ(value2.encodingType, EncodingType::Raw);
     EXPECT_EQ(value2.str(), "teststring");
@@ -49,6 +51,7 @@ TEST(HttpHttpBodyValueType, copysignl)
     HttpBody::value_type value;
     value.str() = "teststring";
     // Move constructor
+    // 移动构造函数
     HttpBody::value_type value2(value);
     EXPECT_EQ(value2.encodingType, EncodingType::Raw);
     EXPECT_EQ(value2.str(), "teststring");
@@ -60,6 +63,7 @@ TEST(HttpHttpBodyValueType, CopyOperatorString)
     HttpBody::value_type value;
     value.str() = "teststring";
     // Move constructor
+    // 移动构造函数
     HttpBody::value_type value2 = value;
     EXPECT_EQ(value2.encodingType, EncodingType::Raw);
     EXPECT_EQ(value2.compressionType, CompressionType::Raw);
@@ -76,6 +80,7 @@ TEST(HttpHttpBodyValueType, MoveFile)
                ec);
     ASSERT_FALSE(ec);
     // Move constructor
+    // 移动构造函数
     HttpBody::value_type value2(std::move(value));
     std::array<char, 11> buffer{};
     size_t out = value2.file().read(buffer.data(), buffer.size(), ec);
@@ -101,6 +106,7 @@ TEST(HttpHttpBodyValueType, MoveOperatorFile)
                ec);
     ASSERT_FALSE(ec);
     // Move constructor
+    // 移动构造函数
     HttpBody::value_type value2 = std::move(value);
     std::array<char, 11> buffer{};
     size_t out = value2.file().read(buffer.data(), buffer.size(), ec);

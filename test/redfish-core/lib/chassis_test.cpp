@@ -138,6 +138,7 @@ TEST(HandleChassisProperties, BadTypeFound)
             "xyz.openbmc_project.Inventory.Item.Chassis.ChassisType.Unknown"));
     handleChassisProperties(response, properties);
     // We fall back to RackMount
+    // 我们回退到 RackMount
     ASSERT_EQ("RackMount", response->res.jsonValue["ChassisType"]);
 }
 

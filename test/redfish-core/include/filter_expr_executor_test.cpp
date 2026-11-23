@@ -44,6 +44,7 @@ TEST(FilterParser, Integers)
 {
     const nlohmann::json members = R"({"Members": [{"Count": 2}]})"_json;
     // Forward true conditions
+    // 正向 true 条件
     filterTrue("Count eq 2", members);
     filterTrue("Count ne 3", members);
     filterTrue("Count gt 1", members);
@@ -52,6 +53,7 @@ TEST(FilterParser, Integers)
     filterTrue("Count le 2", members);
 
     // Reverse true conditions
+    // 反向 true 条件
     filterTrue("2 eq Count", members);
     filterTrue("3 ne Count", members);
     filterTrue("3 gt Count", members);
@@ -60,6 +62,7 @@ TEST(FilterParser, Integers)
     filterTrue("2 le Count", members);
 
     // Forward false conditions
+    // 正向 false 条件
     filterFalse("Count eq 3", members);
     filterFalse("Count ne 2", members);
     filterFalse("Count gt 2", members);
@@ -68,6 +71,7 @@ TEST(FilterParser, Integers)
     filterFalse("Count le 1", members);
 
     // Reverse false conditions
+    // 反向 false 条件
     filterFalse("3 eq Count", members);
     filterFalse("2 ne Count", members);
     filterFalse("2 gt Count", members);
@@ -80,6 +84,7 @@ TEST(FilterParser, FloatingPointToInteger)
 {
     const nlohmann::json members = R"({"Members": [{"Count": 2.0}]})"_json;
     // Forward true conditions
+    // 正向 true 条件
     filterTrue("Count eq 2", members);
     filterTrue("Count ne 3", members);
     filterTrue("Count gt 1", members);
@@ -88,6 +93,7 @@ TEST(FilterParser, FloatingPointToInteger)
     filterTrue("Count le 2", members);
 
     // Reverse true conditions
+    // 反向 true 条件
     filterTrue("2 eq Count", members);
     filterTrue("3 ne Count", members);
     filterTrue("3 gt Count", members);
@@ -96,6 +102,7 @@ TEST(FilterParser, FloatingPointToInteger)
     filterTrue("2 le Count", members);
 
     // Forward false conditions
+    // 正向 false 条件
     filterFalse("Count eq 3", members);
     filterFalse("Count ne 2", members);
     filterFalse("Count gt 2", members);
@@ -104,6 +111,7 @@ TEST(FilterParser, FloatingPointToInteger)
     filterFalse("Count le 1", members);
 
     // Reverse false conditions
+    // 反向 false 条件
     filterFalse("3 eq Count", members);
     filterFalse("2 ne Count", members);
     filterFalse("2 gt Count", members);
@@ -116,6 +124,7 @@ TEST(FilterParser, FloatingPointToFloatingPoint)
 {
     const nlohmann::json members = R"({"Members": [{"Count": 2.0}]})"_json;
     // Forward true conditions
+    // 正向 true 条件
     filterTrue("Count eq 2.0", members);
     filterTrue("Count ne 3.0", members);
     filterTrue("Count gt 1.0", members);
@@ -124,6 +133,7 @@ TEST(FilterParser, FloatingPointToFloatingPoint)
     filterTrue("Count le 2.0", members);
 
     // Reverse true conditions
+    // 反向 true 条件
     filterTrue("2.0 eq Count", members);
     filterTrue("3.0 ne Count", members);
     filterTrue("3.0 gt Count", members);
@@ -132,6 +142,7 @@ TEST(FilterParser, FloatingPointToFloatingPoint)
     filterTrue("2.0 le Count", members);
 
     // Forward false conditions
+    // 正向 false 条件
     filterFalse("Count eq 3.0", members);
     filterFalse("Count ne 2.0", members);
     filterFalse("Count gt 2.0", members);
@@ -140,6 +151,7 @@ TEST(FilterParser, FloatingPointToFloatingPoint)
     filterFalse("Count le 1.0", members);
 
     // Reverse false conditions
+    // 反向 false 条件
     filterFalse("3.0 eq Count", members);
     filterFalse("2.0 ne Count", members);
     filterFalse("2.0 gt Count", members);
@@ -153,6 +165,7 @@ TEST(FilterParser, String)
     const nlohmann::json members =
         R"({"Members": [{"SerialNumber": "1234"}]})"_json;
     // Forward true conditions
+    // 正向 true 条件
     filterTrue("SerialNumber eq '1234'", members);
     filterTrue("SerialNumber ne 'NotFoo'", members);
     filterTrue("SerialNumber gt '1233'", members);
@@ -161,6 +174,7 @@ TEST(FilterParser, String)
     filterTrue("SerialNumber le '1234'", members);
 
     // Reverse true conditions
+    // 反向 true 条件
     filterTrue("'1234' eq SerialNumber", members);
     filterTrue("'NotFoo' ne SerialNumber", members);
     filterTrue("'1235' gt SerialNumber", members);
@@ -169,6 +183,7 @@ TEST(FilterParser, String)
     filterTrue("'1234' le SerialNumber", members);
 
     // Forward false conditions
+    // 正向 false 条件
     filterFalse("SerialNumber eq 'NotFoo'", members);
     filterFalse("SerialNumber ne '1234'", members);
     filterFalse("SerialNumber gt '1234'", members);
@@ -177,6 +192,7 @@ TEST(FilterParser, String)
     filterFalse("SerialNumber le '1233'", members);
 
     // Reverse false conditions
+    // 反向 false 条件
     filterFalse("'NotFoo' eq SerialNumber", members);
     filterFalse("'1234' ne SerialNumber", members);
     filterFalse("'1234' gt SerialNumber", members);
@@ -189,9 +205,12 @@ TEST(FilterParser, StringHuman)
 {
     // Ensure that we're sorting based on human facing numbers, not
     // lexicographic comparison
+    // 确保基于面向人类的数字排序，而不是
+    // 按字典序比较
 
     const nlohmann::json members = R"({"Members": [{}]})"_json;
     // Forward true conditions
+    // 正向 true 条件
     filterFalse("'20' eq '3'", members);
     filterTrue("'20' ne '3'", members);
     filterTrue("'20' gt '3'", members);
@@ -205,6 +224,7 @@ TEST(FilterParser, StringSemver)
     const nlohmann::json members =
         R"({"Members": [{"Version": "20.0.2"}]})"_json;
     // Forward true conditions
+    // 正向 true 条件
     filterTrue("Version eq '20.0.2'", members);
     filterTrue("Version ne '20.2.0'", members);
     filterTrue("Version gt '20.0.1'", members);
@@ -219,6 +239,8 @@ TEST(FilterParser, Dates)
 
     // Note, all comparisons below differ by a single millisecond
     // Forward true conditions
+    // 注意，以下所有比较仅相差一毫秒
+    // 正向 true 条件
     filterTrue("Created eq '2021-11-30T22:41:35.123+00:00'", members);
     filterTrue("Created ne '2021-11-30T22:41:35.122+00:00'", members);
     filterTrue("Created gt '2021-11-30T22:41:35.122+00:00'", members);
@@ -227,6 +249,7 @@ TEST(FilterParser, Dates)
     filterTrue("Created le '2021-11-30T22:41:35.123+00:00'", members);
 
     // Reverse true conditions
+    // 反向 true 条件
     filterTrue("'2021-11-30T22:41:35.123+00:00' eq Created", members);
     filterTrue("'2021-11-30T22:41:35.122+00:00' ne Created", members);
     filterTrue("'2021-11-30T22:41:35.124+00:00' gt Created", members);
@@ -235,6 +258,7 @@ TEST(FilterParser, Dates)
     filterTrue("'2021-11-30T22:41:35.123+00:00' le Created", members);
 
     // Forward false conditions
+    // 正向 false 条件
     filterFalse("Created eq '2021-11-30T22:41:35.122+00:00'", members);
     filterFalse("Created ne '2021-11-30T22:41:35.123+00:00'", members);
     filterFalse("Created gt '2021-11-30T22:41:35.123+00:00'", members);
@@ -243,6 +267,7 @@ TEST(FilterParser, Dates)
     filterFalse("Created le '2021-11-30T22:41:35.122+00:00'", members);
 
     // Reverse false conditions
+    // 反向 false 条件
     filterFalse("'2021-11-30T22:41:35.122+00:00' eq Created", members);
     filterFalse("'2021-11-30T22:41:35.123+00:00' ne Created", members);
     filterFalse("'2021-11-30T22:41:35.123+00:00' gt Created", members);
@@ -261,6 +286,7 @@ TEST(FilterParser, NestedProperty)
         }
       }}]})"_json;
     // Forward true conditions
+    // 正向 true 条件
     filterTrue("Oem/OEM/ErrorId eq 'SWITCH_EC_STRAP_MISMATCH'", members);
     filterTrue("Oem/OEM/Key eq 'Switch_1'", members);
     filterFalse("Oem/OEM/ErrorId eq 'EC_STRAP_MISMATCH'", members);

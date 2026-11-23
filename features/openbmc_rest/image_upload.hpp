@@ -40,6 +40,7 @@ inline void uploadImageHandler(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp)
 {
     // Only allow one FW update at a time
+    // 同一时间只允许进行一次 FW 更新
     if (fwUpdateMatcher != nullptr)
     {
         asyncResp->res.addHeader("Retry-After", "30");
@@ -47,17 +48,20 @@ inline void uploadImageHandler(
         return;
     }
     // Make this const static so it survives outside this method
+    // 将其声明为 const static，使其在该方法外仍然有效
     static boost::asio::steady_timer timeout(getIoContext(),
                                              std::chrono::seconds(5));
 
     timeout.expires_after(std::chrono::seconds(15));
 
     // ast-grep-ignore: long-lambda
+    // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
     auto timeoutHandler = [asyncResp](const boost::system::error_code& ec) {
         fwUpdateMatcher = nullptr;
         if (ec == boost::asio::error::operation_aborted)
         {
             // expected, we were canceled before the timer completed.
+            // 符合预期：定时器完成前操作被取消。
             return;
         }
         BMCWEB_LOG_ERROR("Timed out waiting for Version interface");
@@ -77,6 +81,7 @@ inline void uploadImageHandler(
 
     std::function<void(sdbusplus::message_t&)> callback =
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: 忽略长 lambda 表达式（ast-grep 静态检查忽略标记）
         [asyncResp](sdbusplus::message_t& m) {
             BMCWEB_LOG_DEBUG("Match fired");
 

@@ -83,6 +83,7 @@ constexpr std::string_view chassisSubNodeToString(ChassisSubNode subNode)
 inline ChassisSubNode chassisSubNodeFromString(const std::string& subNodeStr)
 {
     // If none match unknownNode is returned
+    // 若无匹配项则返回 unknownNode
     ChassisSubNode subNode = ChassisSubNode::unknownNode;
 
     if (subNodeStr == "EnvironmentMetrics")
@@ -123,12 +124,14 @@ inline bool isExcerptNode(const ChassisSubNode subNode)
 /**
  * D-Bus inventory item associated with one or more sensors.
  */
+/* 与一个或多个传感器关联的 D-Bus inventory item。 */
 class InventoryItem
 {
   public:
     explicit InventoryItem(const std::string& objPath) : objectPath(objPath)
     {
         // Set inventory item name to last node of object path
+        // 将 inventory item 名称设置为对象路径的最后一个节点
         sdbusplus::object_path path(objectPath);
         name = path.filename();
         if (name.empty())
@@ -175,6 +178,7 @@ inline std::pair<std::string, std::string> splitSensorNameAndType(
     std::string sensorType{sensorId.substr(0, index)};
     std::string sensorName{sensorId.substr(index + 1)};
     // fan_pwm, fan_tach, and rotational_position need special handling
+    // fan_pwm、fan_tach 和 rotational_position 需要特殊处理
     if (sensorType == "fantach" || sensorType == "fanpwm")
     {
         sensorType.insert(3, 1, '_');
@@ -333,15 +337,21 @@ inline sensor::ReadingType toReadingType(std::string_view sensorType)
 
 // represents metric Id, metadata, reading value and timestamp of single
 // reading update in milliseconds
+// 表示单次读数更新的 metric Id、元数据、读数和时间戳，
+// 时间单位为毫秒
 using Reading = std::tuple<std::string, std::string, double, uint64_t>;
 // represents multiple independent readings
+// 表示多个独立的读数
 using Readings = std::vector<Reading>;
 // represents a timestamp and multiple independent readings
+// 表示一个时间戳和多个独立的读数
 using Statistics = std::tuple<uint64_t, Readings>;
 // represents sensor's path, its metadata
+// 表示传感器的路径及其元数据
 using SensorPaths =
     std::vector<std::tuple<sdbusplus::object_path, std::string>>;
 // represents reading parameters for statistics readings
+// 表示统计读数的读取参数
 using ReadingParameters =
     std::vector<std::tuple<SensorPaths, std::string, std::string, uint64_t>>;
 
@@ -379,6 +389,11 @@ inline void updateSensorStatistics(
  * available.
  * @return State value for inventory item.
  */
+/* @brief 返回指定 inventory item 的 Redfish State 值。
+ * @param inventoryItem 与传感器关联的 D-Bus inventory item。
+ * @param sensorAvailable 表示 D-Bus 传感器是否被标记为
+ *                        available 的布尔值。
+ * @return inventory item 的 State 值。 */
 inline resource::State getState(const InventoryItem* inventoryItem,
                                 const bool sensorAvailable)
 {
@@ -403,6 +418,12 @@ inline resource::State getState(const InventoryItem* inventoryItem,
  * be nullptr if no associated inventory item was found.
  * @return Health value for sensor.
  */
+/* @brief 返回指定传感器的 Redfish Health 值。
+ * @param sensorJson 传感器 JSON 对象。
+ * @param valuesDict 所有传感器 DBus 值的映射。
+ * @param inventoryItem 与传感器关联的 D-Bus inventory item。若未找到
+ * 关联的 inventory item，则为 nullptr。
+ * @return 传感器的 Health 值。 */
 inline resource::Health getHealth(
     nlohmann::json& sensorJson,
     const dbus::utility::DBusPropertiesMap& valuesDict,
@@ -411,6 +432,9 @@ inline resource::Health getHealth(
     // Get current health value (if any) in the sensor JSON object.  Some JSON
     // objects contain multiple sensors (such as PowerSupplies).  We want to set
     // the overall health to be the most severe of any of the sensors.
+    // 获取传感器 JSON 对象中当前的 health 值（如果有）。有些 JSON
+    // 对象包含多个传感器（例如 PowerSupplies）。我们要将整体
+    // health 设为所有传感器中最严重的值。
     std::string currentHealth;
     auto statusIt = sensorJson.find("Status");
     if (statusIt != sensorJson.end())
@@ -428,6 +452,8 @@ inline resource::Health getHealth(
 
     // If current health in JSON object is already Critical, return that.  This
     // should override the sensor health, which might be less severe.
+    // 若 JSON 对象中的当前 health 已是 Critical，则直接返回。
+    // 这应覆盖传感器的 health，后者可能没那么严重。
     if (currentHealth == "Critical")
     {
         return resource::Health::Critical;
@@ -447,6 +473,7 @@ inline resource::Health getHealth(
     if (success)
     {
         // Check if sensor has critical threshold alarm
+        // 检查传感器是否有 critical 阈值告警
         if ((criticalAlarmHigh != nullptr && *criticalAlarmHigh) ||
             (criticalAlarmLow != nullptr && *criticalAlarmLow))
         {
@@ -455,6 +482,7 @@ inline resource::Health getHealth(
     }
 
     // Check if associated inventory item is not functional
+    // 检查关联的 inventory item 是否不可用（not functional）
     if ((inventoryItem != nullptr) && !(inventoryItem->isFunctional))
     {
         return resource::Health::Critical;
@@ -462,6 +490,8 @@ inline resource::Health getHealth(
 
     // If current health in JSON object is already Warning, return that. This
     // should override the sensor status, which might be less severe.
+    // 若 JSON 对象中的当前 health 已是 Warning，则直接返回。
+    // 这应覆盖传感器的状态，后者可能没那么严重。
     if (currentHealth == "Warning")
     {
         return resource::Health::Warning;
@@ -470,6 +500,7 @@ inline resource::Health getHealth(
     if (success)
     {
         // Check if sensor has warning threshold alarm
+        // 检查传感器是否有 warning 阈值告警
         if ((warningAlarmHigh != nullptr && *warningAlarmHigh) ||
             (warningAlarmLow != nullptr && *warningAlarmLow))
         {
@@ -509,6 +540,12 @@ inline sensor::ReadingBasisType dBusSensorReadingBasisToRedfish(
  * @param[in] value The Value D-Bus value
  * @return Computed percent returned here if sanity checks pass
  */
+/* @brief 计算旋转风扇（fan_tach）的百分比值
+ * @param[in] sensorName  fan_tach 传感器的名称
+ * @param[in] maxValue MaxValue 的 D-Bus 值
+ * @param[in] minValue MinValue 的 D-Bus 值
+ * @param[in] value Value 的 D-Bus 值
+ * @return 若合理性检查通过，则返回计算所得的百分比 */
 inline std::optional<long> getFanPercent(
     std::string_view sensorName, std::optional<double> maxValue,
     std::optional<double> minValue, std::optional<double> value)
@@ -516,6 +553,8 @@ inline std::optional<long> getFanPercent(
     /* Sanity check values to be used to compute the percent and guard against
      * divide by zero.
      */
+    /* 对用于计算百分比的值进行合理性检查，并防止
+     * 除以零。 */
     if (!value.has_value() || !std::isfinite(*value))
     {
         BMCWEB_LOG_DEBUG("No Value for {}", sensorName);
@@ -542,6 +581,7 @@ inline std::optional<long> getFanPercent(
     }
 
     // Compute fan's RPM Percent value
+    // 计算风扇的 RPM 百分比值
     return std::lround(((*value - *minValue) * 100) / range);
 }
 
@@ -551,11 +591,13 @@ inline void convertToFanPercent(
     std::optional<double> minValue, std::optional<double> value, bool isExcerpt)
 {
     // RPM value reported under SpeedRPM only
+    // RPM 值仅在 SpeedRPM 下报告
     unit = "/SpeedRPM"_json_pointer;
 
     if (!isExcerpt)
     {
         // Convert max/min to percent range to match Reading
+        // 将 max/min 转换为百分比范围以匹配 Reading
         sensorJson["ReadingRangeMax"] = 100;
         sensorJson["ReadingRangeMin"] = 0;
     }
@@ -569,6 +611,7 @@ inline void convertToFanPercent(
     else
     {
         // Indication that percent couldn't be computed
+        // 表示无法计算百分比
         sensorJson["Reading"] = nullptr;
     }
 }
@@ -625,6 +668,9 @@ inline physical_context::PhysicalContext dBusSensorPhysicalContextToRedfish(
     // Currently the PDI only defines the Accelerator type.
     // TODO: Expand this mapping when additional PhysicalContext types are
     // added to phosphor-dbus-interfaces.
+    // 目前 PDI 只定义了 Accelerator 类型。
+    // TODO：当 phosphor-dbus-interfaces 中添加更多
+    // PhysicalContext 类型时，扩展此映射。
     if (sensorPhysicalContext ==
         "xyz.openbmc_project.Common.PhysicalContext.PhysicalContextType.Accelerator")
     {
@@ -668,11 +714,16 @@ inline bool fillSensorIdentity(
      * built by the caller.
      * Additionally they don't include these additional properties.
      */
+    /* Sensor excerpt 使用不同的 key 来引用传感器，这些 key
+     * 由调用者构建。
+     * 此外，它们不包含这些额外的属性。 */
     if (!isExcerpt)
     {
         std::string subNodeEscaped = getSensorId(sensorName, sensorType);
         // For sensors in SensorCollection we set Id instead of MemberId,
         // including power sensors.
+        // 对于 SensorCollection 中的传感器，我们设置 Id 而非 MemberId，
+        // 包括电源传感器。
         sensorJson["Id"] = std::move(subNodeEscaped);
 
         std::string sensorNameEs(sensorName);
@@ -733,6 +784,7 @@ inline bool fillSensorIdentity(
         }
 
         // A service that has not obtained a reading leaves this zero.
+        // 未获得读数的服务会将其保留为零。
         if (updatedTime.has_value() && *updatedTime != 0)
         {
             sensorJson["ReadingTime"] =
@@ -754,6 +806,7 @@ inline bool fillSensorIdentity(
         else
         {
             // Convert fan's RPM value to Percent value for Reading
+            // 将风扇的 RPM 值转换为 Reading 的百分比值
             convertToFanPercent(sensorJson, sensorName, unit, maxValue,
                                 minValue, value, isExcerpt);
         }
@@ -772,6 +825,9 @@ inline bool fillPowerThermalIdentity(
         // Set MemberId and Name for non-power sensors.  For PowerSupplies
         // and PowerControl, those properties have more general values
         // because multiple sensors can be stored in the same JSON object.
+        // 为非电源传感器设置 MemberId 和 Name。对于 PowerSupplies
+        // 和 PowerControl，这些属性使用更通用的值，因为同一个
+        // JSON 对象中可以存储多个传感器。
         std::string sensorNameEs(sensorName);
         std::ranges::replace(sensorNameEs, '_', ' ');
         sensorJson["Name"] = std::move(sensorNameEs);
@@ -783,6 +839,8 @@ inline bool fillPowerThermalIdentity(
         sensorJson["@odata.type"] = "#Thermal.v1_3_0.Temperature";
         // TODO(ed) Documentation says that path should be type fan_tach,
         // implementation seems to implement fan
+        // TODO(ed) 文档称该路径应为 fan_tach 类型，
+        // 但实现似乎实现的是 fan 类型
         return true;
     }
 
@@ -821,6 +879,8 @@ inline bool fillPowerThermalIdentity(
             sensorJson["@odata.type"] = "#Power.v1_0_0.PowerControl";
             // Put multiple "sensors" into a single PowerControl, so have
             // generic names for MemberId and Name. Follows Redfish mockup.
+            // 将多个"传感器"放入单个 PowerControl，因此 MemberId
+            // 和 Name 使用通用名称。遵循 Redfish mockup。
             sensorJson["MemberId"] = "0";
             sensorJson["Name"] = "Chassis Power Control";
             unit = "/PowerConsumedWatts"_json_pointer;
@@ -841,6 +901,7 @@ inline bool fillPowerThermalIdentity(
 }
 
 // Map of dbus interface name, dbus property name and redfish property_name
+// dbus 接口名、dbus 属性名和 redfish property_name 的映射
 using SensorPropertyMap = std::tuple<std::string_view, std::string_view,
                                      nlohmann::json::json_pointer>;
 using SensorPropertyList = std::vector<SensorPropertyMap>;
@@ -851,11 +912,13 @@ inline void mapPropertiesBySubnode(
     bool isExcerpt)
 {
     // unit contains the redfish property_name based on the sensor type/node
+    // unit 包含基于传感器类型/节点的 redfish property_name
     properties.emplace_back("xyz.openbmc_project.Sensor.Value", "Value", unit);
 
     if (isExcerpt)
     {
         // Excerpts don't have any of these extended properties
+        // excerpt 不包含任何这些扩展属性
         return;
     }
 
@@ -897,6 +960,7 @@ inline void mapPropertiesBySubnode(
     }
 
     // TODO Need to get UpperThresholdFatal and LowerThresholdFatal
+    // TODO 需要获取 UpperThresholdFatal 和 LowerThresholdFatal
 
     if (chassisSubNode == ChassisSubNode::sensorsNode)
     {
@@ -916,6 +980,10 @@ inline void mapPropertiesBySubnode(
              * ReadingRangeMin and ReadingRangeMax converted to percent range in
              * that function as well.
              */
+            /* fan_tach 传感器通过 fillSensorIdentity() 调用的
+             * convertToFanPercent() 转换为百分比。
+             * ReadingRangeMin 和 ReadingRangeMax 也在该函数中
+             * 转换为百分比范围。 */
             if (sensorType != "fan_tach")
             {
                 properties.emplace_back("xyz.openbmc_project.Sensor.Value",
@@ -957,6 +1025,14 @@ inline void mapPropertiesBySubnode(
  * @param inventoryItem D-Bus inventory item associated with the sensor.  Will
  * be nullptr if no associated inventory item was found.
  */
+/* @brief 构建传感器的 json 表示。
+ * @param sensorName  要构建的传感器名称
+ * @param sensorType  要构建的传感器类型（temperature、fan_tach 等）
+ * @param chassisSubNode 传感器的子节点（thermal、sensor 等）
+ * @param propertiesDict 用于构建传感器的属性字典。
+ * @param sensorJson  要填充的 json 对象
+ * @param inventoryItem 与传感器关联的 D-Bus inventory item。若未找到
+ * 关联的 inventory item，则为 nullptr。 */
 inline void objectPropertiesToJson(
     std::string_view sensorName, std::string_view sensorType,
     ChassisSubNode chassisSubNode,
@@ -966,11 +1042,15 @@ inline void objectPropertiesToJson(
     // Parameter to set to override the type we get from dbus, and force it to
     // int, regardless of what is available.  This is used for schemas like fan,
     // that require integers, not floats.
+    // 该参数用于覆盖从 dbus 获得的类型，无论实际类型如何，
+    // 都强制转换为 int。这用于 fan 这类要求整数而非浮点数的
+    // schema。
     bool forceToInt = false;
 
     nlohmann::json::json_pointer unit("/Reading");
 
     // This ChassisSubNode builds sensor excerpts
+    // 此 ChassisSubNode 构建 sensor excerpt
     bool isExcerpt = isExcerptNode(chassisSubNode);
     bool filledOk = false;
 
@@ -995,9 +1075,11 @@ inline void objectPropertiesToJson(
     }
 
     // Map of dbus interface name, dbus property name and redfish property_name
+    // dbus 接口名、dbus 属性名和 redfish property_name 的映射
     SensorPropertyList properties;
 
     // Add additional property mappings based on the sensor type/node
+    // 根据传感器类型/节点添加额外的属性映射
     mapPropertiesBySubnode(sensorType, chassisSubNode, properties, unit,
                            isExcerpt);
 
@@ -1012,6 +1094,8 @@ inline void objectPropertiesToJson(
 
             // The property we want to set may be nested json, so use
             // a json_pointer for easy indexing into the json structure.
+            // 我们要设置的属性可能是嵌套 json，因此使用
+            // json_pointer 以便在 json 结构中方便地索引。
             const nlohmann::json::json_pointer& key = std::get<2>(p);
 
             const double* doubleValue = std::get_if<double>(&valueVariant);
@@ -1033,6 +1117,9 @@ inline void objectPropertiesToJson(
                     // Value names with NaN reading should be skipped for a
                     // subset of valueNames (Example: MaxValue) as specified in
                     // valueNanIsNull.
+                    // 对于 valueNanIsNull 中指定的
+                    // 一部分 valueName（例如 MaxValue），
+                    // 读数为 NaN 的值应被跳过。
                     sensorJson[key] = nullptr;
                 }
                 else if (std::ranges::find(valueNanIsSkipped, valueName) ==
@@ -1041,6 +1128,9 @@ inline void objectPropertiesToJson(
                     // Value names with NaN readings where valueNames are
                     // neither in valueNaNIsSkipped nor in valueNaNIsNull are
                     // unexpected. Report as a warning and skip.
+                    // 读数为 NaN、但 valueName 既不在 valueNaNIsSkipped
+                    // 也不在 valueNaNIsNull 中的情况是意外的。
+                    // 报告警告并跳过。
                     BMCWEB_LOG_WARNING(
                         "Sensor value for {} was unexpectedly {}", valueName,
                         *doubleValue);
@@ -1078,6 +1168,19 @@ inline void objectPropertiesToJson(
  * @returns True if sensorJson object filled. False on any error.
  * Caller is responsible for handling error.
  */
+/* @brief 构建传感器 json 格式的 sensor excerpt 表示。
+ * @details 这是一个包装函数，用于为 sensor excerpt 统一设置
+ * "DataSourceUri" 并填充属性。由于 sensor excerpt 通常只有
+ * 传感器的 D-Bus 路径，因此该路径被接受并用于构建
+ * "DataSourceUri"。
+ * @param path 要构建的传感器的 D-Bus 路径
+ * @param chassisId 传感器的 Chassis Id
+ * @param chassisSubNode 传感器的子节点（例如 ThermalMetrics）
+ * @param sensorTypeExpected 传感器预期的 ReadingType
+ * @param propertiesDict 用于构建传感器的属性字典。
+ * @param sensorJson  要填充的 json 对象
+ * @returns 若 sensorJson 对象填充成功则返回 True，任何错误返回 False。
+ * 调用者负责处理错误。 */
 inline bool objectExcerptToJson(
     const std::string& path, const std::string_view chassisId,
     ChassisSubNode chassisSubNode,
@@ -1109,11 +1212,13 @@ inline bool objectExcerptToJson(
     }
 
     // Sensor excerpts use DataSourceUri to reference full sensor Redfish path
+    // Sensor excerpt 使用 DataSourceUri 引用完整传感器的 Redfish 路径
     sensorJson["DataSourceUri"] =
         boost::urls::format("/redfish/v1/Chassis/{}/Sensors/{}", chassisId,
                             getSensorId(sensorName, sensorType));
 
     // Fill in sensor excerpt properties
+    // 填充 sensor excerpt 的属性
     objectPropertiesToJson(sensorName, sensorType, chassisSubNode,
                            propertiesDict, sensorJson, nullptr);
 
@@ -1121,6 +1226,7 @@ inline bool objectExcerptToJson(
 }
 
 // Maps D-Bus: Service, SensorPath
+// 映射 D-Bus：Service、SensorPath
 using SensorServicePathMap = std::pair<std::string, std::string>;
 using SensorServicePathList = std::vector<SensorServicePathMap>;
 
@@ -1136,6 +1242,7 @@ inline void getAllSensorObjects(
     dbus::utility::getAssociatedSubTree(
         endpointPath, sdbusplus::object_path(path), depth, interfaces,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（ast-grep 工具忽略标记：长 lambda，需保持原样）
         [callback = std::move(callback)](
             const boost::system::error_code& ec,
             const dbus::utility::MapperGetSubTreeResponse& subtree) {
@@ -1178,6 +1285,7 @@ constexpr std::string_view sensorPurposeToString(SensorPurpose subNode)
 inline SensorPurpose sensorPurposeFromString(const std::string& subNodeStr)
 {
     // If none match unknownNode is returned
+    // 若都不匹配，则返回 unknownNode
     SensorPurpose subNode = SensorPurpose::unknownPurpose;
 
     if (subNodeStr ==
@@ -1199,6 +1307,8 @@ inline void checkSensorPurpose(
 {
     // If not found this sensor will be skipped but allow to
     // continue processing remaining sensors
+    // 若未找到则跳过该传感器，但允许
+    // 继续处理其余传感器
     if (ec && (ec != boost::system::errc::io_error) && (ec.value() != EBADR))
     {
         BMCWEB_LOG_DEBUG("D-Bus response error : {}", ec);
@@ -1217,6 +1327,7 @@ inline void checkSensorPurpose(
             if (purposeStr == checkPurposeStr)
             {
                 // Add to list
+                // 加入列表
                 BMCWEB_LOG_DEBUG("checkSensorPurpose adding {} {}", serviceName,
                                  sensorPath);
                 sensorMatches->emplace_back(serviceName, sensorPath);
@@ -1242,6 +1353,18 @@ inline void checkSensorPurpose(
  * @param[out] sensorMatches Sensors from sensorListIn with sensorPurpose
  * @param[in] callback Callback to handle list of matching sensors
  */
+/* @brief 从列表中获取具有指定用途（purpose）的传感器
+ * 检查 <sensorListIn> 中的传感器，看是否有传感器在接口
+ * xyz.openbmc_project.Sensor.Purpose 中实现了指定的
+ * <sensorPurpose>。将所有匹配项加入 <sensorMatches> 列表。检查完
+ * <sensorListIn> 中的所有传感器后，将仅用匹配传感器的列表调用
+ * <callback>，该列表可能为空。此外出错时也会调用 <callback>，
+ * 错误处理交由该回调负责。
+ * @param asyncResp 响应数据
+ * @param[in] sensorListIn 待检查的传感器列表
+ * @param[in] sensorPurpose 用于匹配传感器用途的目标值
+ * @param[out] sensorMatches sensorListIn 中具有 sensorPurpose 的传感器
+ * @param[in] callback 处理匹配传感器列表的回调函数 */
 inline void getSensorsByPurpose(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const SensorServicePathList& sensorListIn,
@@ -1254,6 +1377,8 @@ inline void getSensorsByPurpose(
     /* Keeps track of number of asynchronous calls made. Once all handlers have
      * been called the callback function is called with the results.
      */
+    /* 记录已发起的异步调用数量。一旦所有处理函数都被调用，
+     * 就会用结果调用回调函数。 */
     std::shared_ptr<int> remainingSensorsToVist =
         std::make_shared<int>(sensorListIn.size());
 
@@ -1261,6 +1386,9 @@ inline void getSensorsByPurpose(
      * handlers. Once all handlers have been called the callback will be sent
      * the error to handle.
      */
+    /* 保存任一异步处理函数返回的最后一个不可恢复错误。一旦所有处理
+     * 函数都被调用，就会把该错误发送给回调函数，由回调
+     * 函数处理。 */
     std::shared_ptr<boost::system::error_code> asyncErrors =
         std::make_shared<boost::system::error_code>();
 
@@ -1272,11 +1400,13 @@ inline void getSensorsByPurpose(
             serviceName, sensorPath, "xyz.openbmc_project.Sensor.Purpose",
             "Purpose",
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（ast-grep 工具忽略标记：长 lambda，需保持原样）
             [asyncResp, serviceName, sensorPath, sensorPurpose, sensorMatches,
              callback, remainingSensorsToVist,
              asyncErrors](const boost::system::error_code& ec,
                           const std::vector<std::string>& purposeList) {
                 // Keep track of sensor visited
+                // 记录已访问的传感器
                 (*remainingSensorsToVist)--;
                 BMCWEB_LOG_DEBUG("Visited {}. Remaining sensors {}", sensorPath,
                                  *remainingSensorsToVist);
@@ -1285,6 +1415,7 @@ inline void getSensorsByPurpose(
                                    sensorMatches, asyncErrors, ec, purposeList);
 
                 // All sensors have been visited
+                // 所有传感器均已访问完毕
                 if (*remainingSensorsToVist == 0)
                 {
                     BMCWEB_LOG_DEBUG(

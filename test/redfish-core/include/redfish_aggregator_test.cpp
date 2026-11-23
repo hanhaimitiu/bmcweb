@@ -74,6 +74,8 @@ TEST(addPrefixToItem, ValidURIs)
 
     // We're only testing prefix fixing so it's alright that some of the
     // resulting URIs will not actually be possible as defined by the schema
+    // 我们只测试前缀修正，因此某些生成的 URI 按 schema 定义
+    // 实际上并不合法也没关系
     constexpr std::array validIDs{
         "1",
         "1/",
@@ -87,6 +89,7 @@ TEST(addPrefixToItem, ValidURIs)
         "Extra_Test/Sensors/power_sensor/"};
 
     // Construct URIs which should have prefix fixing applied
+    // 构造应应用前缀修正的 URI
     for (const auto& root : validRoots)
     {
         for (const auto& id : validIDs)
@@ -122,6 +125,7 @@ TEST(addPrefixToItem, UnsupportedURIs)
         "Extra_Test/Sensors/power_sensor/"};
 
     // Construct URIs which should NOT have prefix fixing applied
+    // 构造不应应用前缀修正的 URI
     for (const auto& root : invalidRoots)
     {
         for (const auto& id : validIDs)
@@ -152,6 +156,8 @@ TEST(addPrefixToItem, TopLevelCollections)
 
     // Construct URIs for top level collections.  Prefixes should NOT be
     // applied to any of the URIs
+    // 构造顶级集合的 URI。不应将前缀应用到
+    // 任何这些 URI 上
     for (const auto& root : validRoots)
     {
         std::string initial("/redfish/v1/" + std::string(root));
@@ -228,6 +234,9 @@ TEST(addPrefixes, FixHttpTaskMonitor)
     // Previously bmcweb hosted task monitors incorrectly.
     // It has been corrected in the next test, but ensure that the "old"
     // way still produces the correct result.
+    // 以前 bmcweb 托管 task monitor 的方式不正确。
+    // 下一个测试中已修正，但要确保 "旧"
+    // 方式仍能产生正确的结果。
     nlohmann::json taskResp = R"(
     {
       "TaskMonitor": "/redfish/v1/TaskService/Tasks/0/Monitor"
@@ -273,6 +282,8 @@ TEST(addPrefixes, FixHttpHeadersInResponseBody)
 
 // Attempts to perform prefix fixing on a response with response code "result".
 // Fixing should always occur
+// 尝试对响应码为 "result" 的响应执行前缀修正。
+// 修正应始终发生
 void assertProcessResponse(unsigned result)
 {
     nlohmann::json jsonResp;
@@ -345,6 +356,7 @@ TEST(processResponse, preserveHeaders)
 }
 
 // Helper function to correctly populate a ComputerSystem collection response
+// 用于正确填充 ComputerSystem 集合响应的辅助函数
 void populateCollectionResponse(crow::Response& resp)
 {
     nlohmann::json jsonResp = R"(
@@ -365,6 +377,9 @@ void populateCollectionResponse(crow::Response& resp)
     // resp.body() =
     //     jsonResp.dump(2, ' ', true,
     //     nlohmann::json::error_handler_t::replace);
+    // resp.body() =
+    //     jsonResp.dump(2, ' ', true,
+    //     nlohmann::json::error_handler_t::replace);
     resp.jsonValue = std::move(jsonResp);
     resp.addHeader("OData-Version", "4.0");
     resp.addHeader("Content-Type", "application/json");
@@ -380,6 +395,8 @@ void populateCollectionNotFound(crow::Response& resp)
 
 // Used with the above functions to convert the response to appear like it's
 // from a satellite which will not have a json component
+// 与上述函数配合使用，将响应转换为看起来像是
+// 来自没有 json 组件的 satellite
 void convertToSat(crow::Response& resp)
 {
     resp.write(resp.jsonValue.dump(2, ' ', true,
@@ -406,6 +423,7 @@ TEST(processCollectionResponse, localOnly)
     for (const auto& member : *arr)
     {
         // There should only be one member
+        // 应该只有一个成员
         EXPECT_EQ(member["@odata.id"], "/redfish/v1/Systems/system");
     }
 }
@@ -430,6 +448,7 @@ TEST(processCollectionResponse, satelliteOnly)
     for (const auto& member : *arr)
     {
         // There should only be one member
+        // 应该只有一个成员
         EXPECT_EQ(member["@odata.id"], "/redfish/v1/Systems/prefix_system");
     }
 }
@@ -478,6 +497,7 @@ TEST(processCollectionResponse, satelliteWrongContentHeader)
     convertToSat(resp);
 
     // Ignore the satellite even though otherwise valid
+    // 即使 satellite 在其他方面有效，也应忽略它
     resp.clearHeader(boost::beast::http::field::content_type);
 
     RedfishAggregator::processCollectionResponse("prefix", asyncResp, resp);
@@ -522,6 +542,7 @@ TEST(processCollectionResponse, preserveHeaders)
                    "/redfish/v1/Chassis/Test");
 
     // We skip processing collection responses that have a 429 or 502 code
+    // 我们跳过处理响应码为 429 或 502 的集合响应
     resp.result(boost::beast::http::status::too_many_requests); // 429
     RedfishAggregator::processCollectionResponse("prefix", asyncResp, resp);
     EXPECT_EQ(asyncResp->res.resultInt(), 404);
@@ -672,6 +693,7 @@ TEST(searchCollectionsArray, collectionURIs)
 TEST(searchCollectionsArray, collectionOrContainsURIs)
 {
     // Resources that are a top level collection or are uptree of one
+    // 属于顶级集合或位于其上层的资源
     EXPECT_TRUE(isCollOrCon("/redfish/v1/"));
     EXPECT_TRUE(isCollOrCon("/redfish/v1/AggregationService"));
     EXPECT_TRUE(isCollOrCon("/redfish/v1/CompositionService/"));
@@ -733,6 +755,8 @@ TEST(processContainsSubordinateResponse, localNotOK)
 
     // This field was added by resourceNotFound()
     // Sanity test to make sure it gets removed later
+    // 此字段由 resourceNotFound() 添加
+    // 这是一个健全性测试，确保之后会被移除
     EXPECT_TRUE(asyncResp->res.jsonValue.contains("error"));
 
     crow::Response resp;
@@ -754,6 +778,7 @@ TEST(processContainsSubordinateResponse, localNotOK)
         "prefix", asyncResp, resp);
 
     // Most of the response should get copied over since asyncResp is a 404
+    // 由于 asyncResp 是 404，大部分响应应被复制过来
     EXPECT_EQ(asyncResp->res.resultInt(), 200);
     EXPECT_EQ(asyncResp->res.jsonValue["@odata.id"], "/redfish/v1");
     EXPECT_EQ(asyncResp->res.jsonValue["@odata.type"],
@@ -771,6 +796,7 @@ TEST(processContainsSubordinateResponse, localNotOK)
     EXPECT_FALSE(asyncResp->res.jsonValue.contains("error"));
 
     // Test for local response being partially populated before throwing error
+    // 测试在抛出错误之前本地响应已被部分填充的情况
     asyncResp = std::make_shared<bmcweb::AsyncResp>();
     asyncResp->res.addHeader("Content-Type", "application/json");
     asyncResp->res.jsonValue["Chassis"]["@odata.id"] = "/redfish/v1/Chassis";
@@ -781,6 +807,7 @@ TEST(processContainsSubordinateResponse, localNotOK)
         "prefix", asyncResp, resp);
 
     // These should also be copied over since asyncResp is a 500
+    // 由于 asyncResp 是 500，这些也应被复制过来
     EXPECT_EQ(asyncResp->res.resultInt(), 200);
     EXPECT_EQ(asyncResp->res.jsonValue["@odata.id"], "/redfish/v1");
     EXPECT_EQ(asyncResp->res.jsonValue["@odata.type"],
@@ -798,6 +825,7 @@ TEST(processContainsSubordinateResponse, localNotOK)
     EXPECT_FALSE(asyncResp->res.jsonValue.contains("error"));
 
     // These fields should still be present
+    // 这些字段仍应存在
     EXPECT_EQ(asyncResp->res.jsonValue["Chassis"]["@odata.id"],
               "/redfish/v1/Chassis");
     EXPECT_EQ(asyncResp->res.jsonValue["Fake"]["@odata.id"],
@@ -822,12 +850,14 @@ TEST(processContainsSubordinateResponse, noValidLinks)
         "prefix", asyncResp, resp);
 
     // We won't add any links from response so asyncResp shouldn't change
+    // 我们不会从响应中添加任何链接，因此 asyncResp 不应改变
     EXPECT_EQ(asyncResp->res.resultInt(), 500);
     EXPECT_EQ(asyncResp->res.jsonValue["Chassis"]["@odata.id"],
               "/redfish/v1/Chassis");
     EXPECT_FALSE(asyncResp->res.jsonValue.contains("@odata.id"));
 
     // Sat response is non-500 so it shouldn't get copied over
+    // Sat 响应不是 500，因此不应被复制过来
     asyncResp->res.result(200);
     resp.result(500);
     jsonValue["Fabrics"]["@odata.id"] = "/redfish/v1/Fabrics";
@@ -856,6 +886,12 @@ TEST(processContainsSubordinateResponse, noValidLinks)
 // -- so the forwarded copy must preserve the original method, target, and body
 // while dropping the client's credentials.  These cases lock in that contract,
 // which previously had no coverage.
+// createNewRequest() 构建 aggregator 转发给 satellite BMC 的
+// 请求。对于单个（带前缀的）satellite 资源，aggregator 会
+// 转发所有方法——参见 docs/AGGREGATION.md 中的 "Aggregating a Resource"
+// ——因此转发的副本必须保留原始的 method、target 和 body，
+// 同时丢弃客户端的凭据。这些用例固定了这一契约，
+// 此前该契约没有测试覆盖。
 TEST(createNewRequest, PreservesNonGetMethodTargetAndBody)
 {
     std::error_code ec;
@@ -927,6 +963,7 @@ TEST(createNewRequest, FiltersAuthTokenKeepsHostAndContentType)
     EXPECT_TRUE(hasContentType);
     EXPECT_TRUE(hasAccept);
     // The client's auth token must not be leaked to the satellite BMC
+    // 客户端的 auth token 不得泄露给 satellite BMC
     EXPECT_FALSE(hasAuthToken);
 }
 

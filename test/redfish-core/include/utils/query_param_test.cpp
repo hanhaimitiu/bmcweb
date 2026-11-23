@@ -527,6 +527,7 @@ TEST(QueryParams, GetExpandType)
     EXPECT_EQ(query.expandType, ExpandType::Links);
 
     // Per redfish specification, level defaults to 1
+    // 根据 redfish 规范，level 默认为 1
     EXPECT_TRUE(getExpandType(".", query));
     EXPECT_EQ(query.expandLevel, 1);
 
@@ -534,12 +535,15 @@ TEST(QueryParams, GetExpandType)
     EXPECT_EQ(query.expandLevel, 42);
 
     // Overflow
+    // 溢出
     EXPECT_FALSE(getExpandType(".($levels=256)", query));
 
     // Negative
+    // 负数
     EXPECT_FALSE(getExpandType(".($levels=-1)", query));
 
     // No number
+    // 无数字
     EXPECT_FALSE(getExpandType(".($levels=a)", query));
 }
 
@@ -549,39 +553,48 @@ TEST(QueryParams, FindNavigationReferencesNonLink)
 
     // Responses must include their "@odata.id" property for $expand to work
     // correctly
+    // 响应必须包含其 "@odata.id" 属性，
+    // $expand 才能正常工作
     json singleTreeNode =
         R"({"@odata.id": "/redfish/v1",
         "Foo" : {"@odata.id": "/foobar"}})"_json;
 
     // Parsing as the root should net one entry
+    // 作为根解析应得到一个条目
     EXPECT_THAT(
         findNavigationReferences(ExpandType::Both, 1, 0, singleTreeNode),
         UnorderedElementsAre(
             ExpandNode{json::json_pointer("/Foo"), "/foobar"}));
 
     // Parsing in Non-hyperlinks mode should net one entry
+    // 在 Non-hyperlinks 模式下解析应得到一个条目
     EXPECT_THAT(
         findNavigationReferences(ExpandType::NotLinks, 1, 0, singleTreeNode),
         UnorderedElementsAre(
             ExpandNode{json::json_pointer("/Foo"), "/foobar"}));
 
     // Searching for not types should return empty set
+    // 搜索非类型应返回空集合
     EXPECT_TRUE(findNavigationReferences(ExpandType::None, 1, 0, singleTreeNode)
                     .empty());
 
     // Searching for hyperlinks only should return empty set
+    // 仅搜索 hyperlinks 应返回空集合
     EXPECT_TRUE(
         findNavigationReferences(ExpandType::Links, 1, 0, singleTreeNode)
             .empty());
 
     // Responses must include their "@odata.id" property for $expand to work
     // correctly
+    // 响应必须包含其 "@odata.id" 属性，
+    // $expand 才能正常工作
     json multiTreeNodes =
         R"({"@odata.id": "/redfish/v1",
         "Links": {"@odata.id": "/links"},
         "Foo" : {"@odata.id": "/foobar"}})"_json;
 
     // Should still find Foo
+    // 仍应找到 Foo
     EXPECT_THAT(
         findNavigationReferences(ExpandType::NotLinks, 1, 0, multiTreeNodes),
         UnorderedElementsAre(
@@ -594,26 +607,32 @@ TEST(QueryParams, FindNavigationReferencesLink)
 
     // Responses must include their "@odata.id" property for $expand to work
     // correctly
+    // 响应必须包含其 "@odata.id" 属性，
+    // $expand 才能正常工作
     json singleLinkNode =
         R"({"@odata.id": "/redfish/v1",
         "Links" : {"Sessions": {"@odata.id": "/foobar"}}})"_json;
 
     // Parsing as the root should net one entry
+    // 作为根解析应得到一个条目
     EXPECT_THAT(
         findNavigationReferences(ExpandType::Both, 1, 0, singleLinkNode),
         UnorderedElementsAre(
             ExpandNode{json::json_pointer("/Links/Sessions"), "/foobar"}));
     // Parsing in hyperlinks mode should net one entry
+    // 在 hyperlinks 模式下解析应得到一个条目
     EXPECT_THAT(
         findNavigationReferences(ExpandType::Links, 1, 0, singleLinkNode),
         UnorderedElementsAre(
             ExpandNode{json::json_pointer("/Links/Sessions"), "/foobar"}));
 
     // Searching for not types should return empty set
+    // 搜索非类型应返回空集合
     EXPECT_TRUE(findNavigationReferences(ExpandType::None, 1, 0, singleLinkNode)
                     .empty());
 
     // Searching for non-hyperlinks only should return empty set
+    // 仅搜索 non-hyperlinks 应返回空集合
     EXPECT_TRUE(
         findNavigationReferences(ExpandType::NotLinks, 1, 0, singleLinkNode)
             .empty());
@@ -625,6 +644,8 @@ TEST(QueryParams, PreviouslyExpanded)
 
     // Responses must include their "@odata.id" property for $expand to work
     // correctly
+    // 响应必须包含其 "@odata.id" 属性，
+    // $expand 才能正常工作
     json expNode = json::parse(R"(
 {
   "@odata.id": "/redfish/v1/Chassis",
@@ -652,10 +673,12 @@ TEST(QueryParams, PreviouslyExpanded)
                                nullptr, false);
 
     // Expand has already occurred so we should not do anything
+    // 已经执行过 Expand，因此不应再做任何操作
     EXPECT_TRUE(
         findNavigationReferences(ExpandType::NotLinks, 1, 0, expNode).empty());
 
     // Previous expand was only a single level so we should further expand
+    // 之前的 Expand 只有一层，因此应进一步展开
     EXPECT_THAT(findNavigationReferences(ExpandType::NotLinks, 2, 0, expNode),
                 UnorderedElementsAre(
                     ExpandNode{json::json_pointer("/Members/0/Sensors"),
@@ -664,6 +687,7 @@ TEST(QueryParams, PreviouslyExpanded)
                                "/redfish/v1/Chassis/5B247A_Sat2/Sensors"}));
 
     // Make sure we can handle when an array was expanded further down the tree
+    // 确保我们能处理数组在树中更深处被展开的情况
     json expNode2 = R"({"@odata.id" : "/redfish/v1"})"_json;
     expNode2["Chassis"] = std::move(expNode);
     EXPECT_TRUE(
@@ -672,6 +696,7 @@ TEST(QueryParams, PreviouslyExpanded)
         findNavigationReferences(ExpandType::NotLinks, 2, 0, expNode2).empty());
 
     // Previous expand was two levels so we should further expand
+    // 之前的 Expand 有两层，因此应进一步展开
     EXPECT_THAT(findNavigationReferences(ExpandType::NotLinks, 3, 0, expNode2),
                 UnorderedElementsAre(
                     ExpandNode{json::json_pointer("/Chassis/Members/0/Sensors"),
@@ -686,6 +711,8 @@ TEST(QueryParams, DelegatedSkipExpanded)
 
     // Responses must include their "@odata.id" property for $expand to work
     // correctly
+    // 响应必须包含其 "@odata.id" 属性，
+    // $expand 才能正常工作
     json expNode = json::parse(R"(
 {
   "@odata.id": "/redfish/v1",
@@ -708,6 +735,7 @@ TEST(QueryParams, DelegatedSkipExpanded)
                     ExpandNode{json::json_pointer("/Bar/Foo"), "/barfoo"}));
 
     // Skip the first expand level
+    // 跳过第一层 expand
     EXPECT_THAT(findNavigationReferences(ExpandType::NotLinks, 1, 1, expNode),
                 UnorderedElementsAre(
                     ExpandNode{json::json_pointer("/Bar/Foo"), "/barfoo"}));
@@ -719,6 +747,8 @@ TEST(QueryParams, PartiallyPreviouslyExpanded)
 
     // Responses must include their "@odata.id" property for $expand to work
     // correctly
+    // 响应必须包含其 "@odata.id" 属性，
+    // $expand 才能正常工作
     json expNode = json::parse(R"(
 {
   "@odata.id": "/redfish/v1/Chassis",
@@ -743,6 +773,8 @@ TEST(QueryParams, PartiallyPreviouslyExpanded)
 
     // The 5B247A_Sat1 Chassis was already expanded a single level so we should
     // only want to expand the Local Chassis
+    // 5B247A_Sat1 Chassis 已经展开了一层，因此
+    // 我们只需展开 Local Chassis
     EXPECT_THAT(
         findNavigationReferences(ExpandType::NotLinks, 1, 0, expNode),
         UnorderedElementsAre(ExpandNode{json::json_pointer("/Members/0"),
@@ -750,6 +782,8 @@ TEST(QueryParams, PartiallyPreviouslyExpanded)
 
     // The 5B247A_Sat1 Chassis was already expanded a single level so we should
     // further expand it as well as the Local Chassis
+    // 5B247A_Sat1 Chassis 已经展开了一层，因此我们
+    // 应进一步展开它以及 Local Chassis
     EXPECT_THAT(findNavigationReferences(ExpandType::NotLinks, 2, 0, expNode),
                 UnorderedElementsAre(
                     ExpandNode{json::json_pointer("/Members/0"),
@@ -758,6 +792,7 @@ TEST(QueryParams, PartiallyPreviouslyExpanded)
                                "/redfish/v1/Chassis/5B247A_Sat1/Sensors"}));
 
     // Now the response has paths that have been expanded 0, 1, and 2 times
+    // 现在响应中包含已展开 0 次、1 次和 2 次的路径
     json expNode2 = R"({"@odata.id" : "/redfish/v1",
                         "Systems": {"@odata.id": "/redfish/v1/Systems"}})"_json;
     expNode2["Chassis"] = std::move(expNode);

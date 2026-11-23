@@ -12,6 +12,8 @@ A test class that simulates a socket by wrapping the beast test stream
 
 Additionally it adds remote_endpoint to allow testing of TCP-specific behaviors
 */
+/* 一个通过包装 beast test stream 来模拟 socket 的测试类
+ * 此外它还添加了 remote_endpoint，以便测试 TCP 特有的行为 */
 struct TestStream : public boost::beast::test::stream
 {
     explicit TestStream(boost::asio::io_context& io) :

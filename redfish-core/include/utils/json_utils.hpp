@@ -48,6 +48,13 @@ namespace json_util
  * @return true if JSON is valid, false when JSON is invalid and response has
  *         been filled with message and ended.
  */
+/* @brief 处理请求，从其 body 中提取 JSON。若失败，则向响应添加
+ *       MalformedJSON 消息并结束响应。
+ * @param[io]  res       响应对象
+ * @param[in]  req       请求对象
+ * @param[out] reqJson   从请求 body 中提取的 JSON 对象
+ * @return JSON 有效时返回 true；JSON 无效且响应已填充消息并结束时
+ *         返回 false。 */
 bool processJsonFromRequest(crow::Response& res, const crow::Request& req,
                             nlohmann::json& reqJson);
 namespace details
@@ -105,6 +112,9 @@ bool checkRange(const FromType& from, std::string_view key)
         // Assume for the moment that all floats can represent the full range
         // of any int/uint in a cast.  This is close enough to true for the
         // precision of this json parser.
+        // 暂时假设所有 float 都能在转换中完整表示任意 int/uint 的
+        // 取值范围。就本 json 解析器的精度而言，这一假设足够接近
+        // 事实。
     }
     else
     {
@@ -194,6 +204,7 @@ UnpackErrorCode unpackValueWithErrorCode(nlohmann::json& jsonValue,
         if (jsonPtr == nullptr)
         {
             // Value wasn't int, check uint
+            // 该值不是 int，检查是否为 uint
             uint64_t* uJsonPtr = jsonValue.get_ptr<uint64_t*>();
             if (uJsonPtr == nullptr)
             {
@@ -434,6 +445,7 @@ bool unpackValue(nlohmann::json& jsonValue, std::string_view key, Type& value)
 }
 
 //  boost::hash_combine
+//  对应 boost::hash_combine（Boost 的哈希组合实现）
 inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
 {
     seed ^= h + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
@@ -472,6 +484,7 @@ using UnpackVariant = std::variant<
     std::vector<uint64_t>*,
     std::vector<int64_t>*,
     //std::vector<bool>*,
+    // std::vector<bool>*（bool 向量指针类型），
     std::vector<double>*,
     std::vector<std::string>*,
     std::vector<nlohmann::json::object_t>*,
@@ -494,6 +507,7 @@ using UnpackVariant = std::variant<
     std::optional<std::vector<uint64_t>>*,
     std::optional<std::vector<int64_t>>*,
     //std::optional<std::vector<bool>>*,
+    // std::optional<std::vector<bool>>*（可选 bool 向量指针类型），
     std::optional<std::vector<double>>*,
     std::optional<std::vector<std::string>>*,
     std::optional<std::vector<nlohmann::json::object_t>>*,
@@ -545,9 +559,11 @@ inline bool readJsonHelperObject(nlohmann::json::object_t& obj,
             }
 
             // Sublevel key
+            // 下级 key（子层级键）
             if (!leftover.empty())
             {
                 // Include the slash in the key so we can compare later
+                // 在 key 中包含斜杠，以便后续进行比较
                 key = unpackSpec.key.substr(0, keysplitIndex + 1);
                 nlohmann::json::object_t j;
                 result = details::unpackValue<nlohmann::json::object_t>(
@@ -688,6 +704,9 @@ inline std::optional<nlohmann::json::object_t> readJsonPatchHelper(
         //  If the update request only contains OData annotations, the service
         //  should return the HTTP 400 Bad Request status code with the
         //  NoOperation message from the Base Message Registry, ...
+        //  如果更新请求只包含 OData 注解，服务应返回 HTTP 400 Bad Request
+        //  状态码，并附带来自 Base Message Registry 的 NoOperation 消息，
+        //  ...
         messages::noOperation(res);
         return std::nullopt;
     }
@@ -717,6 +736,7 @@ inline const nlohmann::json* findNestedKey(std::string_view key,
         if (it == value.end())
         {
             // Entry didn't have key
+            // 条目中没有该 key
             return nullptr;
         }
         return findNestedKey(leftover, it.value());
@@ -789,6 +809,8 @@ bool readJsonAction(const crow::Request& req, crow::Response& res,
 
 // Determines if two json objects are less, based on the presence of the
 // @odata.id key
+// 根据 @odata.id key 是否存在，判断两个 json 对象的大小
+// 顺序
 inline int objectKeyCmp(std::string_view key, const nlohmann::json& a,
                         const nlohmann::json& b)
 {
@@ -812,6 +834,8 @@ inline int objectKeyCmp(std::string_view key, const nlohmann::json& a,
     object_t::const_iterator bIt = bObj->find(key);
     // If either object doesn't have the key, they get "sorted" to the
     // beginning.
+    // 若任一对象没有该 key，它会被"排序"到
+    // 开头。
     if (aIt == aObj->end())
     {
         if (bIt == bObj->end())
@@ -830,6 +854,8 @@ inline int objectKeyCmp(std::string_view key, const nlohmann::json& a,
         bIt->second.get_ptr<const std::string*>();
     // If either object doesn't have a string as the key, they get "sorted" to
     // the beginning.
+    // 若任一对象的 key 不是字符串，它会被"排序"到
+    // 开头。
     if (nameA == nullptr)
     {
         if (nameB == nullptr)
@@ -894,6 +920,7 @@ inline int objectKeyCmp(std::string_view key, const nlohmann::json& a,
 };
 
 // kept for backward compatibility
+// 保留以保持向后兼容
 inline int odataObjectCmp(const nlohmann::json& left,
                           const nlohmann::json& right)
 {
@@ -916,6 +943,9 @@ struct ODataObjectLess
 // Sort the JSON array by |element[key]|.
 // Elements without |key| or type of |element[key]| is not string are smaller
 // those whose |element[key]| is string.
+// 按 |element[key]| 对 JSON 数组排序。
+// 没有 |key| 或 |element[key]| 类型不是字符串的元素，排在
+// |element[key]| 为字符串的元素之前（更小）。
 inline void sortJsonArrayByKey(nlohmann::json::array_t& array,
                                std::string_view key)
 {
@@ -925,6 +955,9 @@ inline void sortJsonArrayByKey(nlohmann::json::array_t& array,
 // Sort the JSON array by |element[key]|.
 // Elements without |key| or type of |element[key]| is not string are smaller
 // those whose |element[key]| is string.
+// 按 |element[key]| 对 JSON 数组排序。
+// 没有 |key| 或 |element[key]| 类型不是字符串的元素，排在
+// |element[key]| 为字符串的元素之前（更小）。
 inline void sortJsonArrayByOData(nlohmann::json::array_t& array)
 {
     std::ranges::sort(array, ODataObjectLess("@odata.id"));
@@ -934,6 +967,10 @@ inline void sortJsonArrayByOData(nlohmann::json::array_t& array)
 // The implementation walks through every key and every value, accumulates the
 //  total size of keys and values.
 // Ideally, we should use a custom allocator that nlohmann JSON supports.
+// 返回 JSON 值的估算大小
+// 实现会遍历每个 key 和每个 value，累加所有 key 和 value 的
+// 总大小。
+// 理想情况下，应使用 nlohmann JSON 支持的自定义分配器。
 
 // Assumption made:
 //  1. number: 8 characters
@@ -941,9 +978,16 @@ inline void sortJsonArrayByOData(nlohmann::json::array_t& array)
 //  3. string: len(str) + 2 characters (quote)
 //  4. bytes: len(bytes) characters
 //  5. null: 4 characters (null)
+// 所做假设：
+//  1. number（数字）：8 个字符
+//  2. boolean（布尔）：5 个字符（False）
+//  3. string（字符串）：len(str) + 2 个字符（引号）
+//  4. bytes（字节）：len(bytes) 个字符
+//  5. null：4 个字符（null）
 uint64_t getEstimatedJsonSize(const nlohmann::json& root);
 
 // Hashes a json value, recursively omitting every member with key `keyToIgnore`
+// 对 json 值计算哈希，递归忽略 key 为 `keyToIgnore` 的所有成员
 inline size_t hashJsonWithoutKey(const nlohmann::json& jsonValue,
                                  std::string_view keyToIgnore)
 {
@@ -952,6 +996,7 @@ inline size_t hashJsonWithoutKey(const nlohmann::json& jsonValue,
     if (obj == nullptr)
     {
         // Object has no keys to remove so just return hash
+        // 对象中没有需要移除的 key，因此直接返回哈希值
         return std::hash<nlohmann::json>{}(jsonValue);
     }
 

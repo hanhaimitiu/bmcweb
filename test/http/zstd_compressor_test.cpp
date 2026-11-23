@@ -101,6 +101,8 @@ TEST(Zstd, RoundTrip)
 
     // This is a unit test, we WANT reproducible tests
     // NOLINTNEXTLINE(cert-msc51-cpp, cert-msc32-c)
+    // 这是单元测试，我们需要可复现的测试
+    // NOLINTNEXTLINE(cert-msc51-cpp, cert-msc32-c)
     random_bytes_engine rbe;
     std::vector<unsigned char> data(1048576U);
     std::ranges::generate(data, std::ref(rbe));

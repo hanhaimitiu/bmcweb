@@ -37,6 +37,8 @@ bool ZstdCompressor::init([[maybe_unused]] size_t sourceSize)
 
     // 3 is the default compression level for zstd, but set it explicitly
     // so we can tune later if needed]
+    // 3 是 zstd 的默认压缩级别，但这里显式设置，
+    // 以便日后需要时调整]
     size_t ret = ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, 3);
     if (ZSTD_isError(ret) != 0U)
     {

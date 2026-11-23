@@ -104,6 +104,7 @@ inline std::string fillMessageArgs(
         }
         msg.remove_prefix(1);
         // Redfish message args are 1 indexed.
+        // Redfish 消息参数采用 1 起始索引（从 1 开始计数）。
         number--;
         if (number >= messageArgs.size())
         {
@@ -122,6 +123,8 @@ inline nlohmann::json::object_t getLogFromRegistry(
     const redfish::registries::MessageEntry& entry = registry[index];
     // Intentionally make a copy of the string, so we can append in the
     // parameters.
+    // 有意复制该字符串，以便我们可以在
+    // 参数中进行追加。
     std::string msg =
         redfish::registries::fillMessageArgs(args, entry.second.message);
     nlohmann::json jArgs = nlohmann::json::array();

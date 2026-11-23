@@ -22,6 +22,10 @@ namespace ip_util
  *
  * @return IP address string
  */
+/* @brief 将 boost::asio::ip::address 转换为字符串
+ * 会自动将 IPv4-mapped 的 IPv6 地址转回 IPv4。
+ * @param[in] ipAddr 要转换的 IP 地址
+ * @return IP 地址字符串 */
 inline std::string toString(const boost::asio::ip::address& ipAddr)
 {
     if (ipAddr.is_v6() && ipAddr.to_v6().is_v4_mapped())
@@ -43,6 +47,12 @@ inline std::string toString(const boost::asio::ip::address& ipAddr)
  *
  * @return true in case of success, false otherwise
  */
+/* @brief 辅助函数，验证 IP 地址以检查其格式是否
+ *        正确。如果提供了 bits 指针，还会计算子网掩码的
+ *        有效位数。
+ * @param[in]  ip    要验证的 IP
+ * @param[out] bits  以位数表示的计算所得掩码
+ * @return 成功返回 true，否则返回 false */
 inline bool ipv4VerifyIpAndGetBitcount(const std::string& ip,
                                        uint8_t* prefixLength = nullptr)
 {
@@ -106,6 +116,7 @@ inline bool ipv4VerifyIpAndGetBitcount(const std::string& ip,
                     break;
                 default:
                     // Invalid netmask
+                    // 无效的 netmask（子网掩码）
                     return false;
             }
         }

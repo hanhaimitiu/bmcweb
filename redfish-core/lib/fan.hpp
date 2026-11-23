@@ -106,6 +106,7 @@ inline void handleFanCollectionHead(
     redfish::chassis_utils::getValidChassisPath(
         asyncResp, chassisId,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp,
          chassisId](const std::optional<std::string>& validChassisPath) {
             if (!validChassisPath)
@@ -158,6 +159,7 @@ inline void handleFanPath(
         dbus::utility::getDbusObject(
             fanPath, fanInterface,
             // ast-grep-ignore: long-lambda
+            // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
             [fanPath, asyncResp,
              callback](const boost::system::error_code& ec,
                        const dbus::utility::MapperGetObject& object) {
@@ -211,6 +213,7 @@ inline void getFanLocation(const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
         service, fanPath,
         "xyz.openbmc_project.Inventory.Decorator.LocationCode", "LocationCode",
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp](const boost::system::error_code& ec,
                     const std::string& property) {
             if (ec)
@@ -257,6 +260,7 @@ inline void handleGetFanSensorsProperties(
     }
 
     // Guard against bad priority combinations
+    // 防范错误的优先级组合。
     if (priority.has_value())
     {
         if (*priority > 1)
@@ -274,6 +278,7 @@ inline void handleGetFanSensorsProperties(
             return;
         }
         /* No priority for single sensor, use as primary sensor for response */
+        /* 单个传感器没有优先级，将其作为响应的主传感器。 */
         priority = 0;
     }
 
@@ -282,6 +287,8 @@ inline void handleGetFanSensorsProperties(
     /* Don't return an error for a failure to fill in properties from this
      * sensor. Just skip adding it.
      */
+    /* 如果是从该传感器填充属性失败，不要返回错误，
+     * 直接跳过添加它即可。 */
     if (sensor_utils::objectExcerptToJson(
             fanSensorPath, chassisId, sensor_utils::ChassisSubNode::fansNode,
             sensor::ReadingType::Percent, propertiesList, item))
@@ -380,6 +387,7 @@ inline void handleFanHead(App& app, const crow::Request& req,
     redfish::chassis_utils::getValidChassisPath(
         asyncResp, chassisId,
         // ast-grep-ignore: long-lambda
+        // ast-grep-ignore: long-lambda（忽略指令：ast-grep 跳过过长 lambda 检查）
         [asyncResp, chassisId,
          fanId](const std::optional<std::string>& validChassisPath) {
             if (!validChassisPath)

@@ -50,14 +50,19 @@ constexpr int toSystemdLevel(LogLevel level)
     constexpr std::array<std::pair<LogLevel, int>, 5> mapping{
         {// EMERGENCY 0
          // ALERT 1
+         // ALERT 1
          {LogLevel::Critical, 2},
          {LogLevel::Error, 3},
          {LogLevel::Warning, 4},
+         // NOTICE 5
          // NOTICE 5
          {LogLevel::Info, 6},
          // Note, debug here is actually mapped to info level, because OpenBMC
          // has a MaxLevelSyslog and MaxLevelStore of info, so DEBUG level will
          // never be stored.
+         // 注意，此处的 debug 实际上映射到 info 级别，因为 OpenBMC
+         // 的 MaxLevelSyslog 和 MaxLevelStore 为 info，所以 DEBUG 级别
+         // 永远不会被存储。
          {LogLevel::Debug, 6}}};
 
     const auto* it = std::ranges::find_if(
@@ -66,6 +71,7 @@ constexpr int toSystemdLevel(LogLevel level)
         });
 
     // Unknown log level.  Just assume debug
+    // 未知的日志级别，直接按 debug 处理
     if (it == mapping.end())
     {
         return 6;
@@ -75,6 +81,7 @@ constexpr int toSystemdLevel(LogLevel level)
 }
 
 // Mapping of the external loglvl name to internal loglvl
+// 外部 loglvl 名称到内部 loglvl 的映射
 constexpr std::array<std::string_view, 7> mapLogLevelFromName{
     "DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "ENABLED"};
 
@@ -89,6 +96,7 @@ constexpr crow::LogLevel getLogLevelFromName(std::string_view name)
 }
 
 // configured bmcweb LogLevel
+// 配置的 bmcweb LogLevel
 inline crow::LogLevel& getBmcwebCurrentLoggingLevel()
 {
     static crow::LogLevel level = getLogLevelFromName(BMCWEB_LOGGING_LEVEL);
@@ -137,6 +145,10 @@ inline void vlog(std::format_string<Args...>&& format, Args&&... args,
         // throw Based on the documentation, it shouldn't throw, so long as none
         // of the formatters throw, so unclear at this point why this try/catch
         // is required, but add it to silence the static analysis tools.
+        // TODO：多个静态分析工具指出此处可能抛出异常。根据文档，
+        // 只要没有 formatter 抛出异常它就不应抛出，所以目前还不清楚
+        // 为什么需要这个 try/catch，但为了让静态分析工具安静下来，
+        // 还是加上了它。
         logLocation =
             std::format("<{}>[{}:{}] ", systemdLevel, filename, loc.line());
         logLocation +=
@@ -146,9 +158,11 @@ inline void vlog(std::format_string<Args...>&& format, Args&&... args,
     {
         logLocation += "Failed to format";
         // Nothing more we can do here if logging is broken.
+        // 如果日志功能损坏，这里也做不了别的。
     }
     logLocation += '\n';
     // Intentionally ignore error return.
+    // 有意忽略错误返回值。
     fwrite(logLocation.data(), sizeof(std::string::value_type),
            logLocation.size(), stdout);
     fflush(stdout);

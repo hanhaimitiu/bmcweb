@@ -327,6 +327,7 @@ TEST(ReadJsonPatch, ValidElementsReturnsTrueResponseOkValuesUnpackedCorrectly)
     crow::Request req("{\"integer\": 1}", ec);
 
     // Ignore errors intentionally
+    // 有意忽略错误
     req.addHeader(boost::beast::http::field::content_type, "application/json");
 
     int64_t integer = 0;
@@ -342,6 +343,7 @@ TEST(ReadJsonPatch, EmptyObjectReturnsFalseResponseBadRequest)
     std::error_code ec;
     crow::Request req("{}", ec);
     // Ignore errors intentionally
+    // 有意忽略错误
 
     std::optional<int64_t> integer = 0;
     ASSERT_FALSE(readJsonPatch(req, res, "integer", integer));
@@ -356,6 +358,7 @@ TEST(ReadJsonPatch, OdataIgnored)
     crow::Request req(R"({"@odata.etag": "etag", "integer": 1})", ec);
     req.addHeader(boost::beast::http::field::content_type, "application/json");
     // Ignore errors intentionally
+    // 有意忽略错误
 
     std::optional<int64_t> integer = 0;
     ASSERT_TRUE(readJsonPatch(req, res, "integer", integer));
@@ -370,6 +373,7 @@ TEST(ReadJsonPatch, OnlyOdataGivesNoOperation)
     std::error_code ec;
     crow::Request req(R"({"@odata.etag": "etag"})", ec);
     // Ignore errors intentionally
+    // 有意忽略错误
 
     std::optional<int64_t> integer = 0;
     ASSERT_FALSE(readJsonPatch(req, res, "integer", integer));
@@ -383,6 +387,7 @@ TEST(ReadJsonPatch, VerifyReadJsonPatchIntegerReturnsOutOfRange)
     std::error_code ec;
 
     // 4294967296 is an out-of-range value for uint32_t
+    // 4294967296 超出 uint32_t 的取值范围
     crow::Request req(R"({"@odata.etag": "etag", "integer": 4294967296})", ec);
     req.addHeader(boost::beast::http::field::content_type, "application/json");
 
@@ -421,6 +426,7 @@ TEST(ReadJsonAction, ValidElementsReturnsTrueResponseOkValuesUnpackedCorrectly)
     crow::Request req("{\"integer\": 1}", ec);
     req.addHeader(boost::beast::http::field::content_type, "application/json");
     // Ignore errors intentionally
+    // 有意忽略错误
 
     int64_t integer = 0;
     ASSERT_TRUE(readJsonAction(req, res, "integer", integer));
@@ -436,6 +442,7 @@ TEST(ReadJsonAction, EmptyObjectReturnsTrueResponseOk)
     crow::Request req({"{}"}, ec);
     req.addHeader(boost::beast::http::field::content_type, "application/json");
     // Ignore errors intentionally
+    // 有意忽略错误
 
     std::optional<int64_t> integer = 0;
     ASSERT_TRUE(readJsonAction(req, res, "integer", integer));
@@ -482,6 +489,8 @@ TEST(SortJsonArrayByOData, ElementMissingKeyReturnsFalseArrayIsPartlySorted)
     sortJsonArrayByOData(array);
     // Objects with other keys are always larger than those with the specified
     // key.
+    // 具有其他键的对象总是大于
+    // 具有指定键的对象。
     EXPECT_THAT(array,
                 ElementsAre(R"({"@odata.id": "/redfish/v1/1"})"_json,
                             R"({"@odata.id" : "/redfish/v1/20"})"_json,
@@ -561,6 +570,8 @@ TEST(SortJsonArrayByKey, ElementMissingKeyReturnsFalseArrayIsPartlySorted)
     sortJsonArrayByKey(array, "@odata.id");
     // Objects with other keys are always smaller than those with the specified
     // key.
+    // 具有其他键的对象总是小于
+    // 具有指定键的对象。
     EXPECT_THAT(array,
                 ElementsAre(R"({"Name" : "/redfish/v1/5"})"_json,
                             R"({"@odata.id": "/redfish/v1/1"})"_json,
@@ -633,14 +644,19 @@ TEST(GetEstimatedJsonSize, ObjectsReturnsSumWithKeyAndValue)
 
     uint64_t expected = 0;
     // 5 keys of length 4
+    // 5 个长度为 4 的键
     expected += uint64_t(5) * 4;
     // 5 colons, 5 quote pairs, and 5 spaces for 5 keys
+    // 5 个键对应 5 个冒号、5 对引号和 5 个空格
     expected += uint64_t(5) * (1 + 2 + 1);
     // 2 string values of length 3
+    // 2 个长度为 3 的字符串值
     expected += uint64_t(2) * (3 + 2);
     // 1 number value
+    // 1 个数值
     expected += 8;
     // 1 array value of 3 numbers
+    // 1 个包含 3 个数字的数组值
     expected += uint64_t(3) * 8;
     EXPECT_EQ(getEstimatedJsonSize(obj), expected);
 }
@@ -657,17 +673,21 @@ TEST(hashJsonWithoutKey, HashObject)
 )"_json;
 
     // Returns same value as std::hash when no key is ignored
+    // 当没有忽略任何键时，返回与 std::hash 相同的值
     size_t originalHash = std::hash<nlohmann::json>{}(obj);
     EXPECT_EQ(originalHash, hashJsonWithoutKey(obj, "other"));
 
     nlohmann::json modifiedObj;
     // ast-grep-ignore: bmcweb.common-errors.throwing-json-items
+    // ast-grep-ignore: bmcweb.common-errors.throwing-json-items
     for (const auto& element : obj.items())
     {
         // Hash with ignored key is different from original hash
+        // 忽略某个键后的哈希与原始哈希不同
         EXPECT_NE(originalHash, hashJsonWithoutKey(obj, element.key()));
 
         // Hash with ignored key is different than just removing the key
+        // 忽略某个键后的哈希与直接移除该键不同
         modifiedObj = obj;
         modifiedObj.erase(element.key());
         EXPECT_NE(std::hash<nlohmann::json>{}(modifiedObj),
@@ -675,6 +695,7 @@ TEST(hashJsonWithoutKey, HashObject)
     }
 
     // Ignored key is not removed recursively
+    // 被忽略的键不会被递归移除
     modifiedObj = obj;
     modifiedObj["key3"].erase("key4");
     EXPECT_EQ(originalHash, hashJsonWithoutKey(obj, "key4"));

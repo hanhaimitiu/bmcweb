@@ -63,6 +63,8 @@ inline void getServiceIdentification(
 
     // This property shall not be present if its value is an empty string or
     // null: Redfish Data Model Specification 6.125.3
+    // 若该属性的值为空字符串或 null，则不应出现该属性：
+    // Redfish 数据模型规范 6.125.3
     if (isServiceRoot && serviceIdentification.empty())
     {
         return;
@@ -82,12 +84,15 @@ inline void afterGetValidManagerPath(
     if (ec || subtree.empty())
     {
         // Pass the empty managerPath & serviceMap
+        // 传入空的 managerPath 和 serviceMap
         callback(ec, {}, {});
         return;
     }
 
     // Assume only 1 bmc D-Bus object
     // Throw an error if there is more than 1
+    // 假设只有 1 个 bmc D-Bus 对象
+    // 若多于 1 个则抛出错误
     if (subtree.size() > 1)
     {
         BMCWEB_LOG_ERROR("Found more than 1 bmc D-Bus object!");
@@ -98,6 +103,7 @@ inline void afterGetValidManagerPath(
     if (managerId != BMCWEB_REDFISH_MANAGER_URI_NAME)
     {
         // Treat it as NotFound
+        // 将其视为 NotFound
         callback(ec, {}, {});
         return;
     }

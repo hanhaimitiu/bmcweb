@@ -58,6 +58,7 @@ class Subscription : public std::enable_shared_from_this<Subscription>
     ~Subscription() = default;
 
     // callback for subscription sendData
+    // 订阅 sendData 的回调函数。
     void resHandler(const std::shared_ptr<Subscription>& /*self*/,
                     const crow::Response& res);
 
@@ -82,6 +83,8 @@ class Subscription : public std::enable_shared_from_this<Subscription>
 
     // Check used to indicate what response codes are valid as part of our retry
     // policy.  2XX is considered acceptable
+    // 用于指示哪些响应码在我们的重试策略中有效的检查函数。
+    // 2XX 被视为可接受。
     static boost::system::error_code retryRespHandler(unsigned int respCode);
 
     std::shared_ptr<persistent_data::UserSubscription> userSub;

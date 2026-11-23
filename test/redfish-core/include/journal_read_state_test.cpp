@@ -16,6 +16,8 @@ namespace
 
 // The journald filesystem format is documented here:
 // https://systemd.io/JOURNAL_FILE_FORMAT/
+// journald 文件系统格式文档见此处：
+// https://systemd.io/JOURNAL_FILE_FORMAT/
 
 TEST(JournalReadState, TestDataFile)
 {
@@ -30,6 +32,7 @@ TEST(JournalReadState, TestDataFile)
     ASSERT_EQ(state->next(), 1);
 
     // Note, this is technically opaque, so if it changes in the future
+    // 注意，这在技术上是不可见的（opaque），因此如果将来发生变化
     EXPECT_EQ(state->getCursor(),
               "s=bf184a6f61fc4619886c6a7c63681ec8;"
               "i=120f;"

@@ -22,6 +22,7 @@ inline std::string bytesToHexString(const std::span<const uint8_t>& bytes)
 }
 
 // Returns nibble.
+// 返回一个 nibble（半字节）。
 inline uint8_t hexCharToNibble(char ch)
 {
     uint8_t rc = 16;
@@ -42,6 +43,7 @@ inline uint8_t hexCharToNibble(char ch)
 }
 
 // Returns empty vector in case of malformed hex-string.
+// 若十六进制字符串格式错误，则返回空 vector。
 inline std::vector<uint8_t> hexStringToBytes(const std::string& str)
 {
     std::vector<uint8_t> rc(str.size() / 2, 0);

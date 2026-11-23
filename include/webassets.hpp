@@ -40,6 +40,11 @@ inline std::string getStaticEtag(const std::filesystem::path& webpath)
     // Webpack example: app.63e2c453.css (8 hex chars)
     // Vite example: app.DhhjLIym.js (8 alphanumeric chars)
     // Try to detect this, so we can use the hash as the ETAG
+    // 构建工具以如下形式输出生产环境的代码块：
+    // <filename>.<hash>.<extension>
+    // Webpack 示例：app.63e2c453.css（8 个十六进制字符）
+    // Vite 示例：app.DhhjLIym.js（8 个字母数字字符）
+    // 尝试检测这种形式，以便将哈希用作 ETAG
     std::vector<std::string> split;
     bmcweb::split(split, webpath.filename().string(), '.');
     if (split.size() < 3)
@@ -48,14 +53,17 @@ inline std::string getStaticEtag(const std::filesystem::path& webpath)
     }
 
     // get the second to last element
+    // 获取倒数第二个元素
     std::string hash = split.rbegin()[1];
 
     // Build tool hashes are 8 characters long
+    // 构建工具的哈希长度为 8 个字符
     if (hash.size() != 8)
     {
         return "";
     }
     // Build tool hashes only include alphanumeric characters
+    // 构建工具的哈希只包含字母数字字符
     if (hash.find_first_not_of(
             "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") !=
         std::string::npos)
@@ -98,10 +106,14 @@ inline void handleStaticAsset(
         asyncResp->res.addHeader(boost::beast::http::field::etag, file.etag);
         // Don't cache paths that don't have the etag in them, like
         // index, which gets transformed to /
+        // 不要缓存路径中没有 etag 的资源，
+        // 例如 index（会被转换为 /）
         if (!file.renamed)
         {
             // Anything with a hash can be cached forever and is
             // immutable
+            // 任何带哈希的资源都可以永久缓存，
+            // 且不可变
             asyncResp->res.addHeader(boost::beast::http::field::cache_control,
                                      "max-age=31556926, immutable");
         }
@@ -142,6 +154,9 @@ inline std::string_view getFiletypeForExtension(std::string_view extension)
              // dev tools don't care about map type, setting to json causes
              // browser to show as text
              // https://stackoverflow.com/questions/19911929/what-mime-type-should-i-use-for-javascript-source-map-files
+             // 开发工具不关心 map 类型，设为 json 会让浏览器
+             // 以文本形式显示。
+             // https://stackoverflow.com/questions/19911929/what-mime-type-should-i-use-for-javascript-source-map-files
              {".map", "application/json"},
              {".png", "image/png;charset=UTF-8"},
              {".svg", "image/svg+xml"},
@@ -179,6 +194,7 @@ inline void addFile(App& app, const std::filesystem::directory_entry& dir)
     {
         webpath = webpath.replace_extension("");
         // Use the non-gzip version for determining content type
+        // 使用非 gzip 版本来确定内容类型
         extension = webpath.extension().string();
         file.contentEncoding = "gzip";
         file.onDiskComp = bmcweb::CompressionType::Gzip;
@@ -187,6 +203,7 @@ inline void addFile(App& app, const std::filesystem::directory_entry& dir)
     {
         webpath = webpath.replace_extension("");
         // Use the non-zstd version for determining content type
+        // 使用非 zstd 版本来确定内容类型
         extension = webpath.extension().string();
         file.contentEncoding = "zstd";
         file.onDiskComp = bmcweb::CompressionType::Zstd;
@@ -201,6 +218,7 @@ inline void addFile(App& app, const std::filesystem::directory_entry& dir)
         if (webpath.string().empty() || webpath.string().back() != '/')
         {
             // insert the non-directory version of this path
+            // 插入该路径的非目录版本
             webroutes::routes.insert(webpath);
             webpath += "/";
             file.renamed = true;
@@ -214,6 +232,8 @@ inline void addFile(App& app, const std::filesystem::directory_entry& dir)
     {
         // Got a duplicated path.  This is expected in certain
         // situations
+        // 遇到重复路径。
+        // 这在某些情况下是预期行为。
         BMCWEB_LOG_DEBUG("Got duplicated path {}", webpath.string());
         return;
     }
@@ -248,6 +268,11 @@ inline void requestRoutes(App& app)
     // get the gzipped version first.  Because the gzipped path should be longer
     // than the non gzipped path, if we sort in descending order, we should be
     // guaranteed to get the gzip version first.
+    // 某些情况下，我们可能同时拥有文件的 gzip 版本和
+    // 非 gzip 版本。为避免重复路由，需要确保先获取
+    // gzip 版本。由于 gzip 路径应比非 gzip 路径更长，
+    // 如果按降序排序，就能保证先拿到 gzip
+    // 版本。
     std::vector<std::filesystem::directory_entry> paths(
         std::filesystem::begin(dirIter), std::filesystem::end(dirIter));
     std::ranges::sort(std::ranges::reverse_view(paths));
@@ -257,6 +282,7 @@ inline void requestRoutes(App& app)
         if (std::filesystem::is_directory(dir))
         {
             // don't recurse into hidden directories or symlinks
+            // 不要递归进入隐藏目录或符号链接
             if (dir.path().filename().string().starts_with(".") ||
                 std::filesystem::is_symlink(dir))
             {

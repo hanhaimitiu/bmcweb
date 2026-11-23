@@ -24,6 +24,7 @@ namespace persistent_data
 struct UserSubscription
 {
     // Represents a Redfish EventDestination instance
+    // 表示一个 Redfish EventDestination 实例
     std::string id;
     boost::urls::url destinationUrl;
     std::string protocol;
@@ -32,6 +33,8 @@ struct UserSubscription
     bool sendHeartbeat = false;
     // This value of hbIntervalMinutes is just a reasonable default value and
     // most clients will update it if sendHeartbeat is turned on
+    // hbIntervalMinutes 的这个值只是一个合理的默认值，
+    // 大多数客户端在开启 sendHeartbeat 时会更新它
     uint64_t hbIntervalMinutes = 10;
     std::string customText;
     std::string eventFormatType;

@@ -46,6 +46,10 @@ constexpr std::array<std::string_view, 1> cableInterfaces = {
  * @param[in]       ec          Error code corresponding to Async method call.
  * @param[in]       properties  List of Cable Properties key/value pairs.
  */
+/* @brief 填充 Cable（线缆）特有的属性。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] ec 异步方法调用对应的错误码。
+ * @param[in] properties Cable 属性的键值对列表。 */
 inline void fillCableProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const boost::system::error_code& ec,
@@ -81,6 +85,7 @@ inline void fillCableProperties(
         if (!std::isfinite(*length))
         {
             // Cable length is NaN by default, do not throw an error
+            // Cable 长度默认为 NaN，此时不抛出错误。
             if (!std::isnan(*length))
             {
                 BMCWEB_LOG_ERROR("Cable length value is invalid");
@@ -102,6 +107,10 @@ inline void fillCableProperties(
  * @param[in]       serviceMap      A map to hold Service and corresponding
  * interface list for the given cable id.
  */
+/* @brief 获取 Cable 属性的 API。
+ * @param[in,out] asyncResp 异步 HTTP 响应。
+ * @param[in] cableObjectPath Cable 的对象路径。
+ * @param[in] serviceMap 保存给定 cable id 对应的服务及接口列表的映射。 */
 inline void getCableProperties(
     const std::shared_ptr<bmcweb::AsyncResp>& asyncResp,
     const std::string& cableObjectPath,
@@ -218,6 +227,7 @@ inline void handleCableCollectionGet(
 /**
  * The Cable schema
  */
+/* Cable（线缆）的 schema。 */
 inline void requestRoutesCable(App& app)
 {
     BMCWEB_ROUTE(app, "/redfish/v1/Cables/<str>/")
@@ -229,6 +239,7 @@ inline void requestRoutesCable(App& app)
 /**
  * Collection of Cable resource instances
  */
+/* Cable 资源实例的集合。 */
 inline void requestRoutesCableCollection(App& app)
 {
     BMCWEB_ROUTE(app, "/redfish/v1/Cables/")

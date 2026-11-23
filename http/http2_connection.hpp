@@ -82,6 +82,7 @@ class HTTP2Connection :
     void start()
     {
         // Create the control stream
+        // 创建控制流（control stream）
         streams[0];
 
         if (sendServerConnectionHeader() != 0)
@@ -102,6 +103,7 @@ class HTTP2Connection :
             return;
         }
         // Create the control stream
+        // 创建控制流（control stream）
         streams[0];
 
         if (sendServerConnectionHeader() != 0)
@@ -121,12 +123,16 @@ class HTTP2Connection :
         // Both of these settings were found experimentally to allow a single
         // fast stream to upload at a rate equivalent to http1.1  They will
         // likely be tuned in the future.
+        // 这两个设置是通过实验得出的，可让单条
+        // 快速流的上传速率与 http1.1 相当，将来
+        // 可能还会进一步调优。
         uint32_t maxFrameSize = 1 << 14;
         uint32_t windowSize = 1 << 20;
         std::array<nghttp2_settings_entry, 4> iv = {{
             {NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, maxStreams},
             {NGHTTP2_SETTINGS_ENABLE_PUSH, 0},
             // Set an approximately 1MB window size
+            // 设置大约 1MB 的窗口大小
             {NGHTTP2_SETTINGS_INITIAL_WINDOW_SIZE, windowSize},
             {NGHTTP2_SETTINGS_MAX_FRAME_SIZE, maxFrameSize},
         }};
@@ -183,6 +189,7 @@ class HTTP2Connection :
             BMCWEB_LOG_CRITICAL(
                 "Buffer overflow that should never happen happened");
             // Should never happen because of length limit on get() above
+            // 由于上面 get() 有长度限制，这种情况不应发生
             return NGHTTP2_ERR_TEMPORAL_CALLBACK_FAILURE;
         }
         boost::asio::mutable_buffer writeableBuf(buf, length);
@@ -417,6 +424,7 @@ class HTTP2Connection :
             case NGHTTP2_DATA:
             case NGHTTP2_HEADERS:
                 // Check that the client request has finished
+                // 检查客户端请求是否已结束
                 if ((frame.hd.flags & NGHTTP2_FLAG_END_STREAM) != 0)
                 {
                     return onRequestRecv(frame.hd.stream_id);
@@ -451,6 +459,9 @@ class HTTP2Connection :
     {
         // This method exists to keep the unsafe reinterpret cast in one
         // place.
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        // 此方法的存在是为了将不安全的 reinterpret cast
+        // 集中在一处。
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         return *reinterpret_cast<self_type*>(userData);
     }
@@ -523,6 +534,9 @@ class HTTP2Connection :
             // Ignore all other http2 headers
             // :scheme and :authority are other valid http2 fields that might
             // show up here.
+            // 忽略其他所有 http2 头部
+            // :scheme 和 :authority 是其他可能出现在这里的
+            // 合法 http2 字段。
         }
         else
         {
@@ -664,6 +678,8 @@ class HTTP2Connection :
         {
             // EOF is normal when client closes HTTP/2 connection
             // Only log non-EOF errors
+            // 客户端关闭 HTTP/2 连接时出现 EOF 是正常的
+            // 只记录非 EOF 错误
             if (ec != boost::asio::error::eof &&
                 ec != boost::asio::ssl::error::stream_truncated)
             {
@@ -707,6 +723,7 @@ class HTTP2Connection :
     }
 
     // A mapping from http2 stream ID to Stream Data
+    // 从 http2 stream ID 到 Stream Data 的映射
     std::map<int32_t, Http2StreamData> streams;
 
     std::array<uint8_t, 8192> inBuffer{};
